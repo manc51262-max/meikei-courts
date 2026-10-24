@@ -241,10 +241,16 @@
     window.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('date-select').value = today;
-      document.getElementById('poster-base-url').value = window.location.href.split('?')[0];
+      if (document.getElementById('poster-base-url')) {
+        document.getElementById('poster-base-url').value = window.location.href.split('?')[0];
+      }
 
+      // 先に画面の表とチケットを描画する
+      renderTimetable();
+      renderMyBookings();
+
+      // その後にスプレッドシートから最新データを取得
       fetchLatestData();
-      // 15秒ごとに自動リフレッシュ（全員の画面を同期）
       setInterval(fetchLatestData, 15000);
     });
 
