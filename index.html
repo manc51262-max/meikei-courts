@@ -28,9 +28,6 @@
         </div>
       </div>
       <div class="flex items-center space-x-2">
-        <button onclick="fetchLatestData()" class="p-1.5 bg-emerald-800 hover:bg-emerald-900 rounded text-emerald-100 text-xs title='最新状態に更新'">
-          <i class="fa-solid fa-rotate" id="refresh-icon"></i>
-        </button>
         <button id="lang-btn" onclick="toggleLanguage()" class="px-2.5 py-1 text-xs bg-emerald-800 hover:bg-emerald-900 rounded font-semibold transition border border-emerald-600">
           EN / 日本語
         </button>
@@ -48,11 +45,6 @@
       <span id="notice-text" class="truncate font-medium">【規則】体芸6・7番コート。1枠20分（最大4名入室可）。ボールは本部受取です。</span>
     </div>
     <span class="text-[10px] text-amber-700 ml-2 whitespace-nowrap">体芸コート</span>
-  </div>
-
-  <!-- Loading State Indicator -->
-  <div id="loading-bar" class="hidden bg-emerald-600 text-white text-[11px] py-1 text-center font-semibold">
-    <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> スプレッドシートと通信中...
   </div>
 
   <!-- Main Container -->
@@ -119,7 +111,7 @@
   <div id="booking-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-xl max-w-md w-full p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
       <h4 class="font-bold text-base text-slate-800 mb-1" id="modal-title">コート予約申込み</h4>
-      <p class="text-xs font-semibold text-emerald-700 mb-3 bg-emerald-50 p-2 rounded border border-emerald-200" id="modal-slot-info">体芸 6番コート | 09:00 - 09:20</p>
+      <p class="text-xs font-semibold text-emerald-700 mb-3 bg-emerald-50 p-2 rounded border border-emerald-200" id="modal-slot-info"></p>
       
       <p class="text-[11px] text-slate-500 mb-3">※1コート最大4名まで入室可能です。代表選手名と連絡先を必ず入力してください。</p>
 
@@ -145,7 +137,7 @@
 
       <div class="mt-5 flex space-x-2">
         <button onclick="closeBookingModal()" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-xs transition">キャンセル</button>
-        <button id="submit-booking-btn" onclick="confirmBooking()" class="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition shadow">予約を確定する</button>
+        <button onclick="confirmBooking()" class="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition shadow">予約を確定する</button>
       </div>
     </div>
   </div>
@@ -219,8 +211,7 @@
   </div>
 
   <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx8sMgy5h1iiA6sZAVR5IvrQDFEALvbnQLuYmV6XYQIC7aIj59gNmBOIIHfJTWMIQGBceg/exec";
-
+    // --- ローカル動作モード ---
     let currentLang = 'ja';
     let currentRole = 'player';
     let selectedSlot = null;
@@ -242,7 +233,8 @@
       'c7': { ja: '体芸 7番', en: 'Court 7' }
     };
 
-    let bookings = {};
+    // ブラウザの記憶からデータを読み込む
+    let bookings = JSON.parse(localStorage.getItem('meikei_local_bookings')) || {};
     let myBookedIds = JSON.parse(localStorage.getItem('meikei_my_ids')) || [];
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -253,33 +245,10 @@
       const posterUrlInput = document.getElementById('poster-base-url');
       if (posterUrlInput) posterUrlInput.value = window.location.href.split('?')[0];
 
-      // 最初に初期表を必ず描画
+      // 表とチケットを描画
       renderTimetable();
       renderMyBookings();
-
-      // その後にGASと同期
-      fetchLatestData();
-      setInterval(fetchLatestData, 15000);
     });
-
-    async function fetchLatestData() {
-      const icon = document.getElementById('refresh-icon');
-      if (icon) icon.classList.add('fa-spin');
-      
-      try {
-        const res = await fetch(GAS_API_URL);
-        const data = await res.json();
-        if (data && typeof data === 'object') {
-          bookings = data;
-          renderTimetable();
-          renderMyBookings();
-        }
-      } catch (err) {
-        console.warn('GAS同期中...');
-      } finally {
-        if (icon) icon.classList.remove('fa-spin');
-      }
-    }
 
     function toggleLanguage() {
       currentLang = currentLang === 'ja' ? 'en' : 'ja';
@@ -338,7 +307,6 @@
             </td>`;
           } else {
             const isMy = myBookedIds.includes(b.id);
-            // 同伴者一覧を生成
             const others = [b.p2, b.p3, b.p4, b.partner].filter(Boolean);
             const othersText = others.length > 0 ? ` +${others.join(', ')}` : '';
 
@@ -383,7 +351,7 @@
         document.getElementById('booking-modal').classList.remove('hidden');
       } else if (myBookedIds.includes(b.id)) {
         if (confirm(`[${cName} ${time}] の予約を取り消しますか？`)) {
-          cancelBookingOnline(key, b.id);
+          cancelBookingLocal(key, b.id);
         }
       } else {
         alert('この枠はすでに予約されています。');
@@ -398,7 +366,7 @@
       document.getElementById('td-modal').classList.add('hidden');
     }
 
-    async function confirmBooking() {
+    function confirmBooking() {
       const name = document.getElementById('input-player-name').value.trim();
       const phone = document.getElementById('input-phone').value.trim();
       const p2 = document.getElementById('input-p2').value.trim();
@@ -410,106 +378,47 @@
         return;
       }
 
-      const submitBtn = document.getElementById('submit-booking-btn');
-      submitBtn.disabled = true;
-      submitBtn.innerText = '予約処理中...';
-
       const bookingId = 'MK-' + Math.floor(100 + Math.random() * 900);
       const partnerCombined = [p2, p3, p4].filter(Boolean).join(', ');
 
-      const payload = {
-        action: 'book',
-        key: selectedSlot,
-        name: name,
-        partner: partnerCombined,
-        p2: p2,
-        p3: p3,
-        p4: p4,
-        phone: phone,
-        id: bookingId
-      };
+      myBookedIds.push(bookingId);
+      localStorage.setItem('meikei_my_ids', JSON.stringify(myBookedIds));
 
-      try {
-        await fetch(GAS_API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
+      bookings[selectedSlot] = { name, partner: partnerCombined, p2, p3, p4, phone, status: 'booked', id: bookingId };
+      localStorage.setItem('meikei_local_bookings', JSON.stringify(bookings));
 
-        myBookedIds.push(bookingId);
-        localStorage.setItem('meikei_my_ids', JSON.stringify(myBookedIds));
-
-        bookings[selectedSlot] = { name, partner: partnerCombined, p2, p3, p4, phone, status: 'booked', id: bookingId };
-        closeBookingModal();
-        renderTimetable();
-        renderMyBookings();
-        alert(`予約が完了しました！\n予約ID: ${bookingId}\n体芸コートへ向かってください。`);
-        setTimeout(fetchLatestData, 1000);
-      } catch (err) {
-        alert('予約通信に失敗しました。');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = '予約を確定する';
-      }
+      closeBookingModal();
+      renderTimetable();
+      renderMyBookings();
+      alert(`予約が完了しました！\n予約ID: ${bookingId}\n体芸コートへ向かってください。`);
     }
 
-    async function cancelBookingOnline(key, bookingId) {
-      try {
-        await fetch(GAS_API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'cancel', key: key })
-        });
-
-        myBookedIds = myBookedIds.filter(id => id !== bookingId);
-        localStorage.setItem('meikei_my_ids', JSON.stringify(myBookedIds));
-        delete bookings[key];
-        renderTimetable();
-        renderMyBookings();
-        alert('予約を取り消しました。');
-        setTimeout(fetchLatestData, 1000);
-      } catch (err) {
-        alert('取消処理に失敗しました。');
-      }
+    function cancelBookingLocal(key, bookingId) {
+      myBookedIds = myBookedIds.filter(id => id !== bookingId);
+      localStorage.setItem('meikei_my_ids', JSON.stringify(myBookedIds));
+      
+      delete bookings[key];
+      localStorage.setItem('meikei_local_bookings', JSON.stringify(bookings));
+      
+      renderTimetable();
+      renderMyBookings();
+      alert('予約を取り消しました。');
     }
 
-    async function tdSetOfficial() {
+    function tdSetOfficial() {
       if (!selectedSlot) return;
       closeTdModal();
-      
-      await fetch(GAS_API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'official',
-          key: selectedSlot,
-          name: '公式割当 / 調整中',
-          id: 'MK-OFFICIAL'
-        })
-      });
-
       bookings[selectedSlot] = { name: '公式割当 / 調整中', status: 'official', id: 'MK-OFFICIAL' };
+      localStorage.setItem('meikei_local_bookings', JSON.stringify(bookings));
       renderTimetable();
-      setTimeout(fetchLatestData, 1000);
     }
 
-    async function tdCancelSlot() {
+    function tdCancelSlot() {
       if (!selectedSlot) return;
       closeTdModal();
-      
-      await fetch(GAS_API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'cancel', key: selectedSlot })
-      });
-
       delete bookings[selectedSlot];
+      localStorage.setItem('meikei_local_bookings', JSON.stringify(bookings));
       renderTimetable();
-      setTimeout(fetchLatestData, 1000);
     }
 
     function renderMyBookings() {
@@ -530,7 +439,7 @@
             <div>
               <span class="font-bold text-blue-900">${courtLabels[court].ja}コート | ${time}</span>
               <p class="text-slate-700 mt-0.5">代表: <span class="font-bold">${b.name}</span></p>
-              ${others ? `<p class="text-slate-500 text-[11px]">同伴/相手: ${others}</p>` : ''}
+              ${others ? `<p class="text-slate-500 text-[11px]">同伴: ${others}</p>` : ''}
               <p class="text-[10px] text-blue-600 mt-0.5">予約ID: ${b.id}</p>
             </div>
             <button onclick="handleSlotClick('${key}')" class="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold rounded text-xs transition">取消</button>
