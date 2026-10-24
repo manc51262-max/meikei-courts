@@ -45,14 +45,14 @@
   <div id="notice-banner" class="bg-amber-100 border-b border-amber-300 px-4 py-2 text-xs md:text-sm text-amber-900 flex justify-between items-center">
     <div class="flex items-center space-x-2 overflow-hidden">
       <i class="fa-solid fa-circle-exclamation text-amber-600 flex-shrink-0"></i>
-      <span id="notice-text" class="truncate font-medium">【規則】体芸6・7番コート。1枠20分（1選手1日1枠まで）。ボールは本部受取です。</span>
+      <span id="notice-text" class="truncate font-medium">【規則】体芸6・7番コート。1枠20分（最大4名入室可）。ボールは本部受取です。</span>
     </div>
     <span class="text-[10px] text-amber-700 ml-2 whitespace-nowrap">体芸コート</span>
   </div>
 
   <!-- Loading State Indicator -->
-  <div id="loading-bar" class="hidden bg-emerald-500 text-white text-[11px] py-1 text-center font-semibold">
-    <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> 予約データを更新中...
+  <div id="loading-bar" class="hidden bg-emerald-600 text-white text-[11px] py-1 text-center font-semibold">
+    <i class="fa-solid fa-circle-notch fa-spin mr-1"></i> スプレッドシートと通信中...
   </div>
 
   <!-- Main Container -->
@@ -86,7 +86,7 @@
       <table class="w-full border-collapse text-center">
         <thead>
           <tr class="bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-700">
-            <th class="py-3 px-2 border-r border-slate-200 w-28 md:w-36">時間 (20分)</th>
+            <th class="py-3 px-2 border-r border-slate-200 w-24 md:w-32">時間 (20分)</th>
             <th class="py-3 px-2 border-r border-slate-200 w-1/2">
               <span class="text-sm font-bold text-emerald-800 block">体芸 6番コート</span>
               <span class="text-[10px] text-slate-500 font-normal">Court No.6</span>
@@ -115,46 +115,53 @@
     </div>
   </main>
 
-  <!-- Booking Modal -->
+  <!-- Booking Modal (Up to 4 Persons) -->
   <div id="booking-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-2xl relative">
+    <div class="bg-white rounded-xl max-w-md w-full p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
       <h4 class="font-bold text-base text-slate-800 mb-1" id="modal-title">コート予約申込み</h4>
-      <p class="text-xs font-semibold text-emerald-700 mb-4 bg-emerald-50 p-2 rounded border border-emerald-200" id="modal-slot-info">体芸 6番コート | 09:00 - 09:20</p>
+      <p class="text-xs font-semibold text-emerald-700 mb-3 bg-emerald-50 p-2 rounded border border-emerald-200" id="modal-slot-info">体芸 6番コート | 09:00 - 09:20</p>
       
-      <div class="space-y-3 text-xs">
+      <p class="text-[11px] text-slate-500 mb-3">※1コート最大4名まで入室可能です。代表選手名と連絡先を必ず入力してください。</p>
+
+      <div class="space-y-2.5 text-xs">
         <div>
-          <label class="block font-semibold text-slate-600 mb-1" id="label-name">選手氏名 / Player Name *</label>
-          <input type="text" id="input-player-name" placeholder="例: 筑波 太郎 / Taro Tsukuba" class="w-full border border-slate-300 rounded px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+          <label class="block font-semibold text-slate-700 mb-1">代表選手氏名 (必須) *</label>
+          <input type="text" id="input-player-name" placeholder="例: 筑波 太郎" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none">
         </div>
         <div>
-          <label class="block font-semibold text-slate-600 mb-1" id="label-partner">練習相手（任意） / Partner</label>
-          <input type="text" id="input-partner-name" placeholder="例: 相手選手氏名" class="w-full border border-slate-300 rounded px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+          <label class="block font-semibold text-slate-700 mb-1">連絡先電話番号 (必須) *</label>
+          <input type="tel" id="input-phone" placeholder="090-xxxx-xxxx" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none">
         </div>
-        <div>
-          <label class="block font-semibold text-slate-600 mb-1" id="label-phone">連絡先電話番号 / Phone Number *</label>
-          <input type="tel" id="input-phone" placeholder="090-xxxx-xxxx" class="w-full border border-slate-300 rounded px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+
+        <div class="pt-2 border-t border-slate-100">
+          <label class="block font-semibold text-slate-700 mb-1">同伴者・コーチ・練習相手（任意 / 最大3名）</label>
+          <div class="space-y-1.5">
+            <input type="text" id="input-p2" placeholder="2人目 (例: コーチ山田 / 対戦選手名)" class="w-full border border-slate-200 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500 outline-none text-slate-700">
+            <input type="text" id="input-p3" placeholder="3人目 (例: 練習相手・ヒッティング)" class="w-full border border-slate-200 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500 outline-none text-slate-700">
+            <input type="text" id="input-p4" placeholder="4人目 (例: トレーナー / 同伴者)" class="w-full border border-slate-200 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500 outline-none text-slate-700">
+          </div>
         </div>
       </div>
 
       <div class="mt-5 flex space-x-2">
-        <button onclick="closeBookingModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-xs transition">キャンセル</button>
-        <button id="submit-booking-btn" onclick="confirmBooking()" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition shadow">予約を確定する</button>
+        <button onclick="closeBookingModal()" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-xs transition">キャンセル</button>
+        <button id="submit-booking-btn" onclick="confirmBooking()" class="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition shadow">予約を確定する</button>
       </div>
     </div>
   </div>
 
-  <!-- TD Block/Edit Modal -->
+  <!-- TD Slot Edit Modal -->
   <div id="td-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-2xl relative">
       <h4 class="font-bold text-base text-slate-800 mb-1">TD管理者：スロット操作</h4>
-      <p class="text-xs font-semibold text-slate-600 mb-4 bg-slate-100 p-2 rounded" id="td-modal-slot-info"></p>
+      <p class="text-xs font-semibold text-slate-600 mb-4 bg-slate-100 p-2.5 rounded text-left" id="td-modal-slot-info"></p>
       
       <div class="space-y-2">
-        <button onclick="tdSetOfficial()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-xs transition">
+        <button onclick="tdSetOfficial()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-xs transition shadow-sm">
           公式練習 / メンテナンス用にブロック
         </button>
-        <button onclick="tdCancelSlot()" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs transition">
-          現在の予約を取り消す（空きにする）
+        <button onclick="tdCancelSlot()" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs transition shadow-sm">
+          この枠を取り消して「空き」に戻す
         </button>
         <button onclick="closeTdModal()" class="w-full py-2 bg-slate-100 text-slate-600 rounded-lg font-semibold text-xs transition mt-2">
           戻る
@@ -196,7 +203,7 @@
         
         <div class="mt-6 pt-4 border-t-2 border-dashed border-slate-300 text-left text-xs text-slate-700 space-y-1.5 font-medium">
           <p>・利用枠：1回20分（1選手1日1枠まで厳守）</p>
-          <p>・場所：体芸テニスコート 6番・7番</p>
+          <p>・1コートあたり最大4名まで入室可能です</p>
           <p>・ボール受取・返却は大会本部デスクで行ってください</p>
           <p>・公式戦の進行により割り当てが変更になる場合があります</p>
         </div>
@@ -212,7 +219,7 @@
   </div>
 
   <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx8sMgy5hliiA6sZAVR5IvrODFeAlvbnQLuYmV6XYQIc7aIj59gNmB0IlHfJTWMqGBceg/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx8sMgy5h1iiA6sZAVR5IvrQDFEALvbnQLuYmV6XYQIC7aIj59gNmBOIIHfJTWMIQGBceg/exec";
 
     let currentLang = 'ja';
     let currentRole = 'player';
@@ -240,16 +247,17 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().split('T')[0];
-      document.getElementById('date-select').value = today;
-      if (document.getElementById('poster-base-url')) {
-        document.getElementById('poster-base-url').value = window.location.href.split('?')[0];
-      }
+      const dateSelect = document.getElementById('date-select');
+      if (dateSelect) dateSelect.value = today;
+      
+      const posterUrlInput = document.getElementById('poster-base-url');
+      if (posterUrlInput) posterUrlInput.value = window.location.href.split('?')[0];
 
-      // 先に画面の表とチケットを描画する
+      // 最初に初期表を必ず描画
       renderTimetable();
       renderMyBookings();
 
-      // その後にスプレッドシートから最新データを取得
+      // その後にGASと同期
       fetchLatestData();
       setInterval(fetchLatestData, 15000);
     });
@@ -261,11 +269,13 @@
       try {
         const res = await fetch(GAS_API_URL);
         const data = await res.json();
-        bookings = data || {};
-        renderTimetable();
-        renderMyBookings();
+        if (data && typeof data === 'object') {
+          bookings = data;
+          renderTimetable();
+          renderMyBookings();
+        }
       } catch (err) {
-        console.warn('GAS未接続または通信待機中（ローカル保持中）');
+        console.warn('GAS同期中...');
       } finally {
         if (icon) icon.classList.remove('fa-spin');
       }
@@ -277,8 +287,8 @@
         ? '体芸テニスコート 練習予約 / Practice Court' 
         : 'Taigei Courts Practice Booking';
       document.getElementById('notice-text').innerText = currentLang === 'ja' 
-        ? '【規則】体芸6・7番コート。1枠20分（1選手1日1枠まで）。ボールは本部受取です。' 
-        : '[Rule] Court 6 & 7. 20-min slot (Max 1 per day). Pick up balls at Desk.';
+        ? '【規則】体芸6・7番コート。1枠20分（最大4名入室可）。ボールは本部受取です。' 
+        : '[Rule] Court 6 & 7. 20-min slot (Max 4 players). Pick up balls at Desk.';
       renderTimetable();
       renderMyBookings();
     }
@@ -301,6 +311,7 @@
 
     function renderTimetable() {
       const tbody = document.getElementById('timetable-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       timeSlots.forEach(time => {
@@ -315,22 +326,27 @@
           
           if (!b) {
             html += `<td class="p-1.5 border-r border-slate-100 last:border-r-0">
-              <button onclick="handleSlotClick('${key}')" class="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-semibold transition text-xs shadow-sm">
+              <button onclick="handleSlotClick('${key}')" class="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-semibold transition text-xs shadow-sm">
                 ${currentLang === 'ja' ? '空き (予約)' : 'Open'}
               </button>
             </td>`;
           } else if (b.status === 'official') {
             html += `<td class="p-1.5 border-r border-slate-100 last:border-r-0">
-              <div onclick="handleSlotClick('${key}')" class="cursor-pointer w-full py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg font-medium text-xs">
+              <div onclick="handleSlotClick('${key}')" class="cursor-pointer w-full py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg font-medium text-xs">
                 ${b.name || '公式割当'}
               </div>
             </td>`;
           } else {
             const isMy = myBookedIds.includes(b.id);
+            // 同伴者一覧を生成
+            const others = [b.p2, b.p3, b.p4, b.partner].filter(Boolean);
+            const othersText = others.length > 0 ? ` +${others.join(', ')}` : '';
+
             html += `<td class="p-1.5 border-r border-slate-100 last:border-r-0">
-              <div onclick="handleSlotClick('${key}')" class="cursor-pointer w-full py-1.5 ${isMy ? 'bg-blue-100 border-blue-400 text-blue-900 font-bold' : 'bg-slate-100 border-slate-300 text-slate-600'} border rounded-lg text-xs leading-tight">
-                <p class="truncate font-semibold">${b.name}</p>
-                <p class="text-[10px] ${isMy ? 'text-blue-700' : 'text-slate-400'}">${b.id}</p>
+              <div onclick="handleSlotClick('${key}')" class="cursor-pointer w-full py-1.5 px-1 ${isMy ? 'bg-blue-100 border-blue-400 text-blue-900 font-bold' : 'bg-slate-100 border-slate-300 text-slate-700'} border rounded-lg text-xs leading-tight">
+                <p class="truncate font-bold">${b.name}</p>
+                ${othersText ? `<p class="text-[10px] text-slate-500 truncate font-normal">${othersText}</p>` : ''}
+                <p class="text-[9px] ${isMy ? 'text-blue-700' : 'text-slate-400'}">${b.id}</p>
               </div>
             </td>`;
           }
@@ -348,13 +364,16 @@
       const cName = courtLabels[court].ja;
 
       if (currentRole === 'td') {
-        // TD管理者の場合は専用操作モーダルを開く
-        document.getElementById('td-modal-slot-info').innerText = `対象: ${cName}コート (${time}) ${b ? '【' + b.name + '】' : '【空き】'}`;
+        const others = b ? [b.p2, b.p3, b.p4, b.partner].filter(Boolean).join(', ') : '';
+        const info = b 
+          ? `【予約中】\n代表: ${b.name}\n同伴: ${others || 'なし'}\nTEL: ${b.phone || '-'}\nID: ${b.id}` 
+          : '【現在：空き枠】';
+        document.getElementById('td-modal-slot-info').innerText = `${cName}コート (${time})\n${info}`;
         document.getElementById('td-modal').classList.remove('hidden');
         return;
       }
 
-      // 選手モードの場合
+      // 選手モード
       if (!b) {
         if (myBookedIds.length >= 1) {
           alert('練習コートの予約は1選手1日1枠までです。\n変更したい場合は、下の「自分の予約チケット」から取り消してください。');
@@ -367,7 +386,7 @@
           cancelBookingOnline(key, b.id);
         }
       } else {
-        alert('この枠はすでに他の選手によって予約されています。');
+        alert('この枠はすでに予約されています。');
       }
     }
 
@@ -381,11 +400,13 @@
 
     async function confirmBooking() {
       const name = document.getElementById('input-player-name').value.trim();
-      const partner = document.getElementById('input-partner-name').value.trim();
       const phone = document.getElementById('input-phone').value.trim();
+      const p2 = document.getElementById('input-p2').value.trim();
+      const p3 = document.getElementById('input-p3').value.trim();
+      const p4 = document.getElementById('input-p4').value.trim();
 
       if (!name || !phone) {
-        alert('氏名と電話番号を入力してください。');
+        alert('代表選手氏名と電話番号を入力してください。');
         return;
       }
 
@@ -394,11 +415,16 @@
       submitBtn.innerText = '予約処理中...';
 
       const bookingId = 'MK-' + Math.floor(100 + Math.random() * 900);
+      const partnerCombined = [p2, p3, p4].filter(Boolean).join(', ');
+
       const payload = {
         action: 'book',
         key: selectedSlot,
         name: name,
-        partner: partner,
+        partner: partnerCombined,
+        p2: p2,
+        p3: p3,
+        p4: p4,
         phone: phone,
         id: bookingId
       };
@@ -414,15 +440,14 @@
         myBookedIds.push(bookingId);
         localStorage.setItem('meikei_my_ids', JSON.stringify(myBookedIds));
 
-        // ローカルに即時仮反映
-        bookings[selectedSlot] = { name, partner, phone, status: 'booked', id: bookingId };
+        bookings[selectedSlot] = { name, partner: partnerCombined, p2, p3, p4, phone, status: 'booked', id: bookingId };
         closeBookingModal();
         renderTimetable();
         renderMyBookings();
-        alert(`予約が完了しました！\n予約ID: ${bookingId}\nスプレッドシートに保存されました。`);
+        alert(`予約が完了しました！\n予約ID: ${bookingId}\n体芸コートへ向かってください。`);
         setTimeout(fetchLatestData, 1000);
       } catch (err) {
-        alert('予約通信に失敗しました。接続を確認してください。');
+        alert('予約通信に失敗しました。');
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerText = '予約を確定する';
@@ -461,12 +486,12 @@
         body: JSON.stringify({
           action: 'official',
           key: selectedSlot,
-          name: '公式練習割当',
+          name: '公式割当 / 調整中',
           id: 'MK-OFFICIAL'
         })
       });
 
-      bookings[selectedSlot] = { name: '公式練習割当', status: 'official', id: 'MK-OFFICIAL' };
+      bookings[selectedSlot] = { name: '公式割当 / 調整中', status: 'official', id: 'MK-OFFICIAL' };
       renderTimetable();
       setTimeout(fetchLatestData, 1000);
     }
@@ -489,6 +514,7 @@
 
     function renderMyBookings() {
       const list = document.getElementById('my-bookings-list');
+      if (!list) return;
       list.innerHTML = '';
       let count = 0;
 
@@ -497,12 +523,15 @@
         if (b && myBookedIds.includes(b.id)) {
           count++;
           const [time, court] = key.split('_');
+          const others = [b.p2, b.p3, b.p4, b.partner].filter(Boolean).join(', ');
           const div = document.createElement('div');
           div.className = 'border border-blue-200 bg-blue-50/80 p-3 rounded-lg flex justify-between items-center text-xs';
           div.innerHTML = `
             <div>
               <span class="font-bold text-blue-900">${courtLabels[court].ja}コート | ${time}</span>
-              <p class="text-slate-600 mt-0.5">予約者: <span class="font-bold">${b.name}</span> ${b.partner ? '/ 相手: ' + b.partner : ''} (ID: ${b.id})</p>
+              <p class="text-slate-700 mt-0.5">代表: <span class="font-bold">${b.name}</span></p>
+              ${others ? `<p class="text-slate-500 text-[11px]">同伴/相手: ${others}</p>` : ''}
+              <p class="text-[10px] text-blue-600 mt-0.5">予約ID: ${b.id}</p>
             </div>
             <button onclick="handleSlotClick('${key}')" class="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold rounded text-xs transition">取消</button>
           `;
@@ -551,11 +580,12 @@
     }
 
     function exportCSV() {
-      let csv = "Time,Court,Player,Partner,Phone,Status,BookingID\n";
+      let csv = "Time,Court,Leader,Partners,Phone,Status,BookingID\n";
       for (let key in bookings) {
         const [time, court] = key.split('_');
         const b = bookings[key];
-        csv += `"${time}","${courtLabels[court].ja}","${b.name||''}","${b.partner||''}","${b.phone||''}","${b.status||''}","${b.id||''}"\n`;
+        const others = [b.p2, b.p3, b.p4, b.partner].filter(Boolean).join(' / ');
+        csv += `"${time}","${courtLabels[court].ja}","${b.name||''}","${others}","${b.phone||''}","${b.status||''}","${b.id||''}"\n`;
       }
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
