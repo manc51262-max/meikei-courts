@@ -44,7 +44,7 @@
       <i class="fa-solid fa-circle-exclamation text-amber-600 flex-shrink-0"></i>
       <span id="notice-text" class="truncate font-medium">【規則】体芸6・7番コート。1枠20分（最大4名入室可）。ボールは本部受取です。</span>
     </div>
-    <span class="text-[10px] text-amber-700 ml-2 whitespace-nowrap">体芸コート</span>
+    <button onclick="debugReset()" class="text-[10px] text-amber-700 ml-2 whitespace-nowrap underline">データリセット</button>
   </div>
 
   <!-- Main Container -->
@@ -66,9 +66,6 @@
       <div id="td-controls" class="hidden flex items-center space-x-2 w-full sm:w-auto justify-end">
         <button onclick="openPosterModal()" class="px-2.5 py-1 text-xs bg-slate-700 hover:bg-slate-800 text-white rounded font-medium flex items-center space-x-1">
           <i class="fa-solid fa-print"></i><span>QRポスター</span>
-        </button>
-        <button onclick="exportCSV()" class="px-2.5 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded font-medium flex items-center space-x-1">
-          <i class="fa-solid fa-download"></i><span>CSV</span>
         </button>
       </div>
     </div>
@@ -211,7 +208,6 @@
   </div>
 
   <script>
-    // --- ローカル動作モード ---
     let currentLang = 'ja';
     let currentRole = 'player';
     let selectedSlot = null;
@@ -233,9 +229,23 @@
       'c7': { ja: '体芸 7番', en: 'Court 7' }
     };
 
-    // ブラウザの記憶からデータを読み込む
-    let bookings = JSON.parse(localStorage.getItem('meikei_local_bookings')) || {};
-    let myBookedIds = JSON.parse(localStorage.getItem('meikei_my_ids')) || [];
+    let bookings = JSON.parse(localStorage.getItem('meikei_local_bookings_v2')) || {};
+    let myBookedIds = JSON.parse(localStorage.getItem('meikei_my_ids_v2')) || [];
+
+    // ★緊急リセット機能★
+    function debugReset() {
+      if (confirm('スマホ内の予約データをすべてリセットしますか？')) {
+        localStorage.removeItem('meikei_local_bookings_v2');
+        localStorage.removeItem('meikei_my_ids_v2');
+        localStorage.removeItem('meikei_local_bookings'); // 旧バージョンデータも削除
+        localStorage.removeItem('meikei_my_ids'); // 旧バージョンデータも削除
+        bookings = {};
+        myBookedIds = [];
+        renderTimetable();
+        renderMyBookings();
+        alert('リセット完了しました。');
+      }
+    }
 
     window.addEventListener('DOMContentLoaded', () => {
       const today = new Date().toISOString().split('T')[0];
@@ -245,7 +255,6 @@
       const posterUrlInput = document.getElementById('poster-base-url');
       if (posterUrlInput) posterUrlInput.value = window.location.href.split('?')[0];
 
-      // 表とチケットを描画
       renderTimetable();
       renderMyBookings();
     });
@@ -382,23 +391,31 @@
       const partnerCombined = [p2, p3, p4].filter(Boolean).join(', ');
 
       myBookedIds.push(bookingId);
-      localStorage.setItem('meikei_my_ids', JSON.stringify(myBookedIds));
+      localStorage.setItem('meikei_my_ids_v2', JSON.stringify(myBookedIds));
 
       bookings[selectedSlot] = { name, partner: partnerCombined, p2, p3, p4, phone, status: 'booked', id: bookingId };
-      localStorage.setItem('meikei_local_bookings', JSON.stringify(bookings));
+      localStorage.setItem('meikei_local_bookings_v2', JSON.stringify(bookings));
 
       closeBookingModal();
+      
+      // フォームをリセット
+      document.getElementById('input-player-name').value = '';
+      document.getElementById('input-phone').value = '';
+      document.getElementById('input-p2').value = '';
+      document.getElementById('input-p3').value = '';
+      document.getElementById('input-p4').value = '';
+
       renderTimetable();
       renderMyBookings();
-      alert(`予約が完了しました！\n予約ID: ${bookingId}\n体芸コートへ向かってください。`);
+      alert(`予約が完了しました！\n予約ID: ${bookingId}`);
     }
 
     function cancelBookingLocal(key, bookingId) {
       myBookedIds = myBookedIds.filter(id => id !== bookingId);
-      localStorage.setItem('meikei_my_ids', JSON.stringify(myBookedIds));
+      localStorage.setItem('meikei_my_ids_v2', JSON.stringify(myBookedIds));
       
       delete bookings[key];
-      localStorage.setItem('meikei_local_bookings', JSON.stringify(bookings));
+      localStorage.setItem('meikei_local_bookings_v2', JSON.stringify(bookings));
       
       renderTimetable();
       renderMyBookings();
@@ -409,7 +426,7 @@
       if (!selectedSlot) return;
       closeTdModal();
       bookings[selectedSlot] = { name: '公式割当 / 調整中', status: 'official', id: 'MK-OFFICIAL' };
-      localStorage.setItem('meikei_local_bookings', JSON.stringify(bookings));
+      localStorage.setItem('meikei_local_bookings_v2', JSON.stringify(bookings));
       renderTimetable();
     }
 
@@ -417,8 +434,11 @@
       if (!selectedSlot) return;
       closeTdModal();
       delete bookings[selectedSlot];
-      localStorage.setItem('meikei_local_bookings', JSON.stringify(bookings));
+      localStorage.setItem('meikei_local_bookings_v2', JSON.stringify(bookings));
       renderTimetable();
+      
+      // もし自分の予約IDが残っていればそれも消す
+      renderMyBookings(); // 再描画
     }
 
     function renderMyBookings() {
@@ -427,10 +447,14 @@
       list.innerHTML = '';
       let count = 0;
 
+      // エラー回避のため、存在しないIDはmyBookedIdsから除外するクリーンアップ処理
+      const validIds = [];
+
       for (let key in bookings) {
         const b = bookings[key];
         if (b && myBookedIds.includes(b.id)) {
           count++;
+          validIds.push(b.id);
           const [time, court] = key.split('_');
           const others = [b.p2, b.p3, b.p4, b.partner].filter(Boolean).join(', ');
           const div = document.createElement('div');
@@ -448,59 +472,15 @@
         }
       }
 
+      // クリーンアップを保存
+      if (validIds.length !== myBookedIds.length) {
+        myBookedIds = validIds;
+        localStorage.setItem('meikei_my_ids_v2', JSON.stringify(myBookedIds));
+      }
+
       if (count === 0) {
         list.innerHTML = `<p class="text-xs text-slate-400 py-1">${currentLang === 'ja' ? '現在、有効な予約はありません。' : 'No active bookings found.'}</p>`;
       }
-    }
-
-    function openPosterModal() {
-      document.getElementById('poster-modal').classList.remove('hidden');
-      generatePoster('all');
-    }
-
-    function closePosterModal() {
-      document.getElementById('poster-modal').classList.add('hidden');
-    }
-
-    function generatePoster(target) {
-      const baseUrl = document.getElementById('poster-base-url').value.trim() || window.location.href.split('?')[0];
-      const qrContainer = document.getElementById('qrcode-container');
-      qrContainer.innerHTML = '';
-
-      let targetUrl = baseUrl;
-      if (target === 'c6') {
-        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'court=c6';
-        document.getElementById('poster-court-title').innerText = '体芸 6番コート 練習予約';
-      } else if (target === 'c7') {
-        targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'court=c7';
-        document.getElementById('poster-court-title').innerText = '体芸 7番コート 練習予約';
-      } else {
-        document.getElementById('poster-court-title').innerText = '体芸テニスコート 練習予約';
-      }
-
-      new QRCode(qrContainer, {
-        text: targetUrl,
-        width: 180,
-        height: 180,
-        colorDark: "#0f172a",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    }
-
-    function exportCSV() {
-      let csv = "Time,Court,Leader,Partners,Phone,Status,BookingID\n";
-      for (let key in bookings) {
-        const [time, court] = key.split('_');
-        const b = bookings[key];
-        const others = [b.p2, b.p3, b.p4, b.partner].filter(Boolean).join(' / ');
-        csv += `"${time}","${courtLabels[court].ja}","${b.name||''}","${others}","${b.phone||''}","${b.status||''}","${b.id||''}"\n`;
-      }
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `meikei_taigei_court_bookings.csv`;
-      link.click();
     }
   </script>
 </body>
