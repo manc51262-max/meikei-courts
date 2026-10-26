@@ -27,56 +27,43 @@
   <main class="w-full max-w-6xl bg-white shadow-md border border-gray-300 p-2 sm:p-4 overflow-hidden flex flex-col relative">
     
     <div id="sync-indicator" class="hidden absolute top-0 left-0 w-full bg-green-600 text-white text-[10px] py-0.5 text-center font-bold z-50">
-      <i class="fa-solid fa-rotate fa-spin mr-1"></i> <span id="text-sync">Syncing...</span>
+      <i class="fa-solid fa-rotate fa-spin mr-1"></i> 同期中...
     </div>
 
-    <!-- タイトル＆コントロール -->
     <div class="flex flex-col sm:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
-      <h1 class="text-base sm:text-xl font-black tracking-wide text-gray-900" id="text-main-title">
+      <h1 class="text-base sm:text-xl font-black tracking-wide text-gray-900">
         筑波大学MEIKEIオープンテニス PRACTICE SHEET
       </h1>
       <div class="mt-2 sm:mt-0 flex gap-2">
-        <button onclick="toggleLanguage()" id="lang-btn" class="px-2 py-1 text-[10px] bg-blue-100 text-blue-800 border border-blue-300 font-bold hover:bg-blue-200">
-          EN / KO / 日
+        <button onclick="fetchLatestData(true)" class="px-2 py-1 text-[10px] bg-gray-200 text-gray-700 border border-gray-400">
+          <i class="fa-solid fa-rotate"></i> 更新
         </button>
-        <button onclick="fetchLatestData(true)" class="px-2 py-1 text-[10px] bg-gray-200 text-gray-700 border border-gray-400 hover:bg-gray-300">
-          <i class="fa-solid fa-rotate"></i> <span id="text-update-btn">更新</span>
-        </button>
-        <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold hover:bg-yellow-400">
-          TD管理者
-        </button>
+        <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300">初期化</button>
+        <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold">TD管理者</button>
       </div>
     </div>
 
     <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
       <div class="flex flex-col space-y-1">
-        <span class="font-bold text-gray-700" id="text-sub-title">【体芸 1〜7番コート】 1枠20分（最大4名）</span>
+        <span class="font-bold text-gray-700">【1枠最大4名】空いている行（マス）をタップして予約できます</span>
         <div class="flex items-center space-x-2">
           <label for="date-select" class="font-bold">Date:</label>
           <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none">
         </div>
       </div>
       <div class="flex gap-2 mt-2 sm:mt-0 font-medium text-[10px] sm:text-xs">
-        <span class="text-green-700" id="leg-open">■ 空き</span>
-        <span class="text-blue-700" id="leg-my">■ 自分の予約</span>
-        <span class="text-gray-500" id="leg-booked">■ 予約済</span>
+        <span class="text-green-700">■ 空き</span><span class="text-blue-700">■ 自分の予約</span><span class="text-gray-500">■ 予約済</span>
       </div>
     </div>
 
-    <p class="text-[10px] text-gray-500 md:hidden mb-1 animate-pulse" id="text-swipe-hint">※表を横にスワイプして1〜7番コートを確認できます 👉</p>
-
-    <!-- タイムテーブル -->
     <div class="overflow-x-auto w-full relative shadow-inner pb-2">
       <table class="bg-white text-[11px] sm:text-xs">
         <thead>
           <tr class="bg-gray-200 font-bold text-gray-800 h-8">
             <th class="w-20 sticky-col-header thick-right thick-bottom text-center">Starting</th>
-            <th class="min-w-[95px] thick-bottom">Court 1</th>
-            <th class="min-w-[95px] thick-bottom">Court 2</th>
-            <th class="min-w-[95px] thick-bottom">Court 3</th>
-            <th class="min-w-[95px] thick-bottom">Court 4</th>
-            <th class="min-w-[95px] thick-bottom">Court 5</th>
-            <th class="min-w-[95px] thick-bottom">Court 6</th>
+            <th class="min-w-[95px] thick-bottom">Court 1</th><th class="min-w-[95px] thick-bottom">Court 2</th>
+            <th class="min-w-[95px] thick-bottom">Court 3</th><th class="min-w-[95px] thick-bottom">Court 4</th>
+            <th class="min-w-[95px] thick-bottom">Court 5</th><th class="min-w-[95px] thick-bottom">Court 6</th>
             <th class="min-w-[95px] thick-bottom">Court 7</th>
           </tr>
         </thead>
@@ -86,41 +73,32 @@
       </table>
     </div>
 
-    <!-- 自分の予約チケット -->
     <div class="mt-4 border border-gray-400 p-3 bg-gray-50 w-full">
-      <h3 class="font-bold text-sm text-gray-800 border-b border-gray-300 pb-1 mb-2" id="text-my-booking-title">
-        ■ 自分の予約 / My Bookings
+      <h3 class="font-bold text-sm text-gray-800 border-b border-gray-300 pb-1 mb-2">
+        ■ 自分の予約チケット / My Bookings
       </h3>
       <div id="my-bookings-list" class="space-y-2"></div>
     </div>
+
+    <div id="td-controls" class="hidden mt-4 pt-4 border-t border-gray-300 flex gap-2">
+      <button onclick="openPosterModal()" class="px-3 py-1.5 text-xs bg-gray-800 text-white border border-gray-900 font-bold">QRポスター作成</button>
+    </div>
   </main>
 
-  <!-- ================= モーダル ================= -->
+  <!-- ================= モーダル群 ================= -->
   
   <div id="booking-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl relative max-h-[90vh] overflow-y-auto">
-      <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1" id="mod-title">練習コート予約</h4>
+      <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">練習コート予約</h4>
       <p class="text-sm font-bold text-green-700 my-2" id="modal-slot-info"></p>
       
-      <div class="space-y-2 text-xs">
-        <div>
-          <label class="block font-bold mb-0.5 text-blue-800" id="mod-name-lbl">1行目: 代表選手氏名 *</label>
-          <input type="text" id="input-player-name" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 focus:bg-white outline-none">
-        </div>
-        <div>
-          <label class="block font-bold mb-0.5 text-gray-700" id="mod-phone-lbl">連絡先電話番号 *</label>
-          <input type="tel" id="input-phone" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 focus:bg-white outline-none">
-        </div>
-        <div class="pt-2 border-t border-gray-300 mt-2">
-          <label class="block font-bold mb-1 text-gray-700" id="mod-partner-lbl">2〜4行目: 同伴者氏名（任意）</label>
-          <input type="text" id="input-p2" placeholder="2人目 (コーチなど)" class="w-full border border-gray-300 px-2 py-1.5 mb-1 outline-none">
-          <input type="text" id="input-p3" placeholder="3人目" class="w-full border border-gray-300 px-2 py-1.5 mb-1 outline-none">
-          <input type="text" id="input-p4" placeholder="4人目" class="w-full border border-gray-300 px-2 py-1.5 outline-none">
-        </div>
+      <div id="modal-inputs-container" class="space-y-2 text-xs mt-3">
+        <!-- 空き状況に応じて入力欄がJSで自動生成されます -->
       </div>
-      <div class="mt-4 flex space-x-2">
-        <button onclick="closeBookingModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs" id="mod-cancel-btn">キャンセル</button>
-        <button id="submit-btn" onclick="confirmBooking()" class="w-1/2 py-2 border border-green-800 bg-green-600 text-white font-bold text-xs" id="mod-submit-btn">予約確定</button>
+
+      <div class="mt-5 flex space-x-2">
+        <button onclick="closeBookingModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
+        <button id="submit-btn" onclick="confirmBooking()" class="w-1/2 py-2 border border-green-800 bg-green-600 text-white font-bold text-xs">予約確定</button>
       </div>
     </div>
   </div>
@@ -130,70 +108,54 @@
       <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">TD管理者モード</h4>
       <p class="text-xs font-bold text-gray-700 my-2 whitespace-pre-line" id="td-modal-slot-info"></p>
       <div class="space-y-2 mt-4">
-        <button onclick="tdSetOfficial()" class="w-full py-2 border border-yellow-600 bg-yellow-300 text-black font-bold text-xs">公式練習用にブロック</button>
-        <button onclick="tdCancelSlot()" class="w-full py-2 border border-red-800 bg-red-600 text-white font-bold text-xs">この枠を空きに戻す（取消）</button>
+        <button onclick="tdSetOfficial()" class="w-full py-2 border border-yellow-600 bg-yellow-300 text-black font-bold text-xs">この1行をブロック(公式)</button>
+        <button onclick="tdCancelSlot()" class="w-full py-2 border border-red-800 bg-red-600 text-white font-bold text-xs">このグループを取消</button>
         <button onclick="closeTdModal()" class="w-full py-1.5 bg-gray-200 border border-gray-400 font-bold text-xs mt-2">戻る</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="poster-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white max-w-lg w-full border-2 border-gray-800 p-4 shadow-xl">
+      <h4 class="font-bold text-gray-800 mb-2 border-b-2 border-gray-800 pb-1">QRポスター作成</h4>
+      <div class="text-xs space-y-3 mb-4">
+        <div>
+          <label class="font-bold mb-1 block">ベースURL</label>
+          <input type="text" id="poster-base-url" class="w-full border border-gray-400 px-2 py-1.5">
+        </div>
+        <div>
+          <label class="font-bold mb-1 block">掲示用コート指定</label>
+          <div class="flex gap-2">
+            <select id="poster-court-select" class="flex-grow border border-gray-400 py-1.5 px-2 bg-gray-50 outline-none">
+              <option value="all">総合案内 (全コート)</option>
+              <option value="c1">Court 1</option><option value="c2">Court 2</option>
+              <option value="c3">Court 3</option><option value="c4">Court 4</option>
+              <option value="c5">Court 5</option><option value="c6">Court 6</option><option value="c7">Court 7</option>
+            </select>
+            <button onclick="generatePoster()" class="px-3 border border-gray-800 bg-gray-100 font-bold">QR生成</button>
+          </div>
+        </div>
+      </div>
+      <div id="poster-print-area" class="border-2 border-black p-4 text-center bg-white mt-2">
+        <h2 class="font-bold text-gray-900 tracking-wide text-sm">筑波大学MEIKEIオープンテニス</h2>
+        <h3 id="poster-court-title" class="text-xl font-black mt-1 border-b-2 border-black inline-block pb-1 px-4">PRACTICE SHEET</h3>
+        <div id="qrcode-container" class="my-5 flex justify-center min-h-[160px]"></div>
+        <p class="text-sm font-bold">スマホカメラでスキャンして予約</p>
+      </div>
+      <div class="mt-4 flex space-x-2">
+        <button onclick="closePosterModal()" class="w-1/2 border border-gray-400 py-2 bg-gray-200 text-xs font-bold">閉じる</button>
+        <button onclick="window.print()" class="w-1/2 border border-gray-800 py-2 bg-gray-800 text-white text-xs font-bold">A4印刷</button>
       </div>
     </div>
   </div>
 
   <script>
     // ★★★ 以下のURLをご自身のGASのURLに必ず書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyHKiW-A6SWfiERnsE9p1aRhUzqc47EpF4B1WdkfrbcbHi9fgJoguLDjlSHcnjkw0ZooA/exec";
-
-    // --- 多言語対応 (i18n) ---
-    let currentLang = 'ja';
-    const langs = ['ja', 'en', 'ko'];
-    const i18n = {
-      ja: {
-        title: '筑波大学MEIKEIオープンテニス PRACTICE SHEET',
-        sub: '【体芸 1〜7番コート】 1枠20分（最大4名）',
-        swipe: '※表を横にスワイプして1〜7番コートを確認できます 👉',
-        openStr: '【空き枠】', // モーダル用
-        legOpen: '■ 空き', legMy: '■ 自分の予約', legBooked: '■ 予約済',
-        myTitle: '■ 自分の予約 / My Bookings',
-        modTitle: '練習コート予約',
-        modName: '1行目: 代表選手氏名 *', modPhone: '連絡先電話番号 *', modPartner: '2〜4行目: 同伴者氏名（任意）',
-        cancel: 'キャンセル', submit: '予約確定',
-        update: '更新',
-        alertLimit: '1選手1日1枠までです。', alertCancel: 'この予約を取り消しますか？',
-        alertInput: '代表者名と電話番号を入力してください。', alertBooked: 'この枠はすでに予約されています。',
-        tdMode: 'TD管理者', playerMode: '選手モードに戻る', btnLang: 'EN / KO / 日'
-      },
-      en: {
-        title: 'MEIKEI OPEN PRACTICE SHEET',
-        sub: '[Court 1-7] 20min slot (Max 4 pax)',
-        swipe: '※ Swipe horizontally to view courts 1-7 👉',
-        openStr: '[ Open Slot ]', // モーダル用
-        legOpen: '■ Open', legMy: '■ My Booking', legBooked: '■ Booked',
-        myTitle: '■ My Bookings',
-        modTitle: 'Court Booking',
-        modName: 'Line 1: Player Name *', modPhone: 'Phone Number *', modPartner: 'Line 2-4: Partners (Optional)',
-        cancel: 'Cancel', submit: 'Confirm',
-        update: 'Sync',
-        alertLimit: 'Max 1 slot per player/day.', alertCancel: 'Cancel this booking?',
-        alertInput: 'Name and phone required.', alertBooked: 'Already booked.',
-        tdMode: 'TD Admin', playerMode: 'Back to Player', btnLang: 'JA / KO / EN'
-      },
-      ko: {
-        title: 'MEIKEI OPEN 연습 코트 예약',
-        sub: '[코트 1-7] 1타임 20분 (최대 4명)',
-        swipe: '※ 옆으로 스와이프하여 1~7번 코트 확인 👉',
-        openStr: '[ 예약 가능 ]', // 모달용
-        legOpen: '■ 예약가능', legMy: '■ 내 예약', legBooked: '■ 예약됨',
-        myTitle: '■ 내 예약 내역',
-        modTitle: '코트 예약',
-        modName: '1번째 줄: 대표 선수 이름 *', modPhone: '연락처 *', modPartner: '2~4번째 줄: 동반자 이름 (선택)',
-        cancel: '취소', submit: '예약 확정',
-        update: '새로고침',
-        alertLimit: '1인당 하루 1타임만 예약 가능합니다.', alertCancel: '이 예약을 취소하시겠습니까?',
-        alertInput: '이름과 전화번호를 입력해주세요.', alertBooked: '이미 예약된 시간입니다.',
-        tdMode: '관리자', playerMode: '선수 모드', btnLang: 'JA / EN / KO'
-      }
-    };
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzqtD0JU-x-vWm1vB02Nw0AGomITC4jMRWg3HfwtIy56DejhPxw8UA7ONMKL8pZt-L8Aw/exec";
 
     let currentRole = 'player';
     let selectedSlot = null;
+    let currentEmptyKeys = []; // モーダルが開いた時の空き行キーを記憶
 
     const timeSlots = [
       '09:00 - 09:20', '09:20 - 09:40', '09:40 - 10:00', '10:00 - 10:20', '10:20 - 10:40', '10:40 - 11:00',
@@ -204,49 +166,23 @@
     const courts = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
     const courtLabels = { 'c1':'Court 1', 'c2':'Court 2', 'c3':'Court 3', 'c4':'Court 4', 'c5':'Court 5', 'c6':'Court 6', 'c7':'Court 7' };
 
-    let bookings = JSON.parse(localStorage.getItem('meikei_paper_sync_bookings')) || {};
-    let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_sync_ids')) || [];
+    let bookings = JSON.parse(localStorage.getItem('meikei_paper_v2_bookings')) || {};
+    let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_v2_ids')) || [];
 
     function debugReset() {
-      if (confirm('スマホ内の予約データをすべて初期化しますか？')) {
-        localStorage.removeItem('meikei_paper_sync_bookings');
-        localStorage.removeItem('meikei_paper_sync_ids');
+      if (confirm('スマホ内の予約データを初期化しますか？')) {
+        localStorage.removeItem('meikei_paper_v2_bookings');
+        localStorage.removeItem('meikei_paper_v2_ids');
         bookings = {}; myBookedIds = [];
         renderTimetable(); renderMyBookings();
       }
     }
 
-    function toggleLanguage() {
-      const idx = langs.indexOf(currentLang);
-      currentLang = langs[(idx + 1) % langs.length];
-      const txt = i18n[currentLang];
-
-      document.getElementById('text-main-title').innerText = txt.title;
-      document.getElementById('text-sub-title').innerText = txt.sub;
-      document.getElementById('text-swipe-hint').innerText = txt.swipe;
-      document.getElementById('leg-open').innerText = txt.legOpen;
-      document.getElementById('leg-my').innerText = txt.legMy;
-      document.getElementById('leg-booked').innerText = txt.legBooked;
-      document.getElementById('text-my-booking-title').innerText = txt.myTitle;
-      document.getElementById('lang-btn').innerText = txt.btnLang;
-      document.getElementById('text-update-btn').innerText = txt.update;
-      
-      document.getElementById('mod-title').innerText = txt.modTitle;
-      document.getElementById('mod-name-lbl').innerText = txt.modName;
-      document.getElementById('mod-phone-lbl').innerText = txt.modPhone;
-      document.getElementById('mod-partner-lbl').innerText = txt.modPartner;
-      document.getElementById('mod-cancel-btn').innerText = txt.cancel;
-      document.getElementById('submit-btn').innerText = txt.submit;
-
-      if(currentRole === 'player') document.getElementById('role-btn').innerText = txt.tdMode;
-      else document.getElementById('role-btn').innerText = txt.playerMode;
-
-      renderTimetable();
-      renderMyBookings();
-    }
-
     window.addEventListener('DOMContentLoaded', () => {
       document.getElementById('date-select').value = new Date().toISOString().split('T')[0];
+      const pUrl = document.getElementById('poster-base-url');
+      if(pUrl) pUrl.value = window.location.href.split('?')[0];
+
       renderTimetable();
       renderMyBookings();
       fetchLatestData(true);
@@ -260,11 +196,11 @@
         const data = await res.json();
         if (data && typeof data === 'object') {
           bookings = data;
-          localStorage.setItem('meikei_paper_sync_bookings', JSON.stringify(bookings));
+          localStorage.setItem('meikei_paper_v2_bookings', JSON.stringify(bookings));
           renderTimetable();
           renderMyBookings();
         }
-      } catch (err) { console.warn('通信待機中...'); } 
+      } catch (err) {} 
       finally { if(showIndicator) document.getElementById('sync-indicator').classList.add('hidden'); }
     }
 
@@ -272,12 +208,11 @@
       currentRole = currentRole === 'player' ? 'td' : 'player';
       const roleBtn = document.getElementById('role-btn');
       const tdControls = document.getElementById('td-controls');
-      const txt = i18n[currentLang];
       if (currentRole === 'td') {
-        roleBtn.innerText = txt.playerMode; roleBtn.className = 'px-3 py-1 text-xs bg-red-600 text-white border border-red-800 font-bold';
+        roleBtn.innerText = '選手モードに戻る'; roleBtn.className = 'px-3 py-1 text-xs bg-red-600 text-white border border-red-800 font-bold';
         tdControls.classList.remove('hidden');
       } else {
-        roleBtn.innerText = txt.tdMode; roleBtn.className = 'px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold';
+        roleBtn.innerText = 'TD管理者'; roleBtn.className = 'px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold';
         tdControls.classList.add('hidden');
       }
     }
@@ -285,13 +220,12 @@
     function renderTimetable() {
       const tbody = document.getElementById('timetable-body');
       tbody.innerHTML = '';
-      const txt = i18n[currentLang];
 
       timeSlots.forEach(time => {
-        const tr1 = document.createElement('tr'); const tr2 = document.createElement('tr');
-        const tr3 = document.createElement('tr'); const tr4 = document.createElement('tr');
-        tr1.className = 'inner-row bg-white'; tr2.className = 'inner-row bg-white';
-        tr3.className = 'inner-row bg-white'; tr4.className = 'inner-row bg-white thick-bottom';
+        const tr1 = document.createElement('tr'); tr1.className = 'inner-row bg-white';
+        const tr2 = document.createElement('tr'); tr2.className = 'inner-row bg-white';
+        const tr3 = document.createElement('tr'); tr3.className = 'inner-row bg-white';
+        const tr4 = document.createElement('tr'); tr4.className = 'inner-row bg-white thick-bottom';
 
         let tdTime = `<td rowspan="4" class="sticky-col thick-right thick-bottom font-bold text-gray-700 align-middle text-center text-[10px] sm:text-[11px]">${time}</td>`;
         tr1.innerHTML = tdTime;
@@ -299,139 +233,214 @@
         let html1='', html2='', html3='', html4='';
 
         courts.forEach(court => {
-          const key = `${time}_${court}`;
-          const b = bookings[key];
+          // 4つの独立したキーを作成
+          const keys = [`${time}_${court}_1`, `${time}_${court}_2`, `${time}_${court}_3`, `${time}_${court}_4`];
+          
+          keys.forEach((key, idx) => {
+            const b = bookings[key];
+            let cellContent = '<span class="text-[9px] text-gray-300 tracking-widest">(空き)</span>';
+            let bgClass = 'bg-white hover:bg-green-50';
+            let txtClass = 'text-gray-800';
 
-          let v1='', v2='', v3='', v4='';
-          let bgClass = 'bg-white';
-          let txtClass = 'text-gray-800';
+            if (b) {
+              if (b.status === 'official') {
+                bgClass = 'bg-yellow-100'; txtClass = 'text-yellow-900 font-bold';
+                cellContent = b.name;
+              } else {
+                const isMy = myBookedIds.includes(b.id);
+                bgClass = isMy ? 'bg-blue-50' : 'bg-white';
+                txtClass = isMy ? 'text-blue-900 font-bold' : 'text-gray-800 font-bold';
+                cellContent = b.name;
+              }
+            }
 
-          if (!b) {
-            bgClass = 'bg-white hover:bg-green-50';
-            // ★ グリッド上の「空き」文字を削除し完全に空白にしました
-            v1 = ''; 
-          } else if (b.status === 'official') {
-            bgClass = 'bg-yellow-100'; txtClass = 'text-yellow-900 font-bold'; v1 = b.name;
-          } else {
-            const isMy = myBookedIds.includes(b.id);
-            bgClass = isMy ? 'bg-blue-50' : 'bg-white';
-            txtClass = isMy ? 'text-blue-900 font-bold' : 'text-gray-800 font-bold';
-            v1 = b.name || ''; v2 = b.p2 || ''; v3 = b.p3 || ''; v4 = b.p4 || '';
-          }
-
-          const cellAttr = `onclick="handleSlotClick('${key}')" class="cursor-pointer text-center text-[10px] sm:text-[11px] align-middle ${bgClass} ${txtClass}"`;
-          html1 += `<td ${cellAttr}>${v1}</td>`; html2 += `<td ${cellAttr}>${v2}</td>`;
-          html3 += `<td ${cellAttr}>${v3}</td>`; html4 += `<td ${cellAttr}>${v4}</td>`;
+            const cellAttr = `onclick="handleSlotClick('${key}')" class="cursor-pointer text-center text-[10px] sm:text-[11px] align-middle ${bgClass} ${txtClass}"`;
+            const tdHtml = `<td ${cellAttr}>${cellContent}</td>`;
+            
+            if(idx === 0) html1 += tdHtml;
+            if(idx === 1) html2 += tdHtml;
+            if(idx === 2) html3 += tdHtml;
+            if(idx === 3) html4 += tdHtml;
+          });
         });
 
-        tr1.innerHTML += html1; tr2.innerHTML += html2; tr3.innerHTML += html3; tr4.innerHTML += html4;
+        tr1.innerHTML += html1; tr2.innerHTML = html2; tr3.innerHTML = html3; tr4.innerHTML += html4;
         tbody.appendChild(tr1); tbody.appendChild(tr2); tbody.appendChild(tr3); tbody.appendChild(tr4);
       });
     }
 
     function handleSlotClick(key) {
-      selectedSlot = key;
+      const parts = key.split('_'); // [ "09:00 - 09:20", "c6", "1" ]
+      const timeCourtBase = parts[0] + '_' + parts[1];
       const b = bookings[key];
-      const [time, court] = key.split('_');
-      const txt = i18n[currentLang];
 
       if (currentRole === 'td') {
-        const info = b ? `Name: ${b.name}\nLine 2: ${b.p2||'-'}\nLine 3: ${b.p3||'-'}\nLine 4: ${b.p4||'-'}\nTEL: ${b.phone||'-'}` : txt.openStr;
-        document.getElementById('td-modal-slot-info').innerText = `${courtLabels[court]} (${time})\n\n${info}`;
+        const info = b ? `名前: ${b.name}\nTEL: ${b.phone||'-'}\n(ID: ${b.id})` : '【現在: 空き枠】';
+        document.getElementById('td-modal-slot-info').innerText = `${courtLabels[parts[1]]} (${parts[0]})\n第${parts[2]}行目\n\n${info}`;
+        selectedSlot = key;
         document.getElementById('td-modal').classList.remove('hidden');
         return;
       }
 
-      if (!b) {
-        if (myBookedIds.length >= 1) return alert(txt.alertLimit);
-        document.getElementById('modal-slot-info').innerText = `${courtLabels[court]} | ${time}`;
-        document.getElementById('booking-modal').classList.remove('hidden');
-      } else if (myBookedIds.includes(b.id)) {
-        if (confirm(txt.alertCancel)) cancelBookingOnline(key, b.id);
-      } else {
-        alert(txt.alertBooked);
+      if (b) {
+        if (myBookedIds.includes(b.id)) {
+          if (confirm(`この予約を取り消しますか？\n(同伴者も一緒にキャンセルされます)`)) cancelBookingOnline(b.id);
+        } else {
+          alert('この行はすでに予約されています。空いている行をタップしてください。');
+        }
+        return;
       }
+
+      if (myBookedIds.length >= 1) return alert('練習コートの予約は1枠までです。');
+
+      // 空き行を検索
+      currentEmptyKeys = [];
+      for (let r = 1; r <= 4; r++) {
+        if (!bookings[`${timeCourtBase}_${r}`]) currentEmptyKeys.push(`${timeCourtBase}_${r}`);
+      }
+
+      // 状況に合わせてモーダルの入力欄を自動生成
+      const container = document.getElementById('modal-inputs-container');
+      container.innerHTML = '';
+      
+      currentEmptyKeys.forEach((k, idx) => {
+        if (idx === 0) {
+          container.innerHTML += `
+            <div class="mb-2">
+              <label class="block font-bold mb-0.5 text-blue-800">代表選手氏名 (必須)</label>
+              <input type="text" id="input-name-0" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none">
+            </div>
+            <div class="mb-3 border-b border-gray-300 pb-3">
+              <label class="block font-bold mb-0.5 text-gray-700">連絡先電話番号 (必須)</label>
+              <input type="tel" id="input-phone" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none">
+            </div>`;
+        } else {
+          if (idx === 1) container.innerHTML += `<label class="block font-bold mb-1 text-gray-700">追加の同伴者（残り ${currentEmptyKeys.length - 1} 名まで可能）</label>`;
+          container.innerHTML += `
+            <div class="mb-1">
+              <input type="text" id="input-name-${idx}" placeholder="同伴者 ${idx}" class="w-full border border-gray-300 px-2 py-1.5 outline-none">
+            </div>`;
+        }
+      });
+
+      document.getElementById('modal-slot-info').innerText = `${courtLabels[parts[1]]} | ${parts[0]}`;
+      document.getElementById('booking-modal').classList.remove('hidden');
     }
 
     function closeBookingModal() { document.getElementById('booking-modal').classList.add('hidden'); }
     function closeTdModal() { document.getElementById('td-modal').classList.add('hidden'); }
 
     async function confirmBooking() {
-      const txt = i18n[currentLang];
-      const name = document.getElementById('input-player-name').value.trim();
+      const name0 = document.getElementById('input-name-0').value.trim();
       const phone = document.getElementById('input-phone').value.trim();
-      const p2 = document.getElementById('input-p2').value.trim();
-      const p3 = document.getElementById('input-p3').value.trim();
-      const p4 = document.getElementById('input-p4').value.trim();
-
-      if (!name || !phone) return alert(txt.alertInput);
+      if (!name0 || !phone) return alert('代表者名と電話番号を入力してください。');
 
       const btn = document.getElementById('submit-btn');
-      btn.innerText = '...'; btn.disabled = true;
+      btn.innerText = '送信中...'; btn.disabled = true;
 
       const bId = 'MK-' + Math.floor(100 + Math.random() * 900);
-      const partnerCombined = [p2, p3, p4].filter(Boolean).join(', ');
+      const newBookings = [];
+      newBookings.push({ key: currentEmptyKeys[0], name: name0, phone: phone, id: bId });
 
-      const payload = { action: 'book', key: selectedSlot, name: name, partner: partnerCombined, phone: phone, p2: p2, p3: p3, p4: p4, id: bId };
+      for (let i = 1; i < currentEmptyKeys.length; i++) {
+        const input = document.getElementById(`input-name-${i}`);
+        if (input && input.value.trim()) {
+          newBookings.push({ key: currentEmptyKeys[i], name: input.value.trim(), phone: phone, id: bId });
+        }
+      }
 
       try {
-        await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        myBookedIds.push(bId); localStorage.setItem('meikei_paper_sync_ids', JSON.stringify(myBookedIds));
-        bookings[selectedSlot] = { name, partner: partnerCombined, p2, p3, p4, phone, status: 'booked', id: bId };
-        localStorage.setItem('meikei_paper_sync_bookings', JSON.stringify(bookings));
+        await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'book', bookings: newBookings }) });
+        
+        myBookedIds.push(bId); 
+        localStorage.setItem('meikei_paper_v2_ids', JSON.stringify(myBookedIds));
+        
+        newBookings.forEach(b => {
+          bookings[b.key] = { name: b.name, phone: b.phone, status: 'booked', id: bId };
+        });
+        localStorage.setItem('meikei_paper_v2_bookings', JSON.stringify(bookings));
         
         closeBookingModal();
-        ['name','phone','p2','p3','p4'].forEach(id => document.getElementById(`input-${id === 'name' ? 'player-name' : id}`).value = '');
         renderTimetable(); renderMyBookings();
         setTimeout(() => fetchLatestData(false), 1500);
-      } catch (e) { alert('Error'); } 
-      finally { btn.innerText = txt.submit; btn.disabled = false; }
+      } catch (e) { alert('通信に失敗しました。'); } 
+      finally { btn.innerText = '予約確定'; btn.disabled = false; }
     }
 
-    async function cancelBookingOnline(key, bId) {
+    async function cancelBookingOnline(bId, singleKey = null) {
+      // 選手はグループ(ID)ごと取消。TD管理者は引数にsingleKeyを入れて1行だけ取消も可
       try {
-        await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cancel', key: key }) });
-        myBookedIds = myBookedIds.filter(id => id !== bId); localStorage.setItem('meikei_paper_sync_ids', JSON.stringify(myBookedIds));
-        delete bookings[key]; localStorage.setItem('meikei_paper_sync_bookings', JSON.stringify(bookings));
+        await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cancel', id: bId, key: singleKey }) });
+        
+        if (bId) {
+          myBookedIds = myBookedIds.filter(id => id !== bId); 
+          localStorage.setItem('meikei_paper_v2_ids', JSON.stringify(myBookedIds));
+          for (let k in bookings) { if (bookings[k].id === bId) delete bookings[k]; }
+        } else if (singleKey) {
+          delete bookings[singleKey];
+        }
+        
+        localStorage.setItem('meikei_paper_v2_bookings', JSON.stringify(bookings));
         renderTimetable(); renderMyBookings(); setTimeout(() => fetchLatestData(false), 1500);
-      } catch (e) { alert('Error'); }
+      } catch (e) {}
     }
 
     async function tdSetOfficial() {
       if (!selectedSlot) return; closeTdModal();
-      await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'official', key: selectedSlot, name: '公式割当', id: 'MK-OFFICIAL' }) });
+      const payload = { action: 'official', bookings: [{ key: selectedSlot, name: '公式割当', id: 'MK-OFFICIAL' }] };
+      await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       bookings[selectedSlot] = { name: '公式割当', status: 'official', id: 'MK-OFFICIAL' };
       renderTimetable(); setTimeout(() => fetchLatestData(false), 1500);
     }
 
     async function tdCancelSlot() {
       if (!selectedSlot) return; closeTdModal();
-      await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cancel', key: selectedSlot }) });
-      delete bookings[selectedSlot]; renderTimetable(); renderMyBookings(); setTimeout(() => fetchLatestData(false), 1500);
+      const bId = bookings[selectedSlot] ? bookings[selectedSlot].id : null;
+      await cancelBookingOnline(bId, selectedSlot);
     }
 
     function renderMyBookings() {
       const list = document.getElementById('my-bookings-list');
-      list.innerHTML = ''; let count = 0; const validIds = [];
-      const txt = i18n[currentLang];
-
+      list.innerHTML = '';
+      
+      // 同じIDの予約（代表＋同伴者）をグループ化して表示する
+      const myGroups = {};
       for (let key in bookings) {
         const b = bookings[key];
         if (b && myBookedIds.includes(b.id)) {
-          count++; validIds.push(b.id);
-          const [time, court] = key.split('_');
-          const others = [b.p2, b.p3, b.p4].filter(Boolean).join(', ');
-          list.innerHTML += `
-            <div class="flex justify-between items-center text-xs border border-gray-400 p-2 bg-white">
-              <div>
-                <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
-                <span>${b.name}</span>${others ? `<br><span class="text-[10px] text-gray-600">${others}</span>` : ''}
-              </div>
-              <button onclick="handleSlotClick('${key}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">${txt.cancel}</button>
-            </div>`;
+          if(!myGroups[b.id]) myGroups[b.id] = { baseKey: key, names: [] };
+          myGroups[b.id].names.push(b.name);
         }
       }
-      if (validIds.length !== myBookedIds.length) { myBookedIds = validIds; localStorage.setItem('meikei_paper_sync_ids', JSON.stringify(myBookedIds)); }
+
+      let count = Object.keys(myGroups).length;
+      for (let id in myGroups) {
+        const g = myGroups[id];
+        const [time, court] = g.baseKey.split('_');
+        list.innerHTML += `
+          <div class="flex justify-between items-center text-xs border border-gray-400 p-2 bg-white">
+            <div>
+              <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
+              <span class="font-bold">代表: ${g.names[0]}</span>
+              ${g.names.length > 1 ? `<br><span class="text-[10px] text-gray-600">他 ${g.names.length - 1}名同行</span>` : ''}
+            </div>
+            <button onclick="if(confirm('予約を取り消しますか？')) cancelBookingOnline('${id}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">取消</button>
+          </div>`;
+      }
+      if (count === 0) list.innerHTML = `<p class="text-xs text-gray-500">現在有効な予約はありません。</p>`;
+    }
+
+    // QR関連
+    function openPosterModal() { document.getElementById('poster-modal').classList.remove('hidden'); generatePoster(); }
+    function closePosterModal() { document.getElementById('poster-modal').classList.add('hidden'); }
+    function generatePoster() {
+      const baseUrl = document.getElementById('poster-base-url').value.trim();
+      const target = document.getElementById('poster-court-select').value;
+      const qc = document.getElementById('qrcode-container'); qc.innerHTML = '';
+      let tUrl = baseUrl;
+      if (target !== 'all') { tUrl += (tUrl.includes('?') ? '&' : '?') + 'court=' + target; document.getElementById('poster-court-title').innerText = courtLabels[target] + ' 専用'; } 
+      else { document.getElementById('poster-court-title').innerText = 'PRACTICE SHEET'; }
+      new QRCode(qc, { text: tUrl, width: 150, height: 150, colorDark: "#000", colorLight: "#fff" });
     }
   </script>
 </body>
