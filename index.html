@@ -31,7 +31,7 @@
     </div>
 
     <div class="flex flex-col md:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
-      <!-- ★ここを5回連続タップでパスワード入力画面出現★ -->
+      <!-- ★5回連続タップでパスワード入力（TDメニュー出現）★ -->
       <h1 id="main-title" onclick="handleSecretClick()" class="text-base sm:text-xl font-black tracking-wide text-gray-900 cursor-pointer select-none">
         筑波大学MEIKEIオープンテニス PRACTICE SHEET
       </h1>
@@ -44,7 +44,6 @@
           <i class="fa-solid fa-globe"></i> <span id="current-lang-label">日本語</span>
         </button>
         
-        <!-- 隠しTDボタン群（初期状態は非表示） -->
         <div id="admin-buttons" class="hidden flex gap-2 ml-2 p-1 bg-yellow-100 border border-yellow-300 rounded">
           <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300">初期化</button>
           <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold">TD管理者</button>
@@ -124,10 +123,17 @@
     <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl">
       <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">TD管理者モード</h4>
       <p class="text-xs font-bold text-gray-700 my-2 whitespace-pre-line" id="td-modal-slot-info"></p>
-      <div class="space-y-2 mt-4">
-        <button onclick="tdSetOfficial()" class="w-full py-2 border border-yellow-600 bg-yellow-300 text-black font-bold text-xs">この1行をブロック(公式)</button>
-        <button onclick="tdCancelSlot()" class="w-full py-2 border border-red-800 bg-red-600 text-white font-bold text-xs">このグループを取消</button>
-        <button onclick="closeTdModal()" class="w-full py-1.5 bg-gray-200 border border-gray-400 font-bold text-xs mt-2">戻る</button>
+      
+      <!-- TDが名前を指定してブロックできる機能 -->
+      <div class="mt-3 pt-3 border-t border-gray-300">
+        <label id="td-label-name" class="block font-bold mb-1 text-xs text-blue-800">大会側での割当 (選手名)</label>
+        <input type="text" id="td-input-name" class="w-full border border-gray-400 px-2 py-1.5 text-xs bg-yellow-50 outline-none mb-2">
+        <button id="td-btn-block" onclick="tdSetOfficial()" class="w-full py-2 border border-yellow-600 bg-yellow-300 text-black font-bold text-xs">この行を大会割当としてブロック</button>
+      </div>
+
+      <div class="space-y-2 mt-4 pt-4 border-t border-gray-300">
+        <button id="td-btn-cancel" onclick="tdCancelSlot()" class="w-full py-2 border border-red-800 bg-red-600 text-white font-bold text-xs">このグループを取消 (空きに戻す)</button>
+        <button id="td-btn-back" onclick="closeTdModal()" class="w-full py-1.5 bg-gray-200 border border-gray-400 font-bold text-xs mt-2">戻る</button>
       </div>
     </div>
   </div>
@@ -166,7 +172,7 @@
 
   <script>
     // ★★★ 以下のURLをご自身のGASのURLに書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzqtD0JU-x-vWm1vB02Nw0AGomITC4jMRWg3HfwtIy56DejhPxw8UA7ONMKL8pZt-L8Aw/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx8sMgy5h1iiA6sZAVR5IvrQDFEALvbnQLuYmV6XYQIC7aIj59gNmBOIIHfJTWMIQGBceg/exec";
 
     // --- 多言語辞書 (i18n) ---
     const i18n = {
@@ -182,7 +188,10 @@
         btn_cancel: "キャンセル", btn_submit: "予約確定",
         alert_1slot: "練習コートの予約は1枠までです。", alert_booked: "この行はすでに予約されています。",
         alert_req: "代表者名と電話番号を入力してください。", alert_cancel: "この予約を取り消しますか？\n(同伴者も一緒にキャンセルされます)",
-        empty: "( 空き )"
+        empty: "( 空き )",
+        td_label_name: "大会側での割当 (選手名)", td_ph_name: "例: 筑波太郎 (空欄なら「公式割当」)",
+        td_btn_block: "この行を大会割当としてブロック", td_btn_cancel: "このグループを取消 (空きに戻す)",
+        td_btn_back: "戻る", official: "公式割当"
       },
       en: {
         lang_label: "English", title: "MEIKEI OPEN Practice Court",
@@ -196,7 +205,10 @@
         btn_cancel: "Cancel", btn_submit: "Confirm",
         alert_1slot: "You can only book 1 slot per day.", alert_booked: "This row is already booked.",
         alert_req: "Leader name and phone number are required.", alert_cancel: "Cancel this booking? (Partners will also be cancelled)",
-        empty: "( Open )"
+        empty: "( Open )",
+        td_label_name: "Official Assignment (Player Name)", td_ph_name: "e.g. John Doe (Blank for 'Official')",
+        td_btn_block: "Block this row as Official", td_btn_cancel: "Cancel this group",
+        td_btn_back: "Back", official: "Official"
       },
       ko: {
         lang_label: "한국어", title: "MEIKEI OPEN 연습 코트 예약",
@@ -210,7 +222,10 @@
         btn_cancel: "취소", btn_submit: "예약 확정",
         alert_1slot: "예약은 1인당 1타임만 가능합니다.", alert_booked: "이 자리는 이미 예약되었습니다.",
         alert_req: "이름과 연락처를 입력해주세요.", alert_cancel: "이 예약을 취소하시겠습니까? (동반자도 취소됩니다)",
-        empty: "( 빈자리 )"
+        empty: "( 빈자리 )",
+        td_label_name: "대회 측 할당 (선수 이름)", td_ph_name: "예: 홍길동 (비워두면 '공식할당')",
+        td_btn_block: "이 행을 대회 할당으로 블록", td_btn_cancel: "이 그룹 취소",
+        td_btn_back: "뒤로", official: "공식할당"
       }
     };
 
@@ -227,12 +242,10 @@
       clearTimeout(secretClickTimer);
       
       if (secretClickCount >= 5) {
-        secretClickCount = 0; // カウントをリセット
-        
-        // パスワード入力ウィンドウを表示
+        secretClickCount = 0;
         const password = prompt("TD管理者パスワードを入力してください\n(Enter TD Password):");
         
-        // ★ここで好きなパスワードを設定（現在は 2026 に設定）
+        // ★TDパスワード（好きな数字に変更可能）
         if (password === "2026") {
           document.getElementById('admin-buttons').classList.remove('hidden');
           alert('【TD管理者メニュー】のロックを解除しました。');
@@ -240,7 +253,7 @@
           alert('パスワードが違います。');
         }
       } else {
-        secretClickTimer = setTimeout(() => secretClickCount = 0, 1000); // 1秒以内に連続タップ
+        secretClickTimer = setTimeout(() => secretClickCount = 0, 1000);
       }
     }
 
@@ -298,6 +311,13 @@
       document.getElementById('modal-title-text').innerText = t.modal_title;
       document.getElementById('btn-cancel').innerText = t.btn_cancel;
       document.getElementById('submit-btn').innerText = t.btn_submit;
+
+      // TDモーダルの翻訳適用
+      document.getElementById('td-label-name').innerText = t.td_label_name;
+      document.getElementById('td-input-name').placeholder = t.td_ph_name;
+      document.getElementById('td-btn-block').innerText = t.td_btn_block;
+      document.getElementById('td-btn-cancel').innerText = t.td_btn_cancel;
+      document.getElementById('td-btn-back').innerText = t.td_btn_back;
 
       renderTimetable();
       renderMyBookings();
@@ -390,8 +410,9 @@
       const t = i18n[currentLang];
 
       if (currentRole === 'td') {
-        const info = b ? `Name: ${b.name}\nTEL: ${b.phone||'-'}\n(ID: ${b.id})` : '【空き枠 / Empty】';
+        const info = b ? `Name: ${b.name}\nTEL: ${b.phone||'-'}\n(ID: ${b.id})` : `【${t.empty}】`;
         document.getElementById('td-modal-slot-info').innerText = `${courtLabels[parts[1]]} (${parts[0]})\nRow ${parts[2]}\n\n${info}`;
+        document.getElementById('td-input-name').value = ''; // 毎回リセット
         selectedSlot = key;
         document.getElementById('td-modal').classList.remove('hidden');
         return;
@@ -499,12 +520,23 @@
       } catch (e) {}
     }
 
+    // TDが特定の名前で公式割当する処理
     async function tdSetOfficial() {
-      if (!selectedSlot) return; closeTdModal();
-      const payload = { action: 'official', bookings: [{ key: selectedSlot, name: '公式割当', id: 'MK-OFFICIAL' }] };
+      if (!selectedSlot) return; 
+      
+      const t = i18n[currentLang];
+      const inputName = document.getElementById('td-input-name').value.trim();
+      const officialName = inputName ? inputName : t.official;
+      const bId = 'MK-OFFICIAL-' + Math.floor(1000 + Math.random() * 9000);
+      
+      closeTdModal();
+      
+      const payload = { action: 'official', bookings: [{ key: selectedSlot, name: officialName, id: bId }] };
       await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      bookings[selectedSlot] = { name: '公式割当', status: 'official', id: 'MK-OFFICIAL' };
-      renderTimetable(); setTimeout(() => fetchLatestData(false), 1500);
+      
+      bookings[selectedSlot] = { name: officialName, status: 'official', id: bId };
+      renderTimetable(); 
+      setTimeout(() => fetchLatestData(false), 1500);
     }
 
     async function tdCancelSlot() {
