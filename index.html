@@ -14,7 +14,6 @@
       #poster-print-area { position: absolute; left: 0; top: 0; width: 100%; }
     }
     table { border-collapse: collapse; width: 100%; border: 2px solid #1f2937; }
-    /* セル幅の調整と、はみ出し文字の「...」省略設定 */
     th, td { border: 1px solid #9ca3af; max-width: 95px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     .thick-bottom td { border-bottom: 2px solid #1f2937 !important; }
     .thick-right { border-right: 2px solid #1f2937 !important; }
@@ -32,7 +31,6 @@
     </div>
 
     <div class="flex flex-col md:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
-      <!-- 5回タップでロック解除 -->
       <h1 id="main-title" onclick="handleSecretClick()" class="text-base sm:text-xl font-black tracking-wide text-gray-900 cursor-pointer select-none">
         筑波大学MEIKEIオープンテニス PRACTICE SHEET
       </h1>
@@ -54,7 +52,7 @@
 
     <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
       <div class="flex flex-col space-y-1">
-        <span id="rule-text" class="font-bold text-gray-700">【1枠30分・最大4名】空いている行をタップして予約</span>
+        <span id="rule-text" class="font-bold text-gray-700">【1枠30分・最大4名】空いている行（マス）をタップして予約</span>
         <div class="flex items-center space-x-2">
           <label for="date-select" id="date-label" class="font-bold">Date:</label>
           <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none">
@@ -104,7 +102,6 @@
 
   <!-- ================= モーダル群 ================= -->
   
-  <!-- 試合用の一括ブロックモーダル -->
   <div id="bulk-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-md w-full border-2 border-gray-800 p-4 shadow-xl relative max-h-[90vh] overflow-y-auto">
       <h4 id="bulk-title" class="font-bold text-gray-800 mb-3 border-b-2 border-gray-800 pb-1">コート一括ブロック設定</h4>
@@ -147,9 +144,7 @@
     <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl relative max-h-[90vh] overflow-y-auto">
       <h4 id="modal-title-text" class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">練習コート予約</h4>
       <p class="text-sm font-bold text-green-700 my-2" id="modal-slot-info"></p>
-      
       <div id="modal-inputs-container" class="space-y-2 text-xs mt-3"></div>
-
       <div class="mt-5 flex space-x-2">
         <button id="btn-cancel" onclick="closeBookingModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
         <button id="submit-btn" onclick="confirmBooking()" class="w-1/2 py-2 border border-green-800 bg-green-600 text-white font-bold text-xs">予約確定</button>
@@ -226,7 +221,7 @@
         td_btn_block: "この行を大会割当としてブロック", td_btn_cancel: "このグループを取消 (空きに戻す)",
         td_btn_back: "戻る", official: "公式割当",
         btn_bulk: "試合・イベント一括ブロック", bulk_title: "コート一括ブロック設定",
-        bulk_reason: "表示名", bulk_reason_def: "試合 (MATCH)", bulk_courts: "対象コート",
+        bulk_reason: "表示名", bulk_reason_def: "試合", bulk_courts: "対象コート",
         bulk_all: "全選択", bulk_period: "対象期間", bulk_exec: "一括ブロック実行"
       },
       en: {
@@ -276,9 +271,6 @@
     let selectedSlot = null;
     let currentEmptyKeys = []; 
 
-    // --- 隠しコマンド（5回タップ ＋ パスワード認証） ---
-    let secretClickCount = 0;
-    let secretClickTimer = null;
     function handleSecretClick() {
       secretClickCount++;
       clearTimeout(secretClickTimer);
@@ -295,6 +287,7 @@
         secretClickTimer = setTimeout(() => secretClickCount = 0, 1000);
       }
     }
+    let secretClickCount = 0, secretClickTimer = null;
 
     const timeSlots = [
       '09:00 - 09:30', '09:30 - 10:00', '10:00 - 10:30', '10:30 - 11:00',
@@ -341,11 +334,11 @@
       applyLang();
     }
 
-    // ★ 翻訳補助フィルター（DBに保存された固定文字を現在の言語に合わせて置き換える）
+    // ★ 翻訳補助フィルター
     function getLocalizedName(originalName, t) {
       if (!originalName) return '';
       const n = originalName.trim();
-      if (n === "試合のため使用不可" || n === "試合 (MATCH)" || n === "MATCH" || n === "시합 (MATCH)" || n === "Unavailable (Match)") {
+      if (n === "試合のため使用不可" || n === "試合 (MATCH)" || n === "試合" || n === "MATCH" || n === "시합 (MATCH)" || n === "Unavailable (Match)") {
         return t.bulk_reason_def;
       }
       if (n === "公式割当" || n === "Official" || n === "공식할당") {
@@ -385,8 +378,7 @@
       document.getElementById('bulk-btn-exec').innerText = t.bulk_exec;
       document.getElementById('bulk-btn-cancel').innerText = t.btn_cancel;
 
-      renderTimetable();
-      renderMyBookings();
+      renderTimetable(); renderMyBookings();
     }
 
     async function fetchLatestData(showIndicator = false) {
@@ -447,10 +439,11 @@
           );
 
           if (isBulkBlocked) {
-            // 一括ブロック時はセルを結合し、改行させず綺麗に表示
             let dispName = getLocalizedName(b1.name, t);
+            // ★韓国語の時だけフォント幅を詰めてサイズを小さくし、1行に収める
+            let sizeClass = currentLang === 'ko' ? 'text-[9px] sm:text-[10px] tracking-normal' : 'text-[10px] sm:text-xs tracking-widest';
             const cellAttr = `onclick="handleSlotClick('${keys[0]}')" rowspan="4" class="cursor-pointer text-center align-middle bg-slate-200 hover:bg-slate-300 transition !border-b-2 !border-gray-800"`;
-            const cellContent = `<div class="font-bold text-slate-600 text-[10px] sm:text-xs tracking-widest px-1 whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-[85px] mx-auto">${dispName}</div>`;
+            const cellContent = `<div class="font-bold text-slate-600 ${sizeClass} px-0.5 whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-[85px] mx-auto">${dispName}</div>`;
             html1 += `<td ${cellAttr}>${cellContent}</td>`;
           } else {
             keys.forEach((key, idx) => {
@@ -713,6 +706,7 @@
       if (count === 0) list.innerHTML = `<p class="text-xs text-gray-500">${t.no_tickets}</p>`;
     }
 
+    // QR関連
     function openPosterModal() { document.getElementById('poster-modal').classList.remove('hidden'); generatePoster(); }
     function closePosterModal() { document.getElementById('poster-modal').classList.add('hidden'); }
     function generatePoster() {
