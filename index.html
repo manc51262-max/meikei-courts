@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MEIKEI OPEN 練習コート予約システム</title>
+  <title>MEIKEI OPEN Practice Court</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -27,35 +27,49 @@
   <main class="w-full max-w-6xl bg-white shadow-md border border-gray-300 p-2 sm:p-4 overflow-hidden flex flex-col relative">
     
     <div id="sync-indicator" class="hidden absolute top-0 left-0 w-full bg-green-600 text-white text-[10px] py-0.5 text-center font-bold z-50">
-      <i class="fa-solid fa-rotate fa-spin mr-1"></i> 同期中...
+      <i class="fa-solid fa-rotate fa-spin mr-1"></i> Syncing...
     </div>
 
-    <div class="flex flex-col sm:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
-      <h1 class="text-base sm:text-xl font-black tracking-wide text-gray-900">
+    <div class="flex flex-col md:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
+      <!-- ★ここを5回連続タップでパスワード入力画面出現★ -->
+      <h1 id="main-title" onclick="handleSecretClick()" class="text-base sm:text-xl font-black tracking-wide text-gray-900 cursor-pointer select-none">
         筑波大学MEIKEIオープンテニス PRACTICE SHEET
       </h1>
-      <div class="mt-2 sm:mt-0 flex gap-2">
-        <button onclick="fetchLatestData(true)" class="px-2 py-1 text-[10px] bg-gray-200 text-gray-700 border border-gray-400">
-          <i class="fa-solid fa-rotate"></i> 更新
+      
+      <div class="mt-2 md:mt-0 flex gap-2 items-center flex-wrap justify-center">
+        <button onclick="fetchLatestData(true)" class="px-2 py-1.5 text-[11px] bg-gray-200 text-gray-700 border border-gray-400 font-bold">
+          <i class="fa-solid fa-rotate"></i> <span id="btn-update">更新</span>
         </button>
-        <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300">初期化</button>
-        <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold">TD管理者</button>
+        <button onclick="toggleLang()" class="px-2 py-1.5 text-[11px] bg-blue-100 text-blue-800 border border-blue-400 font-bold">
+          <i class="fa-solid fa-globe"></i> <span id="current-lang-label">日本語</span>
+        </button>
+        
+        <!-- 隠しTDボタン群（初期状態は非表示） -->
+        <div id="admin-buttons" class="hidden flex gap-2 ml-2 p-1 bg-yellow-100 border border-yellow-300 rounded">
+          <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300">初期化</button>
+          <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold">TD管理者</button>
+        </div>
       </div>
     </div>
 
     <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
       <div class="flex flex-col space-y-1">
-        <span class="font-bold text-gray-700">【1枠最大4名】空いている行（マス）をタップして予約できます</span>
+        <span id="rule-text" class="font-bold text-gray-700">【1枠最大4名】空いている行（マス）をタップして予約できます</span>
         <div class="flex items-center space-x-2">
-          <label for="date-select" class="font-bold">Date:</label>
+          <label for="date-select" id="date-label" class="font-bold">Date:</label>
           <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none">
         </div>
       </div>
       <div class="flex gap-2 mt-2 sm:mt-0 font-medium text-[10px] sm:text-xs">
-        <span class="text-green-700">■ 空き</span><span class="text-blue-700">■ 自分の予約</span><span class="text-gray-500">■ 予約済</span>
+        <span class="text-green-700" id="legend-open">■ 空き</span>
+        <span class="text-blue-700" id="legend-my">■ 自分の予約</span>
+        <span class="text-gray-500" id="legend-booked">■ 予約済</span>
       </div>
     </div>
 
+    <p id="swipe-hint" class="text-[10px] text-gray-500 md:hidden mb-1 animate-pulse">※表を横にスワイプして1〜7番コートを確認できます 👉</p>
+
+    <!-- タイムテーブル -->
     <div class="overflow-x-auto w-full relative shadow-inner pb-2">
       <table class="bg-white text-[11px] sm:text-xs">
         <thead>
@@ -73,15 +87,18 @@
       </table>
     </div>
 
+    <!-- 自分の予約チケット -->
     <div class="mt-4 border border-gray-400 p-3 bg-gray-50 w-full">
-      <h3 class="font-bold text-sm text-gray-800 border-b border-gray-300 pb-1 mb-2">
+      <h3 id="my-tickets-title" class="font-bold text-sm text-gray-800 border-b border-gray-300 pb-1 mb-2">
         ■ 自分の予約チケット / My Bookings
       </h3>
       <div id="my-bookings-list" class="space-y-2"></div>
     </div>
 
+    <!-- TD用メニュー -->
     <div id="td-controls" class="hidden mt-4 pt-4 border-t border-gray-300 flex gap-2">
       <button onclick="openPosterModal()" class="px-3 py-1.5 text-xs bg-gray-800 text-white border border-gray-900 font-bold">QRポスター作成</button>
+      <button onclick="exportCSV()" class="px-3 py-1.5 text-xs bg-gray-100 text-gray-800 border border-gray-400 font-bold">CSVエクスポート</button>
     </div>
   </main>
 
@@ -89,15 +106,15 @@
   
   <div id="booking-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl relative max-h-[90vh] overflow-y-auto">
-      <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">練習コート予約</h4>
+      <h4 id="modal-title-text" class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">練習コート予約</h4>
       <p class="text-sm font-bold text-green-700 my-2" id="modal-slot-info"></p>
       
       <div id="modal-inputs-container" class="space-y-2 text-xs mt-3">
-        <!-- 空き状況に応じて入力欄がJSで自動生成されます -->
+        <!-- JSで多言語対応のフォームが生成されます -->
       </div>
 
       <div class="mt-5 flex space-x-2">
-        <button onclick="closeBookingModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
+        <button id="btn-cancel" onclick="closeBookingModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
         <button id="submit-btn" onclick="confirmBooking()" class="w-1/2 py-2 border border-green-800 bg-green-600 text-white font-bold text-xs">予約確定</button>
       </div>
     </div>
@@ -115,14 +132,12 @@
     </div>
   </div>
 
+  <!-- ポスター印刷モーダル -->
   <div id="poster-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-lg w-full border-2 border-gray-800 p-4 shadow-xl">
       <h4 class="font-bold text-gray-800 mb-2 border-b-2 border-gray-800 pb-1">QRポスター作成</h4>
       <div class="text-xs space-y-3 mb-4">
-        <div>
-          <label class="font-bold mb-1 block">ベースURL</label>
-          <input type="text" id="poster-base-url" class="w-full border border-gray-400 px-2 py-1.5">
-        </div>
+        <div><label class="font-bold mb-1 block">ベースURL</label><input type="text" id="poster-base-url" class="w-full border border-gray-400 px-2 py-1.5"></div>
         <div>
           <label class="font-bold mb-1 block">掲示用コート指定</label>
           <div class="flex gap-2">
@@ -150,12 +165,84 @@
   </div>
 
   <script>
-    // ★★★ 以下のURLをご自身のGASのURLに必ず書き換えてください ★★★
+    // ★★★ 以下のURLをご自身のGASのURLに書き換えてください ★★★
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzqtD0JU-x-vWm1vB02Nw0AGomITC4jMRWg3HfwtIy56DejhPxw8UA7ONMKL8pZt-L8Aw/exec";
 
+    // --- 多言語辞書 (i18n) ---
+    const i18n = {
+      ja: {
+        lang_label: "日本語", title: "筑波大学MEIKEIオープンテニス PRACTICE SHEET",
+        rule: "【1枠最大4名】空いている行（マス）をタップして予約", update: "更新",
+        date: "Date:", open: "■ 空き", my: "■ 自分の予約", booked: "■ 予約済",
+        swipe: "※表を横にスワイプして1〜7番コートを確認できます 👉",
+        my_tickets: "■ 自分の予約チケット / My Bookings",
+        no_tickets: "現在有効な予約はありません。", btn_cancel_ticket: "取消",
+        modal_title: "練習コート予約", label_name: "代表選手氏名 (必須)", label_phone: "連絡先電話番号 (必須)",
+        label_partner: "追加の同伴者（残り {n} 名まで可能）", ph_partner: "同伴者 {n}",
+        btn_cancel: "キャンセル", btn_submit: "予約確定",
+        alert_1slot: "練習コートの予約は1枠までです。", alert_booked: "この行はすでに予約されています。",
+        alert_req: "代表者名と電話番号を入力してください。", alert_cancel: "この予約を取り消しますか？\n(同伴者も一緒にキャンセルされます)",
+        empty: "( 空き )"
+      },
+      en: {
+        lang_label: "English", title: "MEIKEI OPEN Practice Court",
+        rule: "[Max 4/slot] Tap an empty row to book", update: "Update",
+        date: "Date:", open: "■ Open", my: "■ My Booking", booked: "■ Booked",
+        swipe: "* Swipe right to see Courts 1-7 👉",
+        my_tickets: "■ My Bookings",
+        no_tickets: "No active bookings.", btn_cancel_ticket: "Cancel",
+        modal_title: "Book Practice Court", label_name: "Leader Name (Required)", label_phone: "Phone Number (Required)",
+        label_partner: "Partners (Up to {n} more)", ph_partner: "Partner {n}",
+        btn_cancel: "Cancel", btn_submit: "Confirm",
+        alert_1slot: "You can only book 1 slot per day.", alert_booked: "This row is already booked.",
+        alert_req: "Leader name and phone number are required.", alert_cancel: "Cancel this booking? (Partners will also be cancelled)",
+        empty: "( Open )"
+      },
+      ko: {
+        lang_label: "한국어", title: "MEIKEI OPEN 연습 코트 예약",
+        rule: "[최대 4명] 빈 칸을 탭하여 예약하세요", update: "새로고침",
+        date: "Date:", open: "■ 빈자리", my: "■ 내 예약", booked: "■ 예약됨",
+        swipe: "※ 표를 옆으로 스와이프하여 코트를 확인하세요 👉",
+        my_tickets: "■ 내 예약 / My Bookings",
+        no_tickets: "현재 예약이 없습니다.", btn_cancel_ticket: "취소",
+        modal_title: "연습 코트 예약", label_name: "대표 선수 이름 (필수)", label_phone: "연락처 (필수)",
+        label_partner: "동반자 (추가 {n}명 가능)", ph_partner: "동반자 {n}",
+        btn_cancel: "취소", btn_submit: "예약 확정",
+        alert_1slot: "예약은 1인당 1타임만 가능합니다.", alert_booked: "이 자리는 이미 예약되었습니다.",
+        alert_req: "이름과 연락처를 입력해주세요.", alert_cancel: "이 예약을 취소하시겠습니까? (동반자도 취소됩니다)",
+        empty: "( 빈자리 )"
+      }
+    };
+
+    let currentLang = 'ja';
     let currentRole = 'player';
     let selectedSlot = null;
-    let currentEmptyKeys = []; // モーダルが開いた時の空き行キーを記憶
+    let currentEmptyKeys = []; 
+
+    // --- 隠しコマンド（5回タップ ＋ パスワード認証） ---
+    let secretClickCount = 0;
+    let secretClickTimer = null;
+    function handleSecretClick() {
+      secretClickCount++;
+      clearTimeout(secretClickTimer);
+      
+      if (secretClickCount >= 5) {
+        secretClickCount = 0; // カウントをリセット
+        
+        // パスワード入力ウィンドウを表示
+        const password = prompt("TD管理者パスワードを入力してください\n(Enter TD Password):");
+        
+        // ★ここで好きなパスワードを設定（現在は 2026 に設定）
+        if (password === "2026") {
+          document.getElementById('admin-buttons').classList.remove('hidden');
+          alert('【TD管理者メニュー】のロックを解除しました。');
+        } else if (password !== null) {
+          alert('パスワードが違います。');
+        }
+      } else {
+        secretClickTimer = setTimeout(() => secretClickCount = 0, 1000); // 1秒以内に連続タップ
+      }
+    }
 
     const timeSlots = [
       '09:00 - 09:20', '09:20 - 09:40', '09:40 - 10:00', '10:00 - 10:20', '10:20 - 10:40', '10:40 - 11:00',
@@ -170,7 +257,7 @@
     let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_v2_ids')) || [];
 
     function debugReset() {
-      if (confirm('スマホ内の予約データを初期化しますか？')) {
+      if (confirm('データを初期化しますか？')) {
         localStorage.removeItem('meikei_paper_v2_bookings');
         localStorage.removeItem('meikei_paper_v2_ids');
         bookings = {}; myBookedIds = [];
@@ -183,11 +270,38 @@
       const pUrl = document.getElementById('poster-base-url');
       if(pUrl) pUrl.value = window.location.href.split('?')[0];
 
-      renderTimetable();
-      renderMyBookings();
+      applyLang();
       fetchLatestData(true);
       setInterval(() => fetchLatestData(false), 15000);
     });
+
+    function toggleLang() {
+      if (currentLang === 'ja') currentLang = 'en';
+      else if (currentLang === 'en') currentLang = 'ko';
+      else currentLang = 'ja';
+      applyLang();
+    }
+
+    function applyLang() {
+      const t = i18n[currentLang];
+      document.getElementById('current-lang-label').innerText = t.lang_label;
+      document.getElementById('main-title').innerText = t.title;
+      document.getElementById('rule-text').innerText = t.rule;
+      document.getElementById('btn-update').innerText = t.update;
+      document.getElementById('date-label').innerText = t.date;
+      document.getElementById('legend-open').innerText = t.open;
+      document.getElementById('legend-my').innerText = t.my;
+      document.getElementById('legend-booked').innerText = t.booked;
+      document.getElementById('swipe-hint').innerText = t.swipe;
+      document.getElementById('my-tickets-title').innerText = t.my_tickets;
+      
+      document.getElementById('modal-title-text').innerText = t.modal_title;
+      document.getElementById('btn-cancel').innerText = t.btn_cancel;
+      document.getElementById('submit-btn').innerText = t.btn_submit;
+
+      renderTimetable();
+      renderMyBookings();
+    }
 
     async function fetchLatestData(showIndicator = false) {
       if(showIndicator) document.getElementById('sync-indicator').classList.remove('hidden');
@@ -209,10 +323,10 @@
       const roleBtn = document.getElementById('role-btn');
       const tdControls = document.getElementById('td-controls');
       if (currentRole === 'td') {
-        roleBtn.innerText = '選手モードに戻る'; roleBtn.className = 'px-3 py-1 text-xs bg-red-600 text-white border border-red-800 font-bold';
+        roleBtn.innerText = '選手モードに戻る'; roleBtn.className = 'px-3 py-1 text-[11px] bg-red-600 text-white border border-red-800 font-bold';
         tdControls.classList.remove('hidden');
       } else {
-        roleBtn.innerText = 'TD管理者'; roleBtn.className = 'px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold';
+        roleBtn.innerText = 'TD管理者'; roleBtn.className = 'px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold';
         tdControls.classList.add('hidden');
       }
     }
@@ -220,6 +334,7 @@
     function renderTimetable() {
       const tbody = document.getElementById('timetable-body');
       tbody.innerHTML = '';
+      const t = i18n[currentLang];
 
       timeSlots.forEach(time => {
         const tr1 = document.createElement('tr'); tr1.className = 'inner-row bg-white';
@@ -233,12 +348,11 @@
         let html1='', html2='', html3='', html4='';
 
         courts.forEach(court => {
-          // 4つの独立したキーを作成
           const keys = [`${time}_${court}_1`, `${time}_${court}_2`, `${time}_${court}_3`, `${time}_${court}_4`];
           
           keys.forEach((key, idx) => {
             const b = bookings[key];
-            let cellContent = '<span class="text-[9px] text-gray-300 tracking-widest">(空き)</span>';
+            let cellContent = `<span class="text-[9px] text-gray-300 tracking-widest">${t.empty}</span>`;
             let bgClass = 'bg-white hover:bg-green-50';
             let txtClass = 'text-gray-800';
 
@@ -270,13 +384,14 @@
     }
 
     function handleSlotClick(key) {
-      const parts = key.split('_'); // [ "09:00 - 09:20", "c6", "1" ]
+      const parts = key.split('_'); 
       const timeCourtBase = parts[0] + '_' + parts[1];
       const b = bookings[key];
+      const t = i18n[currentLang];
 
       if (currentRole === 'td') {
-        const info = b ? `名前: ${b.name}\nTEL: ${b.phone||'-'}\n(ID: ${b.id})` : '【現在: 空き枠】';
-        document.getElementById('td-modal-slot-info').innerText = `${courtLabels[parts[1]]} (${parts[0]})\n第${parts[2]}行目\n\n${info}`;
+        const info = b ? `Name: ${b.name}\nTEL: ${b.phone||'-'}\n(ID: ${b.id})` : '【空き枠 / Empty】';
+        document.getElementById('td-modal-slot-info').innerText = `${courtLabels[parts[1]]} (${parts[0]})\nRow ${parts[2]}\n\n${info}`;
         selectedSlot = key;
         document.getElementById('td-modal').classList.remove('hidden');
         return;
@@ -284,22 +399,20 @@
 
       if (b) {
         if (myBookedIds.includes(b.id)) {
-          if (confirm(`この予約を取り消しますか？\n(同伴者も一緒にキャンセルされます)`)) cancelBookingOnline(b.id);
+          if (confirm(t.alert_cancel)) cancelBookingOnline(b.id);
         } else {
-          alert('この行はすでに予約されています。空いている行をタップしてください。');
+          alert(t.alert_booked);
         }
         return;
       }
 
-      if (myBookedIds.length >= 1) return alert('練習コートの予約は1枠までです。');
+      if (myBookedIds.length >= 1) return alert(t.alert_1slot);
 
-      // 空き行を検索
       currentEmptyKeys = [];
       for (let r = 1; r <= 4; r++) {
         if (!bookings[`${timeCourtBase}_${r}`]) currentEmptyKeys.push(`${timeCourtBase}_${r}`);
       }
 
-      // 状況に合わせてモーダルの入力欄を自動生成
       const container = document.getElementById('modal-inputs-container');
       container.innerHTML = '';
       
@@ -307,18 +420,18 @@
         if (idx === 0) {
           container.innerHTML += `
             <div class="mb-2">
-              <label class="block font-bold mb-0.5 text-blue-800">代表選手氏名 (必須)</label>
+              <label class="block font-bold mb-0.5 text-blue-800">${t.label_name}</label>
               <input type="text" id="input-name-0" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none">
             </div>
             <div class="mb-3 border-b border-gray-300 pb-3">
-              <label class="block font-bold mb-0.5 text-gray-700">連絡先電話番号 (必須)</label>
+              <label class="block font-bold mb-0.5 text-gray-700">${t.label_phone}</label>
               <input type="tel" id="input-phone" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none">
             </div>`;
         } else {
-          if (idx === 1) container.innerHTML += `<label class="block font-bold mb-1 text-gray-700">追加の同伴者（残り ${currentEmptyKeys.length - 1} 名まで可能）</label>`;
+          if (idx === 1) container.innerHTML += `<label class="block font-bold mb-1 text-gray-700">${t.label_partner.replace('{n}', currentEmptyKeys.length - 1)}</label>`;
           container.innerHTML += `
             <div class="mb-1">
-              <input type="text" id="input-name-${idx}" placeholder="同伴者 ${idx}" class="w-full border border-gray-300 px-2 py-1.5 outline-none">
+              <input type="text" id="input-name-${idx}" placeholder="${t.ph_partner.replace('{n}', idx)}" class="w-full border border-gray-300 px-2 py-1.5 outline-none">
             </div>`;
         }
       });
@@ -333,10 +446,12 @@
     async function confirmBooking() {
       const name0 = document.getElementById('input-name-0').value.trim();
       const phone = document.getElementById('input-phone').value.trim();
-      if (!name0 || !phone) return alert('代表者名と電話番号を入力してください。');
+      const t = i18n[currentLang];
+      
+      if (!name0 || !phone) return alert(t.alert_req);
 
       const btn = document.getElementById('submit-btn');
-      btn.innerText = '送信中...'; btn.disabled = true;
+      btn.innerText = 'Syncing...'; btn.disabled = true;
 
       const bId = 'MK-' + Math.floor(100 + Math.random() * 900);
       const newBookings = [];
@@ -363,12 +478,11 @@
         closeBookingModal();
         renderTimetable(); renderMyBookings();
         setTimeout(() => fetchLatestData(false), 1500);
-      } catch (e) { alert('通信に失敗しました。'); } 
-      finally { btn.innerText = '予約確定'; btn.disabled = false; }
+      } catch (e) {} 
+      finally { btn.innerText = t.btn_submit; btn.disabled = false; }
     }
 
     async function cancelBookingOnline(bId, singleKey = null) {
-      // 選手はグループ(ID)ごと取消。TD管理者は引数にsingleKeyを入れて1行だけ取消も可
       try {
         await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cancel', id: bId, key: singleKey }) });
         
@@ -402,8 +516,8 @@
     function renderMyBookings() {
       const list = document.getElementById('my-bookings-list');
       list.innerHTML = '';
+      const t = i18n[currentLang];
       
-      // 同じIDの予約（代表＋同伴者）をグループ化して表示する
       const myGroups = {};
       for (let key in bookings) {
         const b = bookings[key];
@@ -421,13 +535,12 @@
           <div class="flex justify-between items-center text-xs border border-gray-400 p-2 bg-white">
             <div>
               <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
-              <span class="font-bold">代表: ${g.names[0]}</span>
-              ${g.names.length > 1 ? `<br><span class="text-[10px] text-gray-600">他 ${g.names.length - 1}名同行</span>` : ''}
+              <span class="font-bold">${g.names.join(' / ')}</span>
             </div>
-            <button onclick="if(confirm('予約を取り消しますか？')) cancelBookingOnline('${id}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">取消</button>
+            <button onclick="if(confirm('${t.alert_cancel}')) cancelBookingOnline('${id}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">${t.btn_cancel_ticket}</button>
           </div>`;
       }
-      if (count === 0) list.innerHTML = `<p class="text-xs text-gray-500">現在有効な予約はありません。</p>`;
+      if (count === 0) list.innerHTML = `<p class="text-xs text-gray-500">${t.no_tickets}</p>`;
     }
 
     // QR関連
