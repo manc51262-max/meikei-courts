@@ -6,209 +6,161 @@
   <title>MEIKEI OPEN 練習コート予約システム</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    /* 紙の印刷プレビュー用 */
     @media print {
       body * { visibility: hidden; }
       #poster-print-area, #poster-print-area * { visibility: visible; }
       #poster-print-area { position: absolute; left: 0; top: 0; width: 100%; }
     }
+    /* 表の枠線をくっきりさせる（エクセル風） */
+    .sheet-table th, .sheet-table td {
+      border: 1px solid #71717a; /* slate-500 */
+    }
+    .sheet-table {
+      border: 2px solid #27272a; /* slate-800 */
+    }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-gray-100 text-gray-900 font-sans min-h-screen flex flex-col items-center py-4">
 
-  <!-- Header -->
-  <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-30">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <i class="fa-solid fa-tennis-ball text-yellow-300 text-2xl"></i>
-        <div>
-          <h1 class="font-bold text-lg md:text-xl leading-tight">MEIKEI OPEN 2026</h1>
-          <p class="text-xs text-emerald-100" id="header-sub">体芸テニスコート 練習予約 / Practice Court</p>
+  <!-- 紙のシート風のメインコンテナ -->
+  <main class="w-full max-w-4xl bg-white shadow-md border border-gray-300 p-2 sm:p-4">
+    
+    <!-- ヘッダー部分（エクセルのタイトル風） -->
+    <div class="flex flex-col sm:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-4">
+      <h1 class="text-lg sm:text-xl font-black tracking-wide text-gray-900">
+        筑波大学MEIKEIオープンテニス PRACTICE SHEET
+      </h1>
+      <div class="mt-2 sm:mt-0 flex gap-2">
+        <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300">データ初期化</button>
+        <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold">TD管理者</button>
+      </div>
+    </div>
+
+    <!-- コントロールバー（日付と説明） -->
+    <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
+      <div class="flex flex-col space-y-1">
+        <span class="font-bold text-gray-700">【体芸テニスコート 6番・7番】 1枠20分（最大4名）</span>
+        <div class="flex items-center space-x-2">
+          <label for="date-select" class="font-bold">Date:</label>
+          <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5">
         </div>
       </div>
-      <div class="flex items-center space-x-2">
-        <button id="lang-btn" onclick="toggleLanguage()" class="px-2.5 py-1 text-xs bg-emerald-800 hover:bg-emerald-900 rounded font-semibold transition border border-emerald-600">
-          EN / 日本語
-        </button>
-        <button id="role-btn" onclick="toggleRole()" class="px-2.5 py-1 text-xs bg-yellow-400 hover:bg-yellow-500 text-slate-900 rounded font-bold transition shadow">
-          TD管理者
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Notice Banner -->
-  <div id="notice-banner" class="bg-amber-100 border-b border-amber-300 px-4 py-2 text-xs md:text-sm text-amber-900 flex justify-between items-center">
-    <div class="flex items-center space-x-2 overflow-hidden">
-      <i class="fa-solid fa-circle-exclamation text-amber-600 flex-shrink-0"></i>
-      <span id="notice-text" class="truncate font-medium">【規則】体芸6・7番コート。1枠20分（最大4名入室可）。ボールは本部受取です。</span>
-    </div>
-    <button onclick="debugReset()" class="text-[10px] text-amber-700 ml-2 whitespace-nowrap underline">データリセット</button>
-  </div>
-
-  <!-- Main Container -->
-  <main class="max-w-4xl mx-auto px-4 py-4 flex-grow w-full">
-    <!-- Controls Bar -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-      <div class="flex items-center space-x-2 w-full sm:w-auto">
-        <label for="date-select" class="text-xs font-bold text-slate-600 whitespace-nowrap">日付 / Date:</label>
-        <input type="date" id="date-select" class="border border-slate-300 rounded px-2.5 py-1 text-xs md:text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none w-full sm:w-auto">
-      </div>
-      
-      <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-600">
-        <span class="flex items-center space-x-1"><span class="w-3 h-3 bg-emerald-100 border border-emerald-400 rounded-sm inline-block"></span><span id="legend-available">空き</span></span>
-        <span class="flex items-center space-x-1"><span class="w-3 h-3 bg-blue-100 border border-blue-400 rounded-sm inline-block"></span><span id="legend-my">自分の予約</span></span>
-        <span class="flex items-center space-x-1"><span class="w-3 h-3 bg-slate-200 border border-slate-400 rounded-sm inline-block"></span><span id="legend-booked">予約済</span></span>
-        <span class="flex items-center space-x-1"><span class="w-3 h-3 bg-amber-200 border border-amber-400 rounded-sm inline-block"></span><span id="legend-official">公式割当</span></span>
-      </div>
-
-      <div id="td-controls" class="hidden flex items-center space-x-2 w-full sm:w-auto justify-end">
-        <button onclick="openPosterModal()" class="px-2.5 py-1 text-xs bg-slate-700 hover:bg-slate-800 text-white rounded font-medium flex items-center space-x-1">
-          <i class="fa-solid fa-print"></i><span>QRポスター</span>
-        </button>
+      <div class="flex gap-3 mt-2 sm:mt-0 font-medium">
+        <span class="text-green-700">■ 空き</span>
+        <span class="text-blue-700">■ 自分の予約</span>
+        <span class="text-gray-500">■ 予約済</span>
       </div>
     </div>
 
-    <!-- Timetable Grid -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-      <table class="w-full border-collapse text-center">
+    <!-- エクセル/紙風のタイムテーブル -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-center border-collapse sheet-table bg-white text-xs sm:text-sm">
         <thead>
-          <tr class="bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-700">
-            <th class="py-3 px-2 border-r border-slate-200 w-24 md:w-32">時間 (20分)</th>
-            <th class="py-3 px-2 border-r border-slate-200 w-1/2">
-              <span class="text-sm font-bold text-emerald-800 block">体芸 6番コート</span>
-              <span class="text-[10px] text-slate-500 font-normal">Court No.6</span>
-            </th>
-            <th class="py-3 px-2 w-1/2">
-              <span class="text-sm font-bold text-emerald-800 block">体芸 7番コート</span>
-              <span class="text-[10px] text-slate-500 font-normal">Court No.7</span>
-            </th>
+          <tr class="bg-gray-200 font-bold text-gray-800 h-8">
+            <th class="w-20 sm:w-28 bg-gray-300 border-r-2 border-gray-800">Starting</th>
+            <th class="w-1/2">Court 6</th>
+            <th class="w-1/2">Court 7</th>
           </tr>
         </thead>
-        <tbody id="timetable-body" class="divide-y divide-slate-100 text-xs">
-          <!-- Timetable rows rendered via JS -->
+        <tbody id="timetable-body">
+          <!-- JSで描画 -->
         </tbody>
       </table>
     </div>
 
-    <!-- My Bookings Card -->
-    <div class="mt-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-      <h3 class="font-bold text-sm text-slate-700 mb-2 flex items-center space-x-1.5">
-        <i class="fa-solid fa-ticket text-emerald-600"></i>
-        <span id="my-ticket-title">自分の予約チケット / My Active Bookings</span>
+    <!-- 自分の予約チケット -->
+    <div class="mt-6 border border-gray-400 p-3 bg-gray-50">
+      <h3 class="font-bold text-sm text-gray-800 border-b border-gray-300 pb-1 mb-2">
+        ■ 自分の予約 / My Bookings
       </h3>
       <div id="my-bookings-list" class="space-y-2">
-        <p class="text-xs text-slate-400 py-2" id="no-booking-msg">現在、有効な予約はありません。コート表の「空き」枠を押して予約してください。</p>
+        <!-- JSで描画 -->
       </div>
     </div>
+
+    <!-- TD用メニュー -->
+    <div id="td-controls" class="hidden mt-4 pt-4 border-t border-gray-300 flex gap-2">
+      <button onclick="openPosterModal()" class="px-3 py-1 text-xs bg-gray-800 text-white border border-gray-900">QRポスター印刷</button>
+      <button onclick="exportCSV()" class="px-3 py-1 text-xs bg-gray-100 text-gray-800 border border-gray-400">CSVエクスポート</button>
+    </div>
+
   </main>
 
-  <!-- Booking Modal (Up to 4 Persons) -->
-  <div id="booking-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-xl max-w-md w-full p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-      <h4 class="font-bold text-base text-slate-800 mb-1" id="modal-title">コート予約申込み</h4>
-      <p class="text-xs font-semibold text-emerald-700 mb-3 bg-emerald-50 p-2 rounded border border-emerald-200" id="modal-slot-info"></p>
-      
-      <p class="text-[11px] text-slate-500 mb-3">※1コート最大4名まで入室可能です。代表選手名と連絡先を必ず入力してください。</p>
 
-      <div class="space-y-2.5 text-xs">
+  <!-- 以下、各種モーダル機能（見た目はシンプルに調整） -->
+  
+  <!-- 予約モーダル -->
+  <div id="booking-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl">
+      <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">練習コート予約</h4>
+      <p class="text-sm font-bold text-green-700 my-2" id="modal-slot-info"></p>
+      <p class="text-[10px] text-gray-500 mb-3">※1コート最大4名。代表者と連絡先は必須です。</p>
+
+      <div class="space-y-2 text-xs">
         <div>
-          <label class="block font-semibold text-slate-700 mb-1">代表選手氏名 (必須) *</label>
-          <input type="text" id="input-player-name" placeholder="例: 筑波 太郎" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none">
+          <label class="block font-bold mb-0.5">代表選手氏名 *</label>
+          <input type="text" id="input-player-name" class="w-full border border-gray-400 px-2 py-1 bg-yellow-50 focus:bg-white outline-none">
         </div>
         <div>
-          <label class="block font-semibold text-slate-700 mb-1">連絡先電話番号 (必須) *</label>
-          <input type="tel" id="input-phone" placeholder="090-xxxx-xxxx" class="w-full border border-slate-300 rounded px-2.5 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none">
+          <label class="block font-bold mb-0.5">連絡先電話番号 *</label>
+          <input type="tel" id="input-phone" class="w-full border border-gray-400 px-2 py-1 bg-yellow-50 focus:bg-white outline-none">
         </div>
-
-        <div class="pt-2 border-t border-slate-100">
-          <label class="block font-semibold text-slate-700 mb-1">同伴者・コーチ・練習相手（任意 / 最大3名）</label>
-          <div class="space-y-1.5">
-            <input type="text" id="input-p2" placeholder="2人目 (例: コーチ山田 / 対戦選手名)" class="w-full border border-slate-200 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500 outline-none text-slate-700">
-            <input type="text" id="input-p3" placeholder="3人目 (例: 練習相手・ヒッティング)" class="w-full border border-slate-200 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500 outline-none text-slate-700">
-            <input type="text" id="input-p4" placeholder="4人目 (例: トレーナー / 同伴者)" class="w-full border border-slate-200 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-emerald-500 outline-none text-slate-700">
-          </div>
+        <div class="pt-2 border-t border-gray-300 mt-2">
+          <label class="block font-bold mb-1">同伴者（最大3名）</label>
+          <input type="text" id="input-p2" placeholder="2人目" class="w-full border border-gray-300 px-2 py-1 mb-1 outline-none">
+          <input type="text" id="input-p3" placeholder="3人目" class="w-full border border-gray-300 px-2 py-1 mb-1 outline-none">
+          <input type="text" id="input-p4" placeholder="4人目" class="w-full border border-gray-300 px-2 py-1 outline-none">
         </div>
       </div>
-
-      <div class="mt-5 flex space-x-2">
-        <button onclick="closeBookingModal()" class="w-1/2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-xs transition">キャンセル</button>
-        <button onclick="confirmBooking()" class="w-1/2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition shadow">予約を確定する</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- TD Slot Edit Modal -->
-  <div id="td-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-2xl relative">
-      <h4 class="font-bold text-base text-slate-800 mb-1">TD管理者：スロット操作</h4>
-      <p class="text-xs font-semibold text-slate-600 mb-4 bg-slate-100 p-2.5 rounded text-left" id="td-modal-slot-info"></p>
-      
-      <div class="space-y-2">
-        <button onclick="tdSetOfficial()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-xs transition shadow-sm">
-          公式練習 / メンテナンス用にブロック
-        </button>
-        <button onclick="tdCancelSlot()" class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs transition shadow-sm">
-          この枠を取り消して「空き」に戻す
-        </button>
-        <button onclick="closeTdModal()" class="w-full py-2 bg-slate-100 text-slate-600 rounded-lg font-semibold text-xs transition mt-2">
-          戻る
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Poster Print Modal (TD) -->
-  <div id="poster-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-xl max-w-lg w-full p-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-3">
-        <h4 class="font-bold text-base text-slate-800">会場掲示用 QRポスター作成</h4>
-        <button onclick="closePosterModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
-      </div>
-      
-      <div class="space-y-3 mb-4 text-xs">
-        <div>
-          <label class="block font-bold text-slate-600 mb-1">公開先URL (Base URL)</label>
-          <input type="text" id="poster-base-url" class="w-full border border-slate-300 rounded px-2.5 py-1.5">
-        </div>
-        <div class="flex space-x-2">
-          <button onclick="generatePoster('all')" class="flex-1 py-1.5 bg-slate-100 border rounded font-semibold text-xs">総合案内</button>
-          <button onclick="generatePoster('c6')" class="flex-1 py-1.5 bg-slate-100 border rounded font-semibold text-xs">6番コート専用</button>
-          <button onclick="generatePoster('c7')" class="flex-1 py-1.5 bg-slate-100 border rounded font-semibold text-xs">7番コート専用</button>
-        </div>
-      </div>
-
-      <!-- Preview Area for Print -->
-      <div id="poster-print-area" class="border-2 border-slate-800 rounded-lg p-6 text-center bg-white">
-        <h2 class="text-base font-bold text-emerald-800 tracking-wider">筑波大学MEIKEI OPEN 2026</h2>
-        <h3 id="poster-court-title" class="text-2xl font-black text-slate-900 mt-1">体芸テニスコート 練習予約</h3>
-        <p class="text-xs text-slate-500 mt-0.5">Practice Court Booking (Court 6 & 7)</p>
-        
-        <div id="qrcode-container" class="my-6 flex justify-center items-center min-h-[180px]"></div>
-
-        <p class="text-sm font-bold text-slate-900 mb-1">スマホのカメラでスキャンして予約</p>
-        <p class="text-[11px] text-slate-500">Scan QR Code to book your 20-min practice slot</p>
-        
-        <div class="mt-6 pt-4 border-t-2 border-dashed border-slate-300 text-left text-xs text-slate-700 space-y-1.5 font-medium">
-          <p>・利用枠：1回20分（1選手1日1枠まで厳守）</p>
-          <p>・1コートあたり最大4名まで入室可能です</p>
-          <p>・ボール受取・返却は大会本部デスクで行ってください</p>
-          <p>・公式戦の進行により割り当てが変更になる場合があります</p>
-        </div>
-      </div>
-
       <div class="mt-4 flex space-x-2">
-        <button onclick="closePosterModal()" class="w-1/2 py-2 bg-slate-100 text-slate-700 rounded font-semibold text-xs">閉じる</button>
-        <button onclick="window.print()" class="w-1/2 py-2 bg-emerald-600 text-white rounded font-bold text-xs flex items-center justify-center space-x-1">
-          <i class="fa-solid fa-print"></i><span>このポスターを印刷</span>
-        </button>
+        <button onclick="closeBookingModal()" class="w-1/2 py-1.5 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
+        <button onclick="confirmBooking()" class="w-1/2 py-1.5 border border-green-800 bg-green-600 text-white font-bold text-xs">予約確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TDモーダル -->
+  <div id="td-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl">
+      <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">TD管理者モード</h4>
+      <p class="text-xs font-bold text-gray-700 my-2" id="td-modal-slot-info"></p>
+      
+      <div class="space-y-2 mt-4">
+        <button onclick="tdSetOfficial()" class="w-full py-2 border border-yellow-600 bg-yellow-300 text-black font-bold text-xs">公式練習用にブロック</button>
+        <button onclick="tdCancelSlot()" class="w-full py-2 border border-red-800 bg-red-600 text-white font-bold text-xs">この枠を空きに戻す（取消）</button>
+        <button onclick="closeTdModal()" class="w-full py-1.5 bg-gray-200 border border-gray-400 font-bold text-xs mt-2">戻る</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ポスター印刷モーダル -->
+  <div id="poster-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white max-w-lg w-full border-2 border-gray-800 p-4 shadow-xl">
+      <h4 class="font-bold text-gray-800 mb-2 border-b-2 border-gray-800 pb-1">QRポスター作成</h4>
+      <div class="text-xs space-y-2 mb-4">
+        <input type="text" id="poster-base-url" class="w-full border border-gray-400 px-2 py-1">
+        <div class="flex space-x-2">
+          <button onclick="generatePoster('all')" class="flex-1 border border-gray-400 py-1 bg-gray-100">総合</button>
+          <button onclick="generatePoster('c6')" class="flex-1 border border-gray-400 py-1 bg-gray-100">Court 6</button>
+          <button onclick="generatePoster('c7')" class="flex-1 border border-gray-400 py-1 bg-gray-100">Court 7</button>
+        </div>
+      </div>
+      <div id="poster-print-area" class="border border-black p-4 text-center bg-white">
+        <h2 class="font-bold text-gray-900 tracking-wide text-sm">筑波大学MEIKEIオープンテニス</h2>
+        <h3 id="poster-court-title" class="text-xl font-black mt-1 border-b-2 border-black inline-block pb-1">PRACTICE SHEET</h3>
+        <div id="qrcode-container" class="my-4 flex justify-center min-h-[160px]"></div>
+        <p class="text-sm font-bold">QRコードをスキャンして予約</p>
+      </div>
+      <div class="mt-4 flex space-x-2">
+        <button onclick="closePosterModal()" class="w-1/2 border border-gray-400 py-1.5 bg-gray-200 text-xs font-bold">閉じる</button>
+        <button onclick="window.print()" class="w-1/2 border border-gray-800 py-1.5 bg-gray-800 text-white text-xs font-bold">印刷</button>
       </div>
     </div>
   </div>
 
   <script>
-    let currentLang = 'ja';
     let currentRole = 'player';
     let selectedSlot = null;
 
@@ -224,52 +176,30 @@
     ];
 
     const courts = ['c6', 'c7'];
-    const courtLabels = {
-      'c6': { ja: '体芸 6番', en: 'Court 6' },
-      'c7': { ja: '体芸 7番', en: 'Court 7' }
-    };
+    const courtLabels = { 'c6': 'Court 6', 'c7': 'Court 7' };
 
-    let bookings = JSON.parse(localStorage.getItem('meikei_local_bookings_v2')) || {};
-    let myBookedIds = JSON.parse(localStorage.getItem('meikei_my_ids_v2')) || [];
+    let bookings = JSON.parse(localStorage.getItem('meikei_paper_bookings')) || {};
+    let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_my_ids')) || [];
 
-    // ★緊急リセット機能★
     function debugReset() {
-      if (confirm('スマホ内の予約データをすべてリセットしますか？')) {
-        localStorage.removeItem('meikei_local_bookings_v2');
-        localStorage.removeItem('meikei_my_ids_v2');
-        localStorage.removeItem('meikei_local_bookings'); // 旧バージョンデータも削除
-        localStorage.removeItem('meikei_my_ids'); // 旧バージョンデータも削除
+      if (confirm('スマホ内の予約データをすべて初期化しますか？')) {
+        localStorage.removeItem('meikei_paper_bookings');
+        localStorage.removeItem('meikei_paper_my_ids');
         bookings = {};
         myBookedIds = [];
         renderTimetable();
         renderMyBookings();
-        alert('リセット完了しました。');
       }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      const today = new Date().toISOString().split('T')[0];
-      const dateSelect = document.getElementById('date-select');
-      if (dateSelect) dateSelect.value = today;
-      
-      const posterUrlInput = document.getElementById('poster-base-url');
-      if (posterUrlInput) posterUrlInput.value = window.location.href.split('?')[0];
+      document.getElementById('date-select').value = new Date().toISOString().split('T')[0];
+      const pUrl = document.getElementById('poster-base-url');
+      if(pUrl) pUrl.value = window.location.href.split('?')[0];
 
       renderTimetable();
       renderMyBookings();
     });
-
-    function toggleLanguage() {
-      currentLang = currentLang === 'ja' ? 'en' : 'ja';
-      document.getElementById('header-sub').innerText = currentLang === 'ja' 
-        ? '体芸テニスコート 練習予約 / Practice Court' 
-        : 'Taigei Courts Practice Booking';
-      document.getElementById('notice-text').innerText = currentLang === 'ja' 
-        ? '【規則】体芸6・7番コート。1枠20分（最大4名入室可）。ボールは本部受取です。' 
-        : '[Rule] Court 6 & 7. 20-min slot (Max 4 players). Pick up balls at Desk.';
-      renderTimetable();
-      renderMyBookings();
-    }
 
     function toggleRole() {
       currentRole = currentRole === 'player' ? 'td' : 'player';
@@ -277,53 +207,47 @@
       const tdControls = document.getElementById('td-controls');
       if (currentRole === 'td') {
         roleBtn.innerText = '選手モードに戻る';
-        roleBtn.className = 'px-2.5 py-1 text-xs bg-rose-500 hover:bg-rose-600 text-white rounded font-bold transition shadow';
+        roleBtn.className = 'px-3 py-1 text-xs bg-red-600 text-white border border-red-800 font-bold';
         tdControls.classList.remove('hidden');
       } else {
         roleBtn.innerText = 'TD管理者';
-        roleBtn.className = 'px-2.5 py-1 text-xs bg-yellow-400 hover:bg-yellow-500 text-slate-900 rounded font-bold transition shadow';
+        roleBtn.className = 'px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold';
         tdControls.classList.add('hidden');
       }
-      renderTimetable();
     }
 
     function renderTimetable() {
       const tbody = document.getElementById('timetable-body');
-      if (!tbody) return;
       tbody.innerHTML = '';
 
       timeSlots.forEach(time => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+        // 時間セル（Starting）
+        let html = `<td class="h-10 sm:h-12 bg-gray-100 font-bold border-r-2 border-gray-800 text-gray-700">${time}</td>`;
 
-        let html = `<td class="py-2.5 px-2 font-semibold text-slate-600 bg-slate-50/70 border-r border-slate-200 whitespace-nowrap text-xs">${time}</td>`;
-
+        // コートセル
         courts.forEach(court => {
           const key = `${time}_${court}`;
           const b = bookings[key];
           
           if (!b) {
-            html += `<td class="p-1.5 border-r border-slate-100 last:border-r-0">
-              <button onclick="handleSlotClick('${key}')" class="w-full py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-semibold transition text-xs shadow-sm">
-                ${currentLang === 'ja' ? '空き (予約)' : 'Open'}
-              </button>
+            html += `<td onclick="handleSlotClick('${key}')" class="cursor-pointer hover:bg-green-50 text-gray-300 hover:text-green-600 transition">
+              <span class="text-[10px] sm:text-xs font-semibold">( 空き )</span>
             </td>`;
           } else if (b.status === 'official') {
-            html += `<td class="p-1.5 border-r border-slate-100 last:border-r-0">
-              <div onclick="handleSlotClick('${key}')" class="cursor-pointer w-full py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-lg font-medium text-xs">
-                ${b.name || '公式割当'}
-              </div>
+            html += `<td onclick="handleSlotClick('${key}')" class="cursor-pointer bg-yellow-100 text-yellow-900 font-bold">
+              <div class="text-xs">${b.name}</div>
             </td>`;
           } else {
             const isMy = myBookedIds.includes(b.id);
             const others = [b.p2, b.p3, b.p4, b.partner].filter(Boolean);
-            const othersText = others.length > 0 ? ` +${others.join(', ')}` : '';
-
-            html += `<td class="p-1.5 border-r border-slate-100 last:border-r-0">
-              <div onclick="handleSlotClick('${key}')" class="cursor-pointer w-full py-1.5 px-1 ${isMy ? 'bg-blue-100 border-blue-400 text-blue-900 font-bold' : 'bg-slate-100 border-slate-300 text-slate-700'} border rounded-lg text-xs leading-tight">
-                <p class="truncate font-bold">${b.name}</p>
-                ${othersText ? `<p class="text-[10px] text-slate-500 truncate font-normal">${othersText}</p>` : ''}
-                <p class="text-[9px] ${isMy ? 'text-blue-700' : 'text-slate-400'}">${b.id}</p>
+            const othersText = others.length > 0 ? ` +${others.length}名` : '';
+            
+            // 紙に書き込んだような見た目
+            html += `<td onclick="handleSlotClick('${key}')" class="cursor-pointer ${isMy ? 'bg-blue-50 text-blue-900' : 'bg-white text-gray-800'}">
+              <div class="flex flex-col justify-center h-full">
+                <span class="font-bold text-xs sm:text-sm truncate">${b.name}</span>
+                ${othersText ? `<span class="text-[9px] text-gray-500">${othersText}</span>` : ''}
               </div>
             </td>`;
           }
@@ -338,14 +262,10 @@
       selectedSlot = key;
       const b = bookings[key];
       const [time, court] = key.split('_');
-      const cName = courtLabels[court].ja;
 
       if (currentRole === 'td') {
-        const others = b ? [b.p2, b.p3, b.p4, b.partner].filter(Boolean).join(', ') : '';
-        const info = b 
-          ? `【予約中】\n代表: ${b.name}\n同伴: ${others || 'なし'}\nTEL: ${b.phone || '-'}\nID: ${b.id}` 
-          : '【現在：空き枠】';
-        document.getElementById('td-modal-slot-info').innerText = `${cName}コート (${time})\n${info}`;
+        const info = b ? `【予約】 ${b.name}\n同伴: ${[b.p2, b.p3, b.p4].filter(Boolean).join(',')||'なし'}` : '【空き枠】';
+        document.getElementById('td-modal-slot-info').innerText = `${courtLabels[court]} (${time})\n${info}`;
         document.getElementById('td-modal').classList.remove('hidden');
         return;
       }
@@ -353,13 +273,13 @@
       // 選手モード
       if (!b) {
         if (myBookedIds.length >= 1) {
-          alert('練習コートの予約は1選手1日1枠までです。\n変更したい場合は、下の「自分の予約チケット」から取り消してください。');
+          alert('1選手1日1枠までです。予約を変更する場合は下のチケットから取り消してください。');
           return;
         }
-        document.getElementById('modal-slot-info').innerText = `${cName}コート | ${time}`;
+        document.getElementById('modal-slot-info').innerText = `${courtLabels[court]} | ${time}`;
         document.getElementById('booking-modal').classList.remove('hidden');
       } else if (myBookedIds.includes(b.id)) {
-        if (confirm(`[${cName} ${time}] の予約を取り消しますか？`)) {
+        if (confirm(`この予約を取り消しますか？`)) {
           cancelBookingLocal(key, b.id);
         }
       } else {
@@ -367,38 +287,27 @@
       }
     }
 
-    function closeBookingModal() {
-      document.getElementById('booking-modal').classList.add('hidden');
-    }
-
-    function closeTdModal() {
-      document.getElementById('td-modal').classList.add('hidden');
-    }
+    function closeBookingModal() { document.getElementById('booking-modal').classList.add('hidden'); }
+    function closeTdModal() { document.getElementById('td-modal').classList.add('hidden'); }
 
     function confirmBooking() {
       const name = document.getElementById('input-player-name').value.trim();
       const phone = document.getElementById('input-phone').value.trim();
-      const p2 = document.getElementById('input-p2').value.trim();
-      const p3 = document.getElementById('input-p3').value.trim();
-      const p4 = document.getElementById('input-p4').value.trim();
+      if (!name || !phone) return alert('代表者名と電話番号を入力してください。');
 
-      if (!name || !phone) {
-        alert('代表選手氏名と電話番号を入力してください。');
-        return;
-      }
+      const bId = 'MK-' + Math.floor(100 + Math.random() * 900);
+      myBookedIds.push(bId);
+      localStorage.setItem('meikei_paper_my_ids', JSON.stringify(myBookedIds));
 
-      const bookingId = 'MK-' + Math.floor(100 + Math.random() * 900);
-      const partnerCombined = [p2, p3, p4].filter(Boolean).join(', ');
-
-      myBookedIds.push(bookingId);
-      localStorage.setItem('meikei_my_ids_v2', JSON.stringify(myBookedIds));
-
-      bookings[selectedSlot] = { name, partner: partnerCombined, p2, p3, p4, phone, status: 'booked', id: bookingId };
-      localStorage.setItem('meikei_local_bookings_v2', JSON.stringify(bookings));
+      bookings[selectedSlot] = {
+        name, phone, status: 'booked', id: bId,
+        p2: document.getElementById('input-p2').value.trim(),
+        p3: document.getElementById('input-p3').value.trim(),
+        p4: document.getElementById('input-p4').value.trim()
+      };
+      localStorage.setItem('meikei_paper_bookings', JSON.stringify(bookings));
 
       closeBookingModal();
-      
-      // フォームをリセット
       document.getElementById('input-player-name').value = '';
       document.getElementById('input-phone').value = '';
       document.getElementById('input-p2').value = '';
@@ -407,26 +316,22 @@
 
       renderTimetable();
       renderMyBookings();
-      alert(`予約が完了しました！\n予約ID: ${bookingId}`);
     }
 
-    function cancelBookingLocal(key, bookingId) {
-      myBookedIds = myBookedIds.filter(id => id !== bookingId);
-      localStorage.setItem('meikei_my_ids_v2', JSON.stringify(myBookedIds));
-      
+    function cancelBookingLocal(key, bId) {
+      myBookedIds = myBookedIds.filter(id => id !== bId);
+      localStorage.setItem('meikei_paper_my_ids', JSON.stringify(myBookedIds));
       delete bookings[key];
-      localStorage.setItem('meikei_local_bookings_v2', JSON.stringify(bookings));
-      
+      localStorage.setItem('meikei_paper_bookings', JSON.stringify(bookings));
       renderTimetable();
       renderMyBookings();
-      alert('予約を取り消しました。');
     }
 
     function tdSetOfficial() {
       if (!selectedSlot) return;
       closeTdModal();
-      bookings[selectedSlot] = { name: '公式割当 / 調整中', status: 'official', id: 'MK-OFFICIAL' };
-      localStorage.setItem('meikei_local_bookings_v2', JSON.stringify(bookings));
+      bookings[selectedSlot] = { name: '公式割当', status: 'official', id: 'MK-OFFICIAL' };
+      localStorage.setItem('meikei_paper_bookings', JSON.stringify(bookings));
       renderTimetable();
     }
 
@@ -434,20 +339,15 @@
       if (!selectedSlot) return;
       closeTdModal();
       delete bookings[selectedSlot];
-      localStorage.setItem('meikei_local_bookings_v2', JSON.stringify(bookings));
+      localStorage.setItem('meikei_paper_bookings', JSON.stringify(bookings));
       renderTimetable();
-      
-      // もし自分の予約IDが残っていればそれも消す
-      renderMyBookings(); // 再描画
+      renderMyBookings();
     }
 
     function renderMyBookings() {
       const list = document.getElementById('my-bookings-list');
-      if (!list) return;
       list.innerHTML = '';
       let count = 0;
-
-      // エラー回避のため、存在しないIDはmyBookedIdsから除外するクリーンアップ処理
       const validIds = [];
 
       for (let key in bookings) {
@@ -456,31 +356,43 @@
           count++;
           validIds.push(b.id);
           const [time, court] = key.split('_');
-          const others = [b.p2, b.p3, b.p4, b.partner].filter(Boolean).join(', ');
-          const div = document.createElement('div');
-          div.className = 'border border-blue-200 bg-blue-50/80 p-3 rounded-lg flex justify-between items-center text-xs';
-          div.innerHTML = `
-            <div>
-              <span class="font-bold text-blue-900">${courtLabels[court].ja}コート | ${time}</span>
-              <p class="text-slate-700 mt-0.5">代表: <span class="font-bold">${b.name}</span></p>
-              ${others ? `<p class="text-slate-500 text-[11px]">同伴: ${others}</p>` : ''}
-              <p class="text-[10px] text-blue-600 mt-0.5">予約ID: ${b.id}</p>
+          const others = [b.p2, b.p3, b.p4].filter(Boolean).join(',');
+          
+          list.innerHTML += `
+            <div class="flex justify-between items-center text-xs border border-gray-400 p-2 bg-white">
+              <div>
+                <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
+                <span>代表: ${b.name} ${others ? `(他: ${others})` : ''}</span>
+              </div>
+              <button onclick="handleSlotClick('${key}')" class="px-2 py-1 bg-gray-200 border border-gray-400 font-bold text-gray-600">取消</button>
             </div>
-            <button onclick="handleSlotClick('${key}')" class="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold rounded text-xs transition">取消</button>
           `;
-          list.appendChild(div);
         }
       }
 
-      // クリーンアップを保存
       if (validIds.length !== myBookedIds.length) {
         myBookedIds = validIds;
-        localStorage.setItem('meikei_my_ids_v2', JSON.stringify(myBookedIds));
+        localStorage.setItem('meikei_paper_my_ids', JSON.stringify(myBookedIds));
       }
+      if (count === 0) list.innerHTML = `<p class="text-xs text-gray-500">現在予約はありません。</p>`;
+    }
 
-      if (count === 0) {
-        list.innerHTML = `<p class="text-xs text-slate-400 py-1">${currentLang === 'ja' ? '現在、有効な予約はありません。' : 'No active bookings found.'}</p>`;
-      }
+    function openPosterModal() {
+      document.getElementById('poster-modal').classList.remove('hidden');
+      generatePoster('all');
+    }
+    function closePosterModal() { document.getElementById('poster-modal').classList.add('hidden'); }
+
+    function generatePoster(target) {
+      const baseUrl = document.getElementById('poster-base-url').value.trim();
+      const qc = document.getElementById('qrcode-container');
+      qc.innerHTML = '';
+      let tUrl = baseUrl;
+      if (target === 'c6') { tUrl += '?court=c6'; document.getElementById('poster-court-title').innerText = 'Court 6 予約'; }
+      else if (target === 'c7') { tUrl += '?court=c7'; document.getElementById('poster-court-title').innerText = 'Court 7 予約'; }
+      else { document.getElementById('poster-court-title').innerText = 'PRACTICE SHEET'; }
+
+      new QRCode(qc, { text: tUrl, width: 140, height: 140, colorDark: "#000", colorLight: "#fff" });
     }
   </script>
 </body>
