@@ -14,6 +14,7 @@
       #poster-print-area { position: absolute; left: 0; top: 0; width: 100%; }
     }
     table { border-collapse: collapse; width: 100%; border: 2px solid #1f2937; }
+    /* セル幅の調整と、はみ出し文字の「...」省略設定 */
     th, td { border: 1px solid #9ca3af; max-width: 95px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     .thick-bottom td { border-bottom: 2px solid #1f2937 !important; }
     .thick-right { border-right: 2px solid #1f2937 !important; }
@@ -119,12 +120,9 @@
             <button onclick="selectAllCourts()" id="bulk-btn-all" class="px-2 py-1 bg-gray-200 border border-gray-400 rounded text-[10px] font-bold">全選択</button>
           </div>
           <div class="grid grid-cols-4 gap-2 mb-2">
-            <label><input type="checkbox" id="bulk-c1"> Court 1</label>
-            <label><input type="checkbox" id="bulk-c2"> Court 2</label>
-            <label><input type="checkbox" id="bulk-c3"> Court 3</label>
-            <label><input type="checkbox" id="bulk-c4"> Court 4</label>
-            <label><input type="checkbox" id="bulk-c5"> Court 5</label>
-            <label><input type="checkbox" id="bulk-c6"> Court 6</label>
+            <label><input type="checkbox" id="bulk-c1"> Court 1</label><label><input type="checkbox" id="bulk-c2"> Court 2</label>
+            <label><input type="checkbox" id="bulk-c3"> Court 3</label><label><input type="checkbox" id="bulk-c4"> Court 4</label>
+            <label><input type="checkbox" id="bulk-c5"> Court 5</label><label><input type="checkbox" id="bulk-c6"> Court 6</label>
             <label><input type="checkbox" id="bulk-c7"> Court 7</label>
           </div>
         </div>
@@ -268,7 +266,7 @@
         td_btn_block: "이 행을 대회 할당으로 블록", td_btn_cancel: "이 그룹 취소",
         td_btn_back: "뒤로", official: "공식할당",
         btn_bulk: "일괄 블록 (시합 등)", bulk_title: "코트 일괄 블록 설정",
-        bulk_reason: "표시 이름", bulk_reason_def: "MATCH", bulk_courts: "대상 코트",
+        bulk_reason: "표시 이름", bulk_reason_def: "시합 (MATCH)", bulk_courts: "대상 코트",
         bulk_all: "전체 선택", bulk_period: "대상 기간", bulk_exec: "일괄 블록 실행"
       }
     };
@@ -343,6 +341,19 @@
       applyLang();
     }
 
+    // ★ 翻訳補助フィルター（DBに保存された固定文字を現在の言語に合わせて置き換える）
+    function getLocalizedName(originalName, t) {
+      if (!originalName) return '';
+      const n = originalName.trim();
+      if (n === "試合のため使用不可" || n === "試合 (MATCH)" || n === "MATCH" || n === "시합 (MATCH)" || n === "Unavailable (Match)") {
+        return t.bulk_reason_def;
+      }
+      if (n === "公式割当" || n === "Official" || n === "공식할당") {
+        return t.official;
+      }
+      return n;
+    }
+
     function applyLang() {
       const t = i18n[currentLang];
       document.getElementById('current-lang-label').innerText = t.lang_label;
@@ -406,7 +417,6 @@
       renderTimetable();
     }
 
-    // ★★★ 一括ブロック時はセルを結合(rowspan=4)して美しく見せるロジック ★★★
     function renderTimetable() {
       const tbody = document.getElementById('timetable-body');
       tbody.innerHTML = '';
@@ -428,7 +438,6 @@
           const b1 = bookings[keys[0]]; const b2 = bookings[keys[1]];
           const b3 = bookings[keys[2]]; const b4 = bookings[keys[3]];
 
-          // 全て同じ名前かつ公式ブロックの同じIDであるかを判定
           const isBulkBlocked = (
             b1 && b2 && b3 && b4 &&
             b1.status === 'official' && b2.status === 'official' &&
@@ -438,13 +447,12 @@
           );
 
           if (isBulkBlocked) {
-            // スッキリ見せるため4マスを結合（グレー調のスタイリッシュな見た目に）
+            // 一括ブロック時はセルを結合し、改行させず綺麗に表示
+            let dispName = getLocalizedName(b1.name, t);
             const cellAttr = `onclick="handleSlotClick('${keys[0]}')" rowspan="4" class="cursor-pointer text-center align-middle bg-slate-200 hover:bg-slate-300 transition !border-b-2 !border-gray-800"`;
-            const cellContent = `<div class="font-bold text-slate-600 text-xs sm:text-sm tracking-widest px-1 whitespace-normal leading-tight">${b1.name}</div>`;
+            const cellContent = `<div class="font-bold text-slate-600 text-[10px] sm:text-xs tracking-widest px-1 whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-[85px] mx-auto">${dispName}</div>`;
             html1 += `<td ${cellAttr}>${cellContent}</td>`;
-            // html2, 3, 4 には何も追加しない（結合されたため）
           } else {
-            // 通常の4行レンダリング
             keys.forEach((key, idx) => {
               const b = bookings[key];
               let cellContent = `<span class="text-[9px] text-gray-300 tracking-widest">${t.empty}</span>`;
@@ -452,14 +460,15 @@
               let txtClass = 'text-gray-800';
 
               if (b) {
+                let dispName = getLocalizedName(b.name, t);
                 if (b.status === 'official') {
                   bgClass = 'bg-yellow-100'; txtClass = 'text-yellow-900 font-bold';
-                  cellContent = b.name;
+                  cellContent = dispName;
                 } else {
                   const isMy = myBookedIds.includes(b.id);
                   bgClass = isMy ? 'bg-blue-50' : 'bg-white';
                   txtClass = isMy ? 'text-blue-900 font-bold' : 'text-gray-800 font-bold';
-                  cellContent = b.name;
+                  cellContent = dispName;
                 }
               }
 
@@ -486,7 +495,8 @@
       const t = i18n[currentLang];
 
       if (currentRole === 'td') {
-        const info = b ? `Name: ${b.name}\nTEL: ${b.phone||'-'}\n(ID: ${b.id})` : `【${t.empty}】`;
+        let dispName = b ? getLocalizedName(b.name, t) : '';
+        const info = b ? `Name: ${dispName}\nTEL: ${b.phone||'-'}\n(ID: ${b.id})` : `【${t.empty}】`;
         document.getElementById('td-modal-slot-info').innerText = `${courtLabels[parts[1]]} (${parts[0]})\nRow ${parts[2]}\n\n${info}`;
         document.getElementById('td-input-name').value = '';
         selectedSlot = key;
@@ -598,7 +608,6 @@
 
     async function tdSetOfficial() {
       if (!selectedSlot) return; 
-      
       const t = i18n[currentLang];
       const inputName = document.getElementById('td-input-name').value.trim();
       const officialName = inputName ? inputName : t.official;
@@ -620,7 +629,6 @@
       await cancelBookingOnline(bId, selectedSlot);
     }
 
-    // --- 一括ブロック機能 ---
     function openBulkModal() { 
       const t = i18n[currentLang];
       document.getElementById('bulk-reason').value = t.bulk_reason_def;
@@ -705,7 +713,6 @@
       if (count === 0) list.innerHTML = `<p class="text-xs text-gray-500">${t.no_tickets}</p>`;
     }
 
-    // QR関連
     function openPosterModal() { document.getElementById('poster-modal').classList.remove('hidden'); generatePoster(); }
     function closePosterModal() { document.getElementById('poster-modal').classList.add('hidden'); }
     function generatePoster() {
