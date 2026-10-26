@@ -149,7 +149,7 @@
         title: '筑波大学MEIKEIオープンテニス PRACTICE SHEET',
         sub: '【体芸 1〜7番コート】 1枠20分（最大4名）',
         swipe: '※表を横にスワイプして1〜7番コートを確認できます 👉',
-        openStr: '( 空き )',
+        openStr: '【空き枠】', // モーダル用
         legOpen: '■ 空き', legMy: '■ 自分の予約', legBooked: '■ 予約済',
         myTitle: '■ 自分の予約 / My Bookings',
         modTitle: '練習コート予約',
@@ -164,7 +164,7 @@
         title: 'MEIKEI OPEN PRACTICE SHEET',
         sub: '[Court 1-7] 20min slot (Max 4 pax)',
         swipe: '※ Swipe horizontally to view courts 1-7 👉',
-        openStr: '( Open )',
+        openStr: '[ Open Slot ]', // モーダル用
         legOpen: '■ Open', legMy: '■ My Booking', legBooked: '■ Booked',
         myTitle: '■ My Bookings',
         modTitle: 'Court Booking',
@@ -179,7 +179,7 @@
         title: 'MEIKEI OPEN 연습 코트 예약',
         sub: '[코트 1-7] 1타임 20분 (최대 4명)',
         swipe: '※ 옆으로 스와이프하여 1~7번 코트 확인 👉',
-        openStr: '( 빈자리 )',
+        openStr: '[ 예약 가능 ]', // 모달용
         legOpen: '■ 예약가능', legMy: '■ 내 예약', legBooked: '■ 예약됨',
         myTitle: '■ 내 예약 내역',
         modTitle: '코트 예약',
@@ -308,7 +308,8 @@
 
           if (!b) {
             bgClass = 'bg-white hover:bg-green-50';
-            v1 = `<span class="text-[9px] text-gray-400 tracking-widest font-semibold">${txt.openStr}</span>`;
+            // ★ グリッド上の「空き」文字を削除し完全に空白にしました
+            v1 = ''; 
           } else if (b.status === 'official') {
             bgClass = 'bg-yellow-100'; txtClass = 'text-yellow-900 font-bold'; v1 = b.name;
           } else {
