@@ -31,7 +31,7 @@
     </div>
 
     <div class="flex flex-col md:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
-      <!-- ★5回連続タップでパスワード入力（TDメニュー出現）★ -->
+      <!-- 5回タップでロック解除 -->
       <h1 id="main-title" onclick="handleSecretClick()" class="text-base sm:text-xl font-black tracking-wide text-gray-900 cursor-pointer select-none">
         筑波大学MEIKEIオープンテニス PRACTICE SHEET
       </h1>
@@ -53,7 +53,7 @@
 
     <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
       <div class="flex flex-col space-y-1">
-        <span id="rule-text" class="font-bold text-gray-700">【1枠最大4名】空いている行（マス）をタップして予約できます</span>
+        <span id="rule-text" class="font-bold text-gray-700">【1枠30分・最大4名】空いている行をタップして予約</span>
         <div class="flex items-center space-x-2">
           <label for="date-select" id="date-label" class="font-bold">Date:</label>
           <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none">
@@ -86,31 +86,71 @@
       </table>
     </div>
 
-    <!-- 自分の予約チケット -->
     <div class="mt-4 border border-gray-400 p-3 bg-gray-50 w-full">
-      <h3 id="my-tickets-title" class="font-bold text-sm text-gray-800 border-b border-gray-300 pb-1 mb-2">
-        ■ 自分の予約チケット / My Bookings
-      </h3>
+      <h3 id="my-tickets-title" class="font-bold text-sm text-gray-800 border-b border-gray-300 pb-1 mb-2">■ 自分の予約チケット / My Bookings</h3>
       <div id="my-bookings-list" class="space-y-2"></div>
     </div>
 
     <!-- TD用メニュー -->
-    <div id="td-controls" class="hidden mt-4 pt-4 border-t border-gray-300 flex gap-2">
-      <button onclick="openPosterModal()" class="px-3 py-1.5 text-xs bg-gray-800 text-white border border-gray-900 font-bold">QRポスター作成</button>
-      <button onclick="exportCSV()" class="px-3 py-1.5 text-xs bg-gray-100 text-gray-800 border border-gray-400 font-bold">CSVエクスポート</button>
+    <div id="td-controls" class="hidden mt-4 pt-4 border-t border-gray-300 flex flex-wrap gap-2">
+      <button onclick="openBulkModal()" class="px-3 py-2 text-xs bg-red-600 text-white border border-red-800 font-bold shadow-md rounded">
+        <i class="fa-solid fa-ban"></i> <span id="btn-bulk">試合・イベント一括ブロック</span>
+      </button>
+      <button onclick="openPosterModal()" class="px-3 py-1.5 text-xs bg-gray-800 text-white border border-gray-900 font-bold rounded">QRポスター作成</button>
+      <button onclick="exportCSV()" class="px-3 py-1.5 text-xs bg-gray-100 text-gray-800 border border-gray-400 font-bold rounded">CSVエクスポート</button>
     </div>
   </main>
 
   <!-- ================= モーダル群 ================= -->
   
+  <!-- 試合用の一括ブロックモーダル -->
+  <div id="bulk-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white max-w-md w-full border-2 border-gray-800 p-4 shadow-xl relative max-h-[90vh] overflow-y-auto">
+      <h4 id="bulk-title" class="font-bold text-gray-800 mb-3 border-b-2 border-gray-800 pb-1">コート一括ブロック設定</h4>
+      
+      <div class="space-y-3 text-xs">
+        <div>
+          <label id="bulk-label-reason" class="block font-bold mb-1">表示名</label>
+          <input type="text" id="bulk-reason" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none">
+        </div>
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label id="bulk-label-courts" class="font-bold">対象コート</label>
+            <button onclick="selectAllCourts()" id="bulk-btn-all" class="px-2 py-1 bg-gray-200 border border-gray-400 rounded text-[10px] font-bold">全選択</button>
+          </div>
+          <div class="grid grid-cols-4 gap-2 mb-2">
+            <label><input type="checkbox" id="bulk-c1"> Court 1</label>
+            <label><input type="checkbox" id="bulk-c2"> Court 2</label>
+            <label><input type="checkbox" id="bulk-c3"> Court 3</label>
+            <label><input type="checkbox" id="bulk-c4"> Court 4</label>
+            <label><input type="checkbox" id="bulk-c5"> Court 5</label>
+            <label><input type="checkbox" id="bulk-c6"> Court 6</label>
+            <label><input type="checkbox" id="bulk-c7"> Court 7</label>
+          </div>
+        </div>
+        <div>
+          <label id="bulk-label-period" class="block font-bold mb-1 border-t border-gray-300 pt-2">対象期間</label>
+          <div class="flex items-center space-x-2">
+            <select id="bulk-start" class="w-1/2 border border-gray-400 px-1 py-1.5 outline-none bg-white"></select>
+            <span class="font-bold">〜</span>
+            <select id="bulk-end" class="w-1/2 border border-gray-400 px-1 py-1.5 outline-none bg-white"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5 flex space-x-2">
+        <button id="bulk-btn-cancel" onclick="closeBulkModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
+        <button id="bulk-btn-exec" onclick="executeBulkBlock()" class="w-1/2 py-2 border border-red-800 bg-red-600 text-white font-bold text-xs shadow-md">一括ブロック実行</button>
+      </div>
+    </div>
+  </div>
+
   <div id="booking-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl relative max-h-[90vh] overflow-y-auto">
       <h4 id="modal-title-text" class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">練習コート予約</h4>
       <p class="text-sm font-bold text-green-700 my-2" id="modal-slot-info"></p>
       
-      <div id="modal-inputs-container" class="space-y-2 text-xs mt-3">
-        <!-- JSで多言語対応のフォームが生成されます -->
-      </div>
+      <div id="modal-inputs-container" class="space-y-2 text-xs mt-3"></div>
 
       <div class="mt-5 flex space-x-2">
         <button id="btn-cancel" onclick="closeBookingModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
@@ -124,13 +164,11 @@
       <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">TD管理者モード</h4>
       <p class="text-xs font-bold text-gray-700 my-2 whitespace-pre-line" id="td-modal-slot-info"></p>
       
-      <!-- TDが名前を指定してブロックできる機能 -->
       <div class="mt-3 pt-3 border-t border-gray-300">
         <label id="td-label-name" class="block font-bold mb-1 text-xs text-blue-800">大会側での割当 (選手名)</label>
         <input type="text" id="td-input-name" class="w-full border border-gray-400 px-2 py-1.5 text-xs bg-yellow-50 outline-none mb-2">
         <button id="td-btn-block" onclick="tdSetOfficial()" class="w-full py-2 border border-yellow-600 bg-yellow-300 text-black font-bold text-xs">この行を大会割当としてブロック</button>
       </div>
-
       <div class="space-y-2 mt-4 pt-4 border-t border-gray-300">
         <button id="td-btn-cancel" onclick="tdCancelSlot()" class="w-full py-2 border border-red-800 bg-red-600 text-white font-bold text-xs">このグループを取消 (空きに戻す)</button>
         <button id="td-btn-back" onclick="closeTdModal()" class="w-full py-1.5 bg-gray-200 border border-gray-400 font-bold text-xs mt-2">戻る</button>
@@ -138,7 +176,6 @@
     </div>
   </div>
 
-  <!-- ポスター印刷モーダル -->
   <div id="poster-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-lg w-full border-2 border-gray-800 p-4 shadow-xl">
       <h4 class="font-bold text-gray-800 mb-2 border-b-2 border-gray-800 pb-1">QRポスター作成</h4>
@@ -161,7 +198,6 @@
         <h2 class="font-bold text-gray-900 tracking-wide text-sm">筑波大学MEIKEIオープンテニス</h2>
         <h3 id="poster-court-title" class="text-xl font-black mt-1 border-b-2 border-black inline-block pb-1 px-4">PRACTICE SHEET</h3>
         <div id="qrcode-container" class="my-5 flex justify-center min-h-[160px]"></div>
-        <p class="text-sm font-bold">スマホカメラでスキャンして予約</p>
       </div>
       <div class="mt-4 flex space-x-2">
         <button onclick="closePosterModal()" class="w-1/2 border border-gray-400 py-2 bg-gray-200 text-xs font-bold">閉じる</button>
@@ -172,13 +208,12 @@
 
   <script>
     // ★★★ 以下のURLをご自身のGASのURLに書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx8sMgy5h1iiA6sZAVR5IvrQDFEALvbnQLuYmV6XYQIC7aIj59gNmBOIIHfJTWMIQGBceg/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxbAAH8yL4RgkPPbrBPb87bT52BNMuxA9ny7bGFYlMc-TXCductvHPRN5EvpPItv2A4Tg/exec";
 
-    // --- 多言語辞書 (i18n) ---
     const i18n = {
       ja: {
         lang_label: "日本語", title: "筑波大学MEIKEIオープンテニス PRACTICE SHEET",
-        rule: "【1枠最大4名】空いている行（マス）をタップして予約", update: "更新",
+        rule: "【1枠30分・最大4名】空いている行（マス）をタップして予約", update: "更新",
         date: "Date:", open: "■ 空き", my: "■ 自分の予約", booked: "■ 予約済",
         swipe: "※表を横にスワイプして1〜7番コートを確認できます 👉",
         my_tickets: "■ 自分の予約チケット / My Bookings",
@@ -191,11 +226,14 @@
         empty: "( 空き )",
         td_label_name: "大会側での割当 (選手名)", td_ph_name: "例: 筑波太郎 (空欄なら「公式割当」)",
         td_btn_block: "この行を大会割当としてブロック", td_btn_cancel: "このグループを取消 (空きに戻す)",
-        td_btn_back: "戻る", official: "公式割当"
+        td_btn_back: "戻る", official: "公式割当",
+        btn_bulk: "試合・イベント一括ブロック", bulk_title: "コート一括ブロック設定",
+        bulk_reason: "表示名", bulk_reason_def: "試合のため使用不可", bulk_courts: "対象コート",
+        bulk_all: "全選択", bulk_period: "対象期間", bulk_exec: "一括ブロック実行"
       },
       en: {
         lang_label: "English", title: "MEIKEI OPEN Practice Court",
-        rule: "[Max 4/slot] Tap an empty row to book", update: "Update",
+        rule: "[Max 4/slot, 30m] Tap an empty row to book", update: "Update",
         date: "Date:", open: "■ Open", my: "■ My Booking", booked: "■ Booked",
         swipe: "* Swipe right to see Courts 1-7 👉",
         my_tickets: "■ My Bookings",
@@ -208,11 +246,14 @@
         empty: "( Open )",
         td_label_name: "Official Assignment (Player Name)", td_ph_name: "e.g. John Doe (Blank for 'Official')",
         td_btn_block: "Block this row as Official", td_btn_cancel: "Cancel this group",
-        td_btn_back: "Back", official: "Official"
+        td_btn_back: "Back", official: "Official",
+        btn_bulk: "Bulk Block (Matches)", bulk_title: "Bulk Block Settings",
+        bulk_reason: "Display Name", bulk_reason_def: "Unavailable (Match)", bulk_courts: "Target Courts",
+        bulk_all: "Select All", bulk_period: "Period", bulk_exec: "Execute"
       },
       ko: {
         lang_label: "한국어", title: "MEIKEI OPEN 연습 코트 예약",
-        rule: "[최대 4명] 빈 칸을 탭하여 예약하세요", update: "새로고침",
+        rule: "[1타임 30분, 최대 4명] 빈 칸을 탭하여 예약", update: "새로고침",
         date: "Date:", open: "■ 빈자리", my: "■ 내 예약", booked: "■ 예약됨",
         swipe: "※ 표를 옆으로 스와이프하여 코트를 확인하세요 👉",
         my_tickets: "■ 내 예약 / My Bookings",
@@ -225,7 +266,10 @@
         empty: "( 빈자리 )",
         td_label_name: "대회 측 할당 (선수 이름)", td_ph_name: "예: 홍길동 (비워두면 '공식할당')",
         td_btn_block: "이 행을 대회 할당으로 블록", td_btn_cancel: "이 그룹 취소",
-        td_btn_back: "뒤로", official: "공식할당"
+        td_btn_back: "뒤로", official: "공식할당",
+        btn_bulk: "일괄 블록 (시합 등)", bulk_title: "코트 일괄 블록 설정",
+        bulk_reason: "표시 이름", bulk_reason_def: "시합으로 사용 불가", bulk_courts: "대상 코트",
+        bulk_all: "전체 선택", bulk_period: "대상 기간", bulk_exec: "일괄 블록 실행"
       }
     };
 
@@ -240,12 +284,9 @@
     function handleSecretClick() {
       secretClickCount++;
       clearTimeout(secretClickTimer);
-      
       if (secretClickCount >= 5) {
         secretClickCount = 0;
         const password = prompt("TD管理者パスワードを入力してください\n(Enter TD Password):");
-        
-        // ★TDパスワード（好きな数字に変更可能）
         if (password === "2026") {
           document.getElementById('admin-buttons').classList.remove('hidden');
           alert('【TD管理者メニュー】のロックを解除しました。');
@@ -257,11 +298,12 @@
       }
     }
 
+    // ★ 30分間隔に変更されたスケジュール
     const timeSlots = [
-      '09:00 - 09:20', '09:20 - 09:40', '09:40 - 10:00', '10:00 - 10:20', '10:20 - 10:40', '10:40 - 11:00',
-      '11:00 - 11:20', '11:20 - 11:40', '11:40 - 12:00', '12:00 - 12:20', '12:20 - 12:40', '12:40 - 13:00',
-      '13:00 - 13:20', '13:20 - 13:40', '13:40 - 14:00', '14:00 - 14:20', '14:20 - 14:40', '14:40 - 15:00',
-      '15:00 - 15:20', '15:20 - 15:40', '15:40 - 16:00', '16:00 - 16:20', '16:20 - 16:40', '16:40 - 17:00'
+      '09:00 - 09:30', '09:30 - 10:00', '10:00 - 10:30', '10:30 - 11:00',
+      '11:00 - 11:30', '11:30 - 12:00', '12:00 - 12:30', '12:30 - 13:00',
+      '13:00 - 13:30', '13:30 - 14:00', '14:00 - 14:30', '14:30 - 15:00',
+      '15:00 - 15:30', '15:30 - 16:00', '16:00 - 16:30', '16:30 - 17:00'
     ];
     const courts = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
     const courtLabels = { 'c1':'Court 1', 'c2':'Court 2', 'c3':'Court 3', 'c4':'Court 4', 'c5':'Court 5', 'c6':'Court 6', 'c7':'Court 7' };
@@ -282,6 +324,14 @@
       document.getElementById('date-select').value = new Date().toISOString().split('T')[0];
       const pUrl = document.getElementById('poster-base-url');
       if(pUrl) pUrl.value = window.location.href.split('?')[0];
+
+      // 一括ブロック用のセレクトボックスを生成
+      const startSel = document.getElementById('bulk-start');
+      const endSel = document.getElementById('bulk-end');
+      timeSlots.forEach((t, i) => {
+        startSel.innerHTML += `<option value="${i}">${t}</option>`;
+        endSel.innerHTML += `<option value="${i}">${t}</option>`;
+      });
 
       applyLang();
       fetchLatestData(true);
@@ -312,12 +362,20 @@
       document.getElementById('btn-cancel').innerText = t.btn_cancel;
       document.getElementById('submit-btn').innerText = t.btn_submit;
 
-      // TDモーダルの翻訳適用
       document.getElementById('td-label-name').innerText = t.td_label_name;
       document.getElementById('td-input-name').placeholder = t.td_ph_name;
       document.getElementById('td-btn-block').innerText = t.td_btn_block;
       document.getElementById('td-btn-cancel').innerText = t.td_btn_cancel;
       document.getElementById('td-btn-back').innerText = t.td_btn_back;
+
+      document.getElementById('btn-bulk').innerText = t.btn_bulk;
+      document.getElementById('bulk-title').innerText = t.bulk_title;
+      document.getElementById('bulk-label-reason').innerText = t.bulk_reason;
+      document.getElementById('bulk-label-courts').innerText = t.bulk_courts;
+      document.getElementById('bulk-btn-all').innerText = t.bulk_all;
+      document.getElementById('bulk-label-period').innerText = t.bulk_period;
+      document.getElementById('bulk-btn-exec').innerText = t.bulk_exec;
+      document.getElementById('bulk-btn-cancel').innerText = t.btn_cancel;
 
       renderTimetable();
       renderMyBookings();
@@ -331,8 +389,7 @@
         if (data && typeof data === 'object') {
           bookings = data;
           localStorage.setItem('meikei_paper_v2_bookings', JSON.stringify(bookings));
-          renderTimetable();
-          renderMyBookings();
+          renderTimetable(); renderMyBookings();
         }
       } catch (err) {} 
       finally { if(showIndicator) document.getElementById('sync-indicator').classList.add('hidden'); }
@@ -412,7 +469,7 @@
       if (currentRole === 'td') {
         const info = b ? `Name: ${b.name}\nTEL: ${b.phone||'-'}\n(ID: ${b.id})` : `【${t.empty}】`;
         document.getElementById('td-modal-slot-info').innerText = `${courtLabels[parts[1]]} (${parts[0]})\nRow ${parts[2]}\n\n${info}`;
-        document.getElementById('td-input-name').value = ''; // 毎回リセット
+        document.getElementById('td-input-name').value = '';
         selectedSlot = key;
         document.getElementById('td-modal').classList.remove('hidden');
         return;
@@ -520,7 +577,6 @@
       } catch (e) {}
     }
 
-    // TDが特定の名前で公式割当する処理
     async function tdSetOfficial() {
       if (!selectedSlot) return; 
       
@@ -543,6 +599,62 @@
       if (!selectedSlot) return; closeTdModal();
       const bId = bookings[selectedSlot] ? bookings[selectedSlot].id : null;
       await cancelBookingOnline(bId, selectedSlot);
+    }
+
+    // --- 一括ブロック機能 (試合用) ---
+    function openBulkModal() { 
+      const t = i18n[currentLang];
+      document.getElementById('bulk-reason').value = t.bulk_reason_def;
+      document.getElementById('bulk-modal').classList.remove('hidden'); 
+    }
+    function closeBulkModal() { document.getElementById('bulk-modal').classList.add('hidden'); }
+    function selectAllCourts() {
+      for(let i=1; i<=7; i++) document.getElementById('bulk-c'+i).checked = true;
+    }
+    
+    async function executeBulkBlock() {
+      const t = i18n[currentLang];
+      const reason = document.getElementById('bulk-reason').value.trim() || t.bulk_reason_def;
+      const startIdx = parseInt(document.getElementById('bulk-start').value);
+      const endIdx = parseInt(document.getElementById('bulk-end').value);
+      
+      if(startIdx > endIdx) return alert('期間の指定が正しくありません。');
+      
+      const selectedCourts = [];
+      for(let i=1; i<=7; i++) {
+        if(document.getElementById('bulk-c'+i).checked) selectedCourts.push('c'+i);
+      }
+      if(selectedCourts.length === 0) return alert('対象コートを選択してください。');
+
+      const btn = document.getElementById('bulk-btn-exec');
+      btn.innerText = 'Syncing...'; btn.disabled = true;
+
+      const bId = 'MK-MATCH-' + Math.floor(1000 + Math.random() * 9000);
+      const newBookings = [];
+
+      // 選択範囲の全ての行（1枠につき4行）を埋める
+      for(let i = startIdx; i <= endIdx; i++) {
+        const time = timeSlots[i];
+        selectedCourts.forEach(c => {
+          for(let r=1; r<=4; r++) {
+            newBookings.push({ key: `${time}_${c}_${r}`, name: reason, phone: '', id: bId });
+          }
+        });
+      }
+
+      try {
+        await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'official', bookings: newBookings }) });
+        
+        newBookings.forEach(b => {
+          bookings[b.key] = { name: b.name, status: 'official', id: bId };
+        });
+        localStorage.setItem('meikei_paper_v2_bookings', JSON.stringify(bookings));
+        
+        closeBulkModal();
+        renderTimetable();
+        setTimeout(() => fetchLatestData(false), 1500);
+      } catch(e) {} 
+      finally { btn.innerText = t.bulk_exec; btn.disabled = false; }
     }
 
     function renderMyBookings() {
