@@ -8,20 +8,17 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* 印刷プレビュー時の調整 */
     @media print {
       body * { visibility: hidden; }
       #poster-print-area, #poster-print-area * { visibility: visible; }
       #poster-print-area { position: absolute; left: 0; top: 0; width: 100%; }
     }
-    /* エクセル風の表スタイル */
     .sheet-table th, .sheet-table td {
       border: 1px solid #71717a;
     }
     .sheet-table {
       border: 2px solid #27272a;
     }
-    /* 横スクロール時に時間を左固定 */
     .sticky-col {
       position: sticky;
       left: 0;
@@ -34,36 +31,26 @@
       background-color: #d1d5db;
       z-index: 20;
     }
-    /* コート名の幅を確保 */
-    .court-col {
-      min-width: 95px;
-    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans min-h-screen flex flex-col items-center py-2 sm:py-4">
 
   <main class="w-full max-w-6xl bg-white shadow-md border border-gray-300 p-2 sm:p-4 overflow-hidden flex flex-col relative">
     
-    <!-- 同期インジケーター -->
     <div id="sync-indicator" class="hidden absolute top-0 left-0 w-full bg-green-600 text-white text-[10px] py-0.5 text-center font-bold z-50">
       <i class="fa-solid fa-rotate fa-spin mr-1"></i> スプレッドシートと同期中...
     </div>
 
-    <!-- タイトル＆コントロール -->
     <div class="flex flex-col sm:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
       <h1 class="text-base sm:text-xl font-black tracking-wide text-gray-900">
         筑波大学MEIKEIオープンテニス PRACTICE SHEET
       </h1>
       <div class="mt-2 sm:mt-0 flex gap-2">
         <button onclick="fetchLatestData(true)" class="px-2 py-1 text-[10px] bg-gray-200 text-gray-700 border border-gray-400 hover:bg-gray-300">
-          <i class="fa-solid fa-rotate"></i> 最新に更新
+          <i class="fa-solid fa-rotate"></i> 更新
         </button>
-        <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300 hover:bg-red-200">
-          データ初期化
-        </button>
-        <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold hover:bg-yellow-400">
-          TD管理者
-        </button>
+        <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300 hover:bg-red-200">データ初期化</button>
+        <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold hover:bg-yellow-400">TD管理者</button>
       </div>
     </div>
 
@@ -84,19 +71,19 @@
 
     <p class="text-[10px] text-gray-500 md:hidden mb-1 animate-pulse">※表を横にスワイプして1〜7番コートを確認できます 👉</p>
 
-    <!-- エクセル/紙風のタイムテーブル -->
+    <!-- 写真と同じ4行レイアウトのタイムテーブル -->
     <div class="overflow-x-auto w-full border-2 border-gray-800 relative shadow-inner">
       <table class="w-full text-center border-collapse sheet-table bg-white text-[11px] sm:text-xs">
         <thead>
           <tr class="bg-gray-200 font-bold text-gray-800 h-8">
             <th class="w-20 sticky-col-header border-r-2 border-gray-800">Starting</th>
-            <th class="court-col">Court 1</th>
-            <th class="court-col">Court 2</th>
-            <th class="court-col">Court 3</th>
-            <th class="court-col">Court 4</th>
-            <th class="court-col">Court 5</th>
-            <th class="court-col">Court 6</th>
-            <th class="court-col">Court 7</th>
+            <th class="min-w-[95px]">Court 1</th>
+            <th class="min-w-[95px]">Court 2</th>
+            <th class="min-w-[95px]">Court 3</th>
+            <th class="min-w-[95px]">Court 4</th>
+            <th class="min-w-[95px]">Court 5</th>
+            <th class="min-w-[95px]">Court 6</th>
+            <th class="min-w-[95px]">Court 7</th>
           </tr>
         </thead>
         <tbody id="timetable-body">
@@ -123,16 +110,15 @@
 
   <!-- ================= 各種モーダル ================= -->
   
-  <!-- 予約モーダル -->
   <div id="booking-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl relative max-h-[90vh] overflow-y-auto">
       <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">練習コート予約</h4>
       <p class="text-sm font-bold text-green-700 my-2" id="modal-slot-info"></p>
-      <p class="text-[10px] text-gray-500 mb-3">※1コート最大4名。代表者と連絡先は必須です。</p>
+      <p class="text-[10px] text-gray-500 mb-3">※代表者と連絡先は必須です。</p>
 
       <div class="space-y-2 text-xs">
         <div>
-          <label class="block font-bold mb-0.5">代表選手氏名 *</label>
+          <label class="block font-bold mb-0.5">代表選手氏名 * (1行目に印字)</label>
           <input type="text" id="input-player-name" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 focus:bg-white outline-none">
         </div>
         <div>
@@ -140,8 +126,8 @@
           <input type="tel" id="input-phone" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 focus:bg-white outline-none">
         </div>
         <div class="pt-2 border-t border-gray-300 mt-2">
-          <label class="block font-bold mb-1">同伴者（最大3名 / 任意）</label>
-          <input type="text" id="input-p2" placeholder="2人目" class="w-full border border-gray-300 px-2 py-1.5 mb-1 outline-none">
+          <label class="block font-bold mb-1">同伴者（2〜4行目に印字 / 任意）</label>
+          <input type="text" id="input-p2" placeholder="2人目 (コーチなど)" class="w-full border border-gray-300 px-2 py-1.5 mb-1 outline-none">
           <input type="text" id="input-p3" placeholder="3人目" class="w-full border border-gray-300 px-2 py-1.5 mb-1 outline-none">
           <input type="text" id="input-p4" placeholder="4人目" class="w-full border border-gray-300 px-2 py-1.5 outline-none">
         </div>
@@ -153,12 +139,10 @@
     </div>
   </div>
 
-  <!-- TD操作モーダル -->
   <div id="td-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl">
       <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">TD管理者モード</h4>
       <p class="text-xs font-bold text-gray-700 my-2 whitespace-pre-line" id="td-modal-slot-info"></p>
-      
       <div class="space-y-2 mt-4">
         <button onclick="tdSetOfficial()" class="w-full py-2 border border-yellow-600 bg-yellow-300 text-black font-bold text-xs">公式練習用にブロック</button>
         <button onclick="tdCancelSlot()" class="w-full py-2 border border-red-800 bg-red-600 text-white font-bold text-xs">この枠を空きに戻す（取消）</button>
@@ -167,7 +151,7 @@
     </div>
   </div>
 
-  <!-- ポスター印刷モーダル -->
+  <!-- ポスター印刷モーダルは省略せずそのまま -->
   <div id="poster-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-lg w-full border-2 border-gray-800 p-4 shadow-xl">
       <h4 class="font-bold text-gray-800 mb-2 border-b-2 border-gray-800 pb-1">QRポスター作成</h4>
@@ -181,13 +165,9 @@
           <div class="flex gap-2">
             <select id="poster-court-select" class="flex-grow border border-gray-400 py-1.5 px-2 bg-gray-50 outline-none">
               <option value="all">総合案内 (全コート)</option>
-              <option value="c1">Court 1 専用</option>
-              <option value="c2">Court 2 専用</option>
-              <option value="c3">Court 3 専用</option>
-              <option value="c4">Court 4 専用</option>
-              <option value="c5">Court 5 専用</option>
-              <option value="c6">Court 6 専用</option>
-              <option value="c7">Court 7 専用</option>
+              <option value="c1">Court 1</option><option value="c2">Court 2</option>
+              <option value="c3">Court 3</option><option value="c4">Court 4</option>
+              <option value="c5">Court 5</option><option value="c6">Court 6</option><option value="c7">Court 7</option>
             </select>
             <button onclick="generatePoster()" class="px-3 border border-gray-800 bg-gray-100 font-bold">QR生成</button>
           </div>
@@ -201,49 +181,37 @@
       </div>
       <div class="mt-4 flex space-x-2">
         <button onclick="closePosterModal()" class="w-1/2 border border-gray-400 py-2 bg-gray-200 text-xs font-bold">閉じる</button>
-        <button onclick="window.print()" class="w-1/2 border border-gray-800 py-2 bg-gray-800 text-white text-xs font-bold">A4サイズで印刷</button>
+        <button onclick="window.print()" class="w-1/2 border border-gray-800 py-2 bg-gray-800 text-white text-xs font-bold">A4印刷</button>
       </div>
     </div>
   </div>
 
-  <!-- ================= JavaScript ================= -->
   <script>
-    // ★★★ 以下のURLを、先ほど発行した新しいご自身のGAS URLに必ず書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzndW44ODDJ4OZEjrsBun-CBjKfxE-fqHTObSm6PfHp2zZ-z6551FJ2VHuRHZ1ssq_AtQ/exec";
+    // ★★★ 以下のURLをご自身のGASのURLに必ず書き換えてください ★★★
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyhmmJguM7pV2c9GSBi6PEOWojr5UZehLoThmp-kU1uNmtrR5zj0xYH_7DKYT30NN19lA/exec";
 
     let currentRole = 'player';
     let selectedSlot = null;
 
     const timeSlots = [
-      '09:00 - 09:20', '09:20 - 09:40', '09:40 - 10:00',
-      '10:00 - 10:20', '10:20 - 10:40', '10:40 - 11:00',
-      '11:00 - 11:20', '11:20 - 11:40', '11:40 - 12:00',
-      '12:00 - 12:20', '12:20 - 12:40', '12:40 - 13:00',
-      '13:00 - 13:20', '13:20 - 13:40', '13:40 - 14:00',
-      '14:00 - 14:20', '14:20 - 14:40', '14:40 - 15:00',
-      '15:00 - 15:20', '15:20 - 15:40', '15:40 - 16:00',
-      '16:00 - 16:20', '16:20 - 16:40', '16:40 - 17:00'
+      '09:00 - 09:20', '09:20 - 09:40', '09:40 - 10:00', '10:00 - 10:20', '10:20 - 10:40', '10:40 - 11:00',
+      '11:00 - 11:20', '11:20 - 11:40', '11:40 - 12:00', '12:00 - 12:20', '12:20 - 12:40', '12:40 - 13:00',
+      '13:00 - 13:20', '13:20 - 13:40', '13:40 - 14:00', '14:00 - 14:20', '14:20 - 14:40', '14:40 - 15:00',
+      '15:00 - 15:20', '15:20 - 15:40', '15:40 - 16:00', '16:00 - 16:20', '16:20 - 16:40', '16:40 - 17:00'
     ];
 
     const courts = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
-    const courtLabels = {
-      'c1': 'Court 1', 'c2': 'Court 2', 'c3': 'Court 3', 'c4': 'Court 4',
-      'c5': 'Court 5', 'c6': 'Court 6', 'c7': 'Court 7'
-    };
+    const courtLabels = { 'c1':'Court 1', 'c2':'Court 2', 'c3':'Court 3', 'c4':'Court 4', 'c5':'Court 5', 'c6':'Court 6', 'c7':'Court 7' };
 
-    let bookings = JSON.parse(localStorage.getItem('meikei_paper_7c_bookings')) || {};
-    let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_7c_ids')) || [];
+    let bookings = JSON.parse(localStorage.getItem('meikei_paper_4row_bookings')) || {};
+    let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_4row_ids')) || [];
 
-    // データ強制初期化
     function debugReset() {
-      if (confirm('スマホ内の予約データをすべて初期化しますか？（※通信バグが起きた時用）')) {
-        localStorage.removeItem('meikei_paper_7c_bookings');
-        localStorage.removeItem('meikei_paper_7c_ids');
-        bookings = {};
-        myBookedIds = [];
-        renderTimetable();
-        renderMyBookings();
-        alert('初期化しました');
+      if (confirm('スマホ内の予約データをすべて初期化しますか？')) {
+        localStorage.removeItem('meikei_paper_4row_bookings');
+        localStorage.removeItem('meikei_paper_4row_ids');
+        bookings = {}; myBookedIds = [];
+        renderTimetable(); renderMyBookings();
       }
     }
 
@@ -252,11 +220,8 @@
       const pUrl = document.getElementById('poster-base-url');
       if(pUrl) pUrl.value = window.location.href.split('?')[0];
 
-      // 最初に空の表を描画
       renderTimetable();
       renderMyBookings();
-      
-      // GASから最新データを取得（以降15秒ごとに自動更新）
       fetchLatestData(true);
       setInterval(() => fetchLatestData(false), 15000);
     });
@@ -268,15 +233,12 @@
         const data = await res.json();
         if (data && typeof data === 'object') {
           bookings = data;
-          localStorage.setItem('meikei_paper_7c_bookings', JSON.stringify(bookings));
+          localStorage.setItem('meikei_paper_4row_bookings', JSON.stringify(bookings));
           renderTimetable();
           renderMyBookings();
         }
-      } catch (err) {
-        console.warn('通信待機中...');
-      } finally {
-        if(showIndicator) document.getElementById('sync-indicator').classList.add('hidden');
-      }
+      } catch (err) { console.warn('通信待機中...'); } 
+      finally { if(showIndicator) document.getElementById('sync-indicator').classList.add('hidden'); }
     }
 
     function toggleRole() {
@@ -284,45 +246,60 @@
       const roleBtn = document.getElementById('role-btn');
       const tdControls = document.getElementById('td-controls');
       if (currentRole === 'td') {
-        roleBtn.innerText = '選手モードに戻る';
-        roleBtn.className = 'px-3 py-1 text-xs bg-red-600 text-white border border-red-800 font-bold';
+        roleBtn.innerText = '選手モードに戻る'; roleBtn.className = 'px-3 py-1 text-xs bg-red-600 text-white border border-red-800 font-bold';
         tdControls.classList.remove('hidden');
       } else {
-        roleBtn.innerText = 'TD管理者';
-        roleBtn.className = 'px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold';
+        roleBtn.innerText = 'TD管理者'; roleBtn.className = 'px-3 py-1 text-xs bg-yellow-300 text-black border border-yellow-500 font-bold';
         tdControls.classList.add('hidden');
       }
     }
 
+    // ★★★ ここが写真と同じ「4行レイアウト」を作る部分 ★★★
     function renderTimetable() {
       const tbody = document.getElementById('timetable-body');
       tbody.innerHTML = '';
 
       timeSlots.forEach(time => {
         const tr = document.createElement('tr');
-        let html = `<td class="sticky-col h-10 sm:h-12 font-bold border-r-2 border-gray-800 text-gray-700">${time}</td>`;
+        
+        // 左側の時間セル（4行分の高さを確保したブロック）
+        let html = `<td class="sticky-col border-r-2 border-gray-800 bg-gray-100 align-middle">
+          <div class="flex items-center justify-center h-24 font-bold text-gray-700">${time}</div>
+        </td>`;
 
         courts.forEach(court => {
           const key = `${time}_${court}`;
           const b = bookings[key];
           
           if (!b) {
-            html += `<td onclick="handleSlotClick('${key}')" class="cursor-pointer hover:bg-green-50 text-gray-300 hover:text-green-600 transition p-1">
-              <span class="text-[10px] font-semibold tracking-wider">( 空き )</span>
+            html += `<td onclick="handleSlotClick('${key}')" class="p-0 border-r-2 border-gray-300 align-top cursor-pointer hover:bg-green-50 transition bg-white">
+              <div class="flex flex-col h-24 text-[10px] text-gray-400">
+                <div class="h-6 border-b border-gray-300 flex items-center justify-center font-semibold">( 空き )</div>
+                <div class="h-6 border-b border-gray-300"></div>
+                <div class="h-6 border-b border-gray-300"></div>
+                <div class="h-6"></div>
+              </div>
             </td>`;
           } else if (b.status === 'official') {
-            html += `<td onclick="handleSlotClick('${key}')" class="cursor-pointer bg-yellow-100 text-yellow-900 font-bold p-1">
-              <div class="truncate w-full max-w-[90px] mx-auto">${b.name}</div>
+            html += `<td onclick="handleSlotClick('${key}')" class="p-0 border-r-2 border-gray-300 align-top cursor-pointer bg-yellow-100">
+              <div class="flex flex-col h-24 text-[11px] text-yellow-900 font-bold">
+                <div class="h-6 border-b border-yellow-300 flex items-center justify-center truncate px-1">${b.name}</div>
+                <div class="h-6 border-b border-yellow-300"></div>
+                <div class="h-6 border-b border-yellow-300"></div>
+                <div class="h-6"></div>
+              </div>
             </td>`;
           } else {
             const isMy = myBookedIds.includes(b.id);
-            // GAS経由だとpartner列に同伴者が入っている
-            const othersText = b.partner ? `(+同伴)` : '';
+            const bgClass = isMy ? 'bg-blue-50 text-blue-900' : 'bg-white text-gray-800';
+            const borderClass = isMy ? 'border-blue-200' : 'border-gray-300';
             
-            html += `<td onclick="handleSlotClick('${key}')" class="cursor-pointer p-1 ${isMy ? 'bg-blue-50 text-blue-900' : 'bg-white text-gray-800'}">
-              <div class="flex flex-col justify-center h-full overflow-hidden">
-                <span class="font-bold truncate w-full max-w-[90px] mx-auto text-xs">${b.name}</span>
-                ${othersText ? `<span class="text-[9px] text-gray-500 truncate w-full px-1 block">${othersText}</span>` : ''}
+            html += `<td onclick="handleSlotClick('${key}')" class="p-0 border-r-2 border-gray-300 align-top cursor-pointer ${bgClass}">
+              <div class="flex flex-col h-24 text-[11px] font-bold">
+                <div class="h-6 border-b ${borderClass} flex items-center px-1 truncate w-[90px] mx-auto">${b.name || ''}</div>
+                <div class="h-6 border-b ${borderClass} flex items-center px-1 truncate w-[90px] mx-auto text-gray-600 font-normal">${b.p2 || ''}</div>
+                <div class="h-6 border-b ${borderClass} flex items-center px-1 truncate w-[90px] mx-auto text-gray-600 font-normal">${b.p3 || ''}</div>
+                <div class="h-6 flex items-center px-1 truncate w-[90px] mx-auto text-gray-600 font-normal">${b.p4 || ''}</div>
               </div>
             </td>`;
           }
@@ -339,23 +316,18 @@
       const [time, court] = key.split('_');
 
       if (currentRole === 'td') {
-        const info = b ? `【予約】 ${b.name}\n同伴: ${b.partner||'なし'}\nTEL: ${b.phone||'-'}` : '【空き枠】';
+        const info = b ? `代表: ${b.name}\n2人目: ${b.p2||'-'}\n3人目: ${b.p3||'-'}\n4人目: ${b.p4||'-'}\nTEL: ${b.phone||'-'}` : '【空き枠】';
         document.getElementById('td-modal-slot-info').innerText = `${courtLabels[court]} (${time})\n\n${info}`;
         document.getElementById('td-modal').classList.remove('hidden');
         return;
       }
 
       if (!b) {
-        if (myBookedIds.length >= 1) {
-          alert('1選手1日1枠までです。変更する場合は下のチケットから取り消してください。');
-          return;
-        }
+        if (myBookedIds.length >= 1) return alert('1選手1日1枠までです。');
         document.getElementById('modal-slot-info').innerText = `${courtLabels[court]} | ${time}`;
         document.getElementById('booking-modal').classList.remove('hidden');
       } else if (myBookedIds.includes(b.id)) {
-        if (confirm(`この予約を取り消しますか？`)) {
-          cancelBookingOnline(key, b.id);
-        }
+        if (confirm(`この予約を取り消しますか？`)) cancelBookingOnline(key, b.id);
       } else {
         alert('この枠はすでに予約されています。');
       }
@@ -374,184 +346,94 @@
       if (!name || !phone) return alert('代表者名と電話番号を入力してください。');
 
       const btn = document.getElementById('submit-btn');
-      btn.innerText = '送信中...';
-      btn.disabled = true;
+      btn.innerText = '送信中...'; btn.disabled = true;
 
       const bId = 'MK-' + Math.floor(100 + Math.random() * 900);
       const partnerCombined = [p2, p3, p4].filter(Boolean).join(', ');
 
-      const payload = {
-        action: 'book',
-        key: selectedSlot,
-        name: name,
-        partner: partnerCombined,
-        phone: phone,
-        p2: p2,
-        p3: p3,
-        p4: p4,
-        id: bId
-      };
+      const payload = { action: 'book', key: selectedSlot, name: name, partner: partnerCombined, phone: phone, p2: p2, p3: p3, p4: p4, id: bId };
 
       try {
-        await fetch(GAS_API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        myBookedIds.push(bId);
-        localStorage.setItem('meikei_paper_7c_ids', JSON.stringify(myBookedIds));
+        await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        myBookedIds.push(bId); localStorage.setItem('meikei_paper_4row_ids', JSON.stringify(myBookedIds));
         
-        // 画面に即時反映
         bookings[selectedSlot] = { name, partner: partnerCombined, p2, p3, p4, phone, status: 'booked', id: bId };
-        localStorage.setItem('meikei_paper_7c_bookings', JSON.stringify(bookings));
+        localStorage.setItem('meikei_paper_4row_bookings', JSON.stringify(bookings));
         
         closeBookingModal();
-        document.getElementById('input-player-name').value = '';
-        document.getElementById('input-phone').value = '';
-        document.getElementById('input-p2').value = '';
-        document.getElementById('input-p3').value = '';
-        document.getElementById('input-p4').value = '';
-
-        renderTimetable();
-        renderMyBookings();
-        alert(`予約が完了しました！\nスプレッドシートに保存されました。`);
+        ['name','phone','p2','p3','p4'].forEach(id => document.getElementById(`input-${id === 'name' ? 'player-name' : id}`).value = '');
+        renderTimetable(); renderMyBookings();
         setTimeout(() => fetchLatestData(false), 1500);
-      } catch (e) {
-        alert('通信に失敗しました。');
-      } finally {
-        btn.innerText = '予約確定';
-        btn.disabled = false;
-      }
+      } catch (e) { alert('通信に失敗しました。'); } 
+      finally { btn.innerText = '予約確定'; btn.disabled = false; }
     }
 
     async function cancelBookingOnline(key, bId) {
       try {
-        await fetch(GAS_API_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'cancel', key: key })
-        });
-        
-        myBookedIds = myBookedIds.filter(id => id !== bId);
-        localStorage.setItem('meikei_paper_7c_ids', JSON.stringify(myBookedIds));
-        delete bookings[key];
-        localStorage.setItem('meikei_paper_7c_bookings', JSON.stringify(bookings));
-        
-        renderTimetable();
-        renderMyBookings();
-        setTimeout(() => fetchLatestData(false), 1500);
-      } catch (e) {
-        alert('取消に失敗しました。');
-      }
+        await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cancel', key: key }) });
+        myBookedIds = myBookedIds.filter(id => id !== bId); localStorage.setItem('meikei_paper_4row_ids', JSON.stringify(myBookedIds));
+        delete bookings[key]; localStorage.setItem('meikei_paper_4row_bookings', JSON.stringify(bookings));
+        renderTimetable(); renderMyBookings(); setTimeout(() => fetchLatestData(false), 1500);
+      } catch (e) { alert('取消に失敗しました。'); }
     }
 
     async function tdSetOfficial() {
-      if (!selectedSlot) return;
-      closeTdModal();
-      
-      await fetch(GAS_API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'official', key: selectedSlot, name: '公式割当', id: 'MK-OFFICIAL' })
-      });
-
+      if (!selectedSlot) return; closeTdModal();
+      await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'official', key: selectedSlot, name: '公式割当', id: 'MK-OFFICIAL' }) });
       bookings[selectedSlot] = { name: '公式割当', status: 'official', id: 'MK-OFFICIAL' };
-      renderTimetable();
-      setTimeout(() => fetchLatestData(false), 1500);
+      renderTimetable(); setTimeout(() => fetchLatestData(false), 1500);
     }
 
     async function tdCancelSlot() {
-      if (!selectedSlot) return;
-      closeTdModal();
-      
-      await fetch(GAS_API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'cancel', key: selectedSlot })
-      });
-
-      delete bookings[selectedSlot];
-      renderTimetable();
-      renderMyBookings();
-      setTimeout(() => fetchLatestData(false), 1500);
+      if (!selectedSlot) return; closeTdModal();
+      await fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'cancel', key: selectedSlot }) });
+      delete bookings[selectedSlot]; renderTimetable(); renderMyBookings(); setTimeout(() => fetchLatestData(false), 1500);
     }
 
     function renderMyBookings() {
       const list = document.getElementById('my-bookings-list');
-      list.innerHTML = '';
-      let count = 0;
-      const validIds = [];
+      list.innerHTML = ''; let count = 0; const validIds = [];
 
       for (let key in bookings) {
         const b = bookings[key];
         if (b && myBookedIds.includes(b.id)) {
-          count++;
-          validIds.push(b.id);
+          count++; validIds.push(b.id);
           const [time, court] = key.split('_');
-          
+          const others = [b.p2, b.p3, b.p4].filter(Boolean).join(', ');
           list.innerHTML += `
             <div class="flex justify-between items-center text-xs border border-gray-400 p-2 bg-white">
               <div>
                 <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
-                <span>代表: ${b.name}</span>
-                ${b.partner ? `<br><span class="text-[10px] text-gray-600">同伴: ${b.partner}</span>` : ''}
+                <span>代表: ${b.name}</span>${others ? `<br><span class="text-[10px] text-gray-600">同伴: ${others}</span>` : ''}
               </div>
               <button onclick="handleSlotClick('${key}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">取消</button>
-            </div>
-          `;
+            </div>`;
         }
       }
-
-      if (validIds.length !== myBookedIds.length) {
-        myBookedIds = validIds;
-        localStorage.setItem('meikei_paper_7c_ids', JSON.stringify(myBookedIds));
-      }
+      if (validIds.length !== myBookedIds.length) { myBookedIds = validIds; localStorage.setItem('meikei_paper_4row_ids', JSON.stringify(myBookedIds)); }
       if (count === 0) list.innerHTML = `<p class="text-xs text-gray-500">現在有効な予約はありません。</p>`;
     }
 
-    function openPosterModal() {
-      document.getElementById('poster-modal').classList.remove('hidden');
-      generatePoster();
-    }
-    
-    function closePosterModal() { 
-      document.getElementById('poster-modal').classList.add('hidden'); 
-    }
-
+    function openPosterModal() { document.getElementById('poster-modal').classList.remove('hidden'); generatePoster(); }
+    function closePosterModal() { document.getElementById('poster-modal').classList.add('hidden'); }
     function generatePoster() {
       const baseUrl = document.getElementById('poster-base-url').value.trim();
       const target = document.getElementById('poster-court-select').value;
-      const qc = document.getElementById('qrcode-container');
-      qc.innerHTML = '';
-      
+      const qc = document.getElementById('qrcode-container'); qc.innerHTML = '';
       let tUrl = baseUrl;
-      if (target !== 'all') {
-        tUrl += (tUrl.includes('?') ? '&' : '?') + 'court=' + target;
-        document.getElementById('poster-court-title').innerText = courtLabels[target] + ' 予約専用';
-      } else {
-        document.getElementById('poster-court-title').innerText = 'PRACTICE SHEET';
-      }
-
+      if (target !== 'all') { tUrl += (tUrl.includes('?') ? '&' : '?') + 'court=' + target; document.getElementById('poster-court-title').innerText = courtLabels[target] + ' 予約専用'; } 
+      else { document.getElementById('poster-court-title').innerText = 'PRACTICE SHEET'; }
       new QRCode(qc, { text: tUrl, width: 150, height: 150, colorDark: "#000", colorLight: "#fff" });
     }
-
     function exportCSV() {
       let csv = "Time,Court,Leader,Partners,Phone,Status,BookingID\n";
       for (let key in bookings) {
-        const [time, court] = key.split('_');
-        const b = bookings[key];
+        const [time, court] = key.split('_'); const b = bookings[key];
         csv += `"${time}","${courtLabels[court]}","${b.name||''}","${b.partner||''}","${b.phone||''}","${b.status||''}","${b.id||''}"\n`;
       }
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `meikei_practice_7courts.csv`;
-      link.click();
+      const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
+      link.download = `meikei_practice_7courts.csv`; link.click();
     }
   </script>
 </body>
