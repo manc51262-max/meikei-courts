@@ -108,6 +108,7 @@
   <div id="bulk-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-md w-full border-2 border-gray-800 p-4 shadow-xl relative max-h-[90vh] overflow-y-auto">
       <h4 id="bulk-title" class="font-bold text-gray-800 mb-3 border-b-2 border-gray-800 pb-1">コート一括ブロック設定</h4>
+      
       <div class="space-y-3 text-xs">
         <div>
           <label id="bulk-label-reason" class="block font-bold mb-1">表示名</label>
@@ -134,6 +135,7 @@
           </div>
         </div>
       </div>
+
       <div class="mt-5 flex space-x-2">
         <button id="bulk-btn-cancel" onclick="closeBulkModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
         <button id="bulk-btn-exec" onclick="executeBulkBlock()" class="w-1/2 py-2 border border-red-800 bg-red-600 text-white font-bold text-xs shadow-md">一括ブロック実行</button>
@@ -157,6 +159,7 @@
     <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl">
       <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">TD管理者モード</h4>
       <p class="text-xs font-bold text-gray-700 my-2 whitespace-pre-line" id="td-modal-slot-info"></p>
+      
       <div class="mt-3 pt-3 border-t border-gray-300">
         <label id="td-label-name" class="block font-bold mb-1 text-xs text-blue-800">大会側での割当 (選手名)</label>
         <input type="text" id="td-input-name" class="w-full border border-gray-400 px-2 py-1.5 text-xs bg-yellow-50 outline-none mb-2">
@@ -227,10 +230,10 @@
         bulk_reason: "表示名", bulk_reason_def: "試合", bulk_courts: "対象コート",
         bulk_all: "全選択", bulk_period: "対象期間", bulk_exec: "一括ブロック実行",
         // ★ 追加された安全確認ダイアログ用のテキスト
-        confirm_td_cancel: "本当にこの予約を強制削除しますか？\n(元に戻せません)",
         confirm_td_block: "この行を大会割当としてブロックしますか？",
         confirm_td_bulk: "選択した条件で一括ブロックを実行しますか？",
-        prompt_init: "【警告】スマホ内の設定を初期化します。\n実行するにはTDパスワードを入力してください:"
+        prompt_init: "【警告】スマホ内の設定を初期化します。\n実行するにはTDパスワードを入力してください:",
+        prompt_td_cancel_pass: "【危険】この予約を強制削除します。\n実行するにはTDパスワードを入力してください:"
       },
       en: {
         lang_label: "English", title: "MEIKEI OPEN Practice Court",
@@ -254,10 +257,10 @@
         btn_bulk: "Bulk Block (Matches)", bulk_title: "Bulk Block Settings",
         bulk_reason: "Display Name", bulk_reason_def: "MATCH", bulk_courts: "Target Courts",
         bulk_all: "Select All", bulk_period: "Period", bulk_exec: "Execute",
-        confirm_td_cancel: "Are you sure you want to force delete this booking?\n(Cannot be undone)",
         confirm_td_block: "Block this row as Official?",
         confirm_td_bulk: "Execute bulk block with selected conditions?",
-        prompt_init: "[Warning] Initialize app settings.\nEnter TD Password:"
+        prompt_init: "[Warning] Initialize app settings.\nEnter TD Password:",
+        prompt_td_cancel_pass: "[Warning] Force deleting this booking.\nEnter TD Password to execute:"
       },
       ko: {
         lang_label: "한국어", title: "MEIKEI OPEN 연습 코트 예약",
@@ -281,10 +284,10 @@
         btn_bulk: "일괄 블록 (시합 등)", bulk_title: "코트 일괄 블록 설정",
         bulk_reason: "표시 이름", bulk_reason_def: "시합 (MATCH)", bulk_courts: "대상 코트",
         bulk_all: "전체 선택", bulk_period: "대상 기간", bulk_exec: "일괄 블록 실행",
-        confirm_td_cancel: "정말로 이 예약을 강제 삭제하시겠습니까?\n(되돌릴 수 없습니다)",
         confirm_td_block: "이 행을 대회 할당으로 블록하시겠습니까?",
         confirm_td_bulk: "선택한 조건으로 일괄 블록을 실행하시겠습니까?",
-        prompt_init: "[경고] 앱 설정을 초기화합니다.\nTD 비밀번호 입력:"
+        prompt_init: "[경고] 앱 설정을 초기화합니다.\nTD 비밀번호 입력:",
+        prompt_td_cancel_pass: "[경고] 이 예약을 강제 삭제합니다.\n실행하려면 TD 비밀번호를 입력하세요:"
       }
     };
 
@@ -341,7 +344,6 @@
       return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
 
-    // ★ 初期化ボタンの誤操作防止（パスワード要求に変更）
     function debugReset() {
       const t = i18n[currentLang];
       const pass = prompt(t.prompt_init);
@@ -351,7 +353,7 @@
         renderTimetable(); renderMyBookings();
         alert('初期化しました。');
       } else if (pass !== null) {
-        alert('パスワードが違います。');
+        alert(t.wrong_pin);
       }
     }
 
@@ -705,12 +707,11 @@
       } catch (e) {}
     }
 
-    // ★ 誤操作防止：ブロック時の確認ダイアログ追加
     async function tdSetOfficial() {
       if (!selectedSlot) return; 
       const t = i18n[currentLang];
       
-      if (!confirm(t.confirm_td_block)) return; // 確認ポップアップ
+      if (!confirm(t.confirm_td_block)) return; 
       
       const selectedDate = document.getElementById('date-select').value;
       const inputName = document.getElementById('td-input-name').value.trim();
@@ -727,16 +728,19 @@
       setTimeout(() => manualSync(), 1500);
     }
 
-    // ★ 誤操作防止：強制取消時の確認ダイアログ追加
+    // ★ 誤操作防止：強制取消時にTDパスワードを入力させる
     async function tdCancelSlot() {
       if (!selectedSlot) return; 
       const t = i18n[currentLang];
       
-      if (!confirm(t.confirm_td_cancel)) return; // 確認ポップアップ
-      
-      closeTdModal();
-      const bId = bookings[selectedSlot] ? bookings[selectedSlot].id : null;
-      await cancelBookingOnline(bId, selectedSlot, null, true);
+      const pass = prompt(t.prompt_td_cancel_pass);
+      if (pass === "2026") {
+        closeTdModal();
+        const bId = bookings[selectedSlot] ? bookings[selectedSlot].id : null;
+        await cancelBookingOnline(bId, selectedSlot, null, true);
+      } else if (pass !== null) {
+        alert(t.wrong_pin);
+      }
     }
 
     function openBulkModal() { 
@@ -749,11 +753,10 @@
       for(let i=1; i<=7; i++) document.getElementById('bulk-c'+i).checked = true;
     }
     
-    // ★ 誤操作防止：一括ブロック時の確認ダイアログ追加
     async function executeBulkBlock() {
       const t = i18n[currentLang];
       
-      if (!confirm(t.confirm_td_bulk)) return; // 確認ポップアップ
+      if (!confirm(t.confirm_td_bulk)) return; 
       
       const selectedDate = document.getElementById('date-select').value;
       const reason = document.getElementById('bulk-reason').value.trim() || t.bulk_reason_def;
