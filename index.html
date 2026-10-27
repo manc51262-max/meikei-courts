@@ -54,10 +54,10 @@
 
     <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
       <div class="flex flex-col space-y-1">
-        <span id="rule-text" class="font-bold text-gray-700"></span> <!-- JSで枠数を埋め込みます -->
+        <span id="rule-text" class="font-bold text-gray-700"></span>
         <div class="flex items-center space-x-2">
           <label for="date-select" id="date-label" class="font-bold">Date:</label>
-          <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none font-bold bg-yellow-50">
+          <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none font-bold bg-yellow-50 cursor-pointer">
         </div>
       </div>
       <div class="flex gap-2 mt-2 sm:mt-0 font-medium text-[10px] sm:text-xs">
@@ -102,18 +102,27 @@
         <button onclick="exportCSV()" class="px-3 py-1.5 text-xs bg-gray-100 text-gray-800 border border-gray-400 font-bold rounded">CSVエクスポート</button>
       </div>
       
-      <!-- ★ システム設定系（枠の解放・消去） -->
+      <!-- システム設定系 -->
       <div class="flex flex-wrap gap-2 items-center justify-between border-t border-gray-200 pt-3 mt-1">
-        <div class="flex items-center gap-2 bg-blue-100 px-3 py-2 rounded border border-blue-400 shadow-sm">
-           <span class="text-xs font-bold text-blue-900">選手1人の予約上限:</span>
-           <select id="td-max-slots" onchange="tdSetMaxSlots()" class="border border-blue-500 bg-white text-xs py-1 px-1 outline-none font-bold text-center">
-             <option value="1">1枠 / 日</option>
-             <option value="2">2枠 / 日</option>
-             <option value="3">3枠 / 日</option>
-             <option value="99">無制限</option>
-           </select>
+        
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2 bg-blue-100 px-3 py-1.5 rounded border border-blue-400 shadow-sm">
+             <span class="text-xs font-bold text-blue-900">選手1人の予約上限:</span>
+             <select id="td-max-slots" onchange="tdSetMaxSlots()" class="border border-blue-500 bg-white text-xs py-1 px-1 outline-none font-bold text-center">
+               <option value="1">1枠 / 日</option>
+               <option value="2">2枠 / 日</option>
+               <option value="3">3枠 / 日</option>
+               <option value="99">無制限</option>
+             </select>
+          </div>
+          <!-- ★ 追加：OP発表後の日付解放機能 -->
+          <div class="flex items-center gap-2 bg-green-100 px-3 py-1.5 rounded border border-green-400 shadow-sm">
+             <span class="text-xs font-bold text-green-900">予約解放日(OP発表後):</span>
+             <input type="date" id="td-max-date" onchange="tdSetMaxDate()" class="border border-green-500 bg-white text-xs py-1 px-1 outline-none font-bold text-center">
+          </div>
         </div>
-        <button onclick="tdForceCleanDay()" class="px-3 py-2 text-xs bg-black text-white font-bold rounded shadow-md">この日のデータを全消去</button>
+
+        <button onclick="tdForceCleanDay()" class="px-3 py-2 text-xs bg-black text-white font-bold rounded shadow-md mt-auto mb-1">この日のデータを全消去</button>
       </div>
     </div>
   </main>
@@ -219,7 +228,7 @@
 
   <script>
     // ★★★ 以下のURLをご自身の【新しいデプロイ】のURLに書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-4g2MnvBMCtvHbGphM5SJeEUNgvcvAjSdLamT5SAF7Wdj0H3kJ9FZFH1SEfKpTEHKtA/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxIgKNY83VtR2VRifzv2RHdZr2ceLhphNQ1wS1a7DDFRQKLExxKO8jx_ijK8eDYcvAHjg/exec";
 
     const i18n = {
       ja: {
@@ -237,6 +246,7 @@
         alert_booked: "この行はすでに予約されています。",
         alert_req: "代表者名、電話番号、4桁のパスワードを入力してください。", alert_cancel: "この予約を取り消しますか？\n(同伴者も一緒にキャンセルされます)",
         alert_double_book: "タッチの差で他の人に予約されてしまいました。\n画面を最新状態に更新します。",
+        alert_not_open: "この日付の予約はまだ解放されていません。\n(前日のOP発表後に解放されます)",
         prompt_cancel_pin: "別端末で予約された枠です。\n取り消すには予約時のパスワード(数字4桁)を入力してください:",
         wrong_pin: "パスワードが違います。", empty: "( 空き )",
         td_label_name: "大会側での割当 (選手名)", td_ph_name: "例: 筑波太郎 (空欄なら「公式割当」)",
@@ -265,6 +275,7 @@
         alert_booked: "This row is already booked.",
         alert_req: "Leader name, phone, and 4-digit PIN are required.", alert_cancel: "Cancel this booking? (Partners will also be cancelled)",
         alert_double_book: "This slot was just booked by someone else.\nRefreshing the schedule...",
+        alert_not_open: "Bookings for this date are not yet open.\n(Will open after the OOP is released.)",
         prompt_cancel_pin: "This slot was booked on another device.\nEnter the 4-digit PIN to cancel:",
         wrong_pin: "Incorrect PIN.", empty: "( Open )",
         td_label_name: "Official Assignment (Player Name)", td_ph_name: "e.g. John Doe (Blank for 'Official')",
@@ -293,6 +304,7 @@
         alert_booked: "이 자리는 이미 예약되었습니다.",
         alert_req: "이름, 연락처, 4자리 비밀번호를 입력해주세요.", alert_cancel: "이 예약을 취소하시겠습니까? (동반자도 취소됩니다)",
         alert_double_book: "간발의 차이로 다른 사람이 예약했습니다.\n화면을 새로고침합니다.",
+        alert_not_open: "이 날짜의 예약은 아직 열리지 않았습니다.\n(전날 OP 발표 후 오픈됩니다)",
         prompt_cancel_pin: "다른 기기에서 예약된 자리입니다.\n취소하려면 예약 시 설정한 4자리 비밀번호를 입력하세요:",
         wrong_pin: "비밀번호가 틀렸습니다.", empty: "( 빈자리 )",
         td_label_name: "대회 측 할당 (선수 이름)", td_ph_name: "예: 홍길동 (비워두면 '공식할당')",
@@ -313,7 +325,8 @@
     let selectedSlot = null;
     let currentEmptyKeys = []; 
     let initialScrollDone = false; 
-    let sysMaxSlots = 1; // サーバーから取得する予約上限枠数
+    let sysMaxSlots = 1; 
+    let sysMaxDate = ""; // ★ サーバーから取得する予約解放日
 
     let syncTimer = null;
     function startEcoSync() {
@@ -336,6 +349,8 @@
         if (password === "2026") {
           document.getElementById('admin-buttons').classList.remove('hidden');
           alert('【TD管理者メニュー】のロックを解除しました。');
+          // TDは未来の日程も強制的に見れるようにmax属性を解除
+          document.getElementById('date-select').removeAttribute('max');
         } else if (password !== null) {
           alert('パスワードが違います。');
         }
@@ -376,7 +391,10 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('date-select').value = getTodayString();
+      sysMaxDate = getTodayString();
+      document.getElementById('date-select').value = sysMaxDate;
+      document.getElementById('date-select').max = sysMaxDate; // 未来の日付をブロック
+      
       const pUrl = document.getElementById('poster-base-url');
       if(pUrl) pUrl.value = window.location.href.split('?')[0];
 
@@ -408,7 +426,6 @@
       applyLang();
     }
 
-    // 予約枠のテキスト整形
     function getSlotText(lang, slots) {
       if (slots >= 99) {
          if(lang === 'en') return 'Unlimited slots';
@@ -456,17 +473,20 @@
       renderTimetable(); renderMyBookings();
     }
 
-    function updateMaxSlotsUI() {
+    function updateSettingsUI() {
        const sel = document.getElementById('td-max-slots');
        if(sel) sel.value = sysMaxSlots;
+       const dateInput = document.getElementById('td-max-date');
+       if(dateInput) dateInput.value = sysMaxDate;
+       // 選手の場合は max 属性で未来をブロック
+       if (currentRole !== 'td') document.getElementById('date-select').max = sysMaxDate;
     }
     
-    // ★ TDが上限を変更する処理
     async function tdSetMaxSlots() {
        const newMax = document.getElementById('td-max-slots').value;
        const label = newMax === '99' ? '無制限' : newMax + '枠';
        if (!confirm(`予約上限を【1日 ${label}】に変更しますか？\n(全選手のスマホ画面に即座に反映されます)`)) {
-          updateMaxSlotsUI(); 
+          updateSettingsUI(); 
           return;
        }
        try {
@@ -474,6 +494,21 @@
          sysMaxSlots = parseInt(newMax);
          applyLang();
          alert('システム全体の予約上限を変更しました。');
+       } catch(e) {}
+    }
+
+    // ★ TDが予約の解放日を変更する処理
+    async function tdSetMaxDate() {
+       const newDate = document.getElementById('td-max-date').value;
+       if (!confirm(`選手の予約カレンダーを【${newDate}】まで解放しますか？`)) {
+          updateSettingsUI(); 
+          return;
+       }
+       try {
+         await sendToServer({ action: 'set_max_date', maxDate: newDate });
+         sysMaxDate = newDate;
+         updateSettingsUI();
+         alert('予約の解放日を更新しました。');
        } catch(e) {}
     }
 
@@ -496,14 +531,16 @@
         const res = await fetch(GAS_API_URL + "?date=" + selectedDate);
         const data = await res.json();
         if (data && typeof data === 'object') {
-          // サーバーから設定値を抜き取る
           if (data['_sys_max_slots']) {
-             sysMaxSlots = data['_sys_max_slots'];
-             delete data['_sys_max_slots'];
+             sysMaxSlots = data['_sys_max_slots']; delete data['_sys_max_slots'];
           }
+          if (data['_sys_max_date']) {
+             sysMaxDate = data['_sys_max_date']; delete data['_sys_max_date'];
+          }
+          
           bookings = data;
-          applyLang(); // 上限が変わった場合にテキストを更新
-          updateMaxSlotsUI(); // TDメニューの表示を同期
+          applyLang(); 
+          updateSettingsUI(); 
           
           renderTimetable(); 
           renderMyBookings();
@@ -551,9 +588,11 @@
       if (currentRole === 'td') {
         roleBtn.innerText = '選手モードに戻る'; roleBtn.className = 'px-3 py-1 text-[11px] bg-red-600 text-white border border-red-800 font-bold';
         tdControls.classList.remove('hidden');
+        document.getElementById('date-select').removeAttribute('max'); // TDは未来を見れる
       } else {
         roleBtn.innerText = 'TD管理者'; roleBtn.className = 'px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold';
         tdControls.classList.add('hidden');
+        document.getElementById('date-select').max = sysMaxDate;
       }
       renderTimetable();
     }
@@ -646,6 +685,11 @@
         document.getElementById('td-modal').classList.remove('hidden');
         return;
       }
+      
+      // ★ 解放日前のチェック（TD以外が未来の日程を直リン等で操作しようとした場合ブロック）
+      if (selectedDate > sysMaxDate) {
+         return alert(t.alert_not_open);
+      }
 
       if (b) {
         if (b.status === 'official') {
@@ -660,7 +704,6 @@
         return;
       }
 
-      // ★ サーバー設定に応じた予約上限チェック
       let myTodayCount = 0;
       for (let id in myBookedIds) {
         if (typeof myBookedIds[id] === 'object' && myBookedIds[id].date === selectedDate) {
@@ -885,30 +928,39 @@
       list.innerHTML = '';
       const t = i18n[currentLang];
       
-      let count = 0;
+      // ★ 日付が近い順（降順）に並び替えるための配列化
+      let bookingArray = [];
       for (let id in myBookedIds) {
-        const data = myBookedIds[id];
-        if (typeof data === 'object') {
-          count++;
-          const dateStr = data.date;
-          const time = data.time;
-          const court = data.court;
-          const names = data.names.join(' / ');
-          const pin = data.pin;
-          
-          list.innerHTML += `
-            <div class="flex justify-between items-center text-xs border border-gray-400 p-2 bg-white mb-2">
-              <div>
-                <span class="text-blue-700 font-bold mb-0.5 block tracking-wider">${dateStr}</span>
-                <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
-                <span class="font-bold">${names}</span>
-              </div>
-              <button onclick="promptCancelMyBooking('${id}', '${pin}', '${dateStr}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">${t.btn_cancel_ticket}</button>
-            </div>`;
+        if (typeof myBookedIds[id] === 'object') {
+          bookingArray.push({ id: id, data: myBookedIds[id] });
         }
       }
+      bookingArray.sort((a, b) => (b.data.date > a.data.date) ? 1 : -1);
+
+      if (bookingArray.length === 0) {
+        list.innerHTML = `<p class="text-xs text-gray-500">${t.no_tickets}</p>`;
+        return;
+      }
       
-      if (count === 0) list.innerHTML = `<p class="text-xs text-gray-500">${t.no_tickets}</p>`;
+      bookingArray.forEach(item => {
+        const id = item.id;
+        const data = item.data;
+        const dateStr = data.date;
+        const time = data.time;
+        const court = data.court;
+        const names = data.names.join(' / ');
+        const pin = data.pin;
+        
+        list.innerHTML += `
+          <div class="flex justify-between items-center text-xs border border-gray-400 p-2 bg-white mb-2 shadow-sm rounded">
+            <div>
+              <span class="text-blue-700 font-bold mb-0.5 block tracking-wider">${dateStr}</span>
+              <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
+              <span class="font-bold">${names}</span>
+            </div>
+            <button onclick="promptCancelMyBooking('${id}', '${pin}', '${dateStr}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300 rounded">${t.btn_cancel_ticket}</button>
+          </div>`;
+      });
     }
 
     function openPosterModal() { document.getElementById('poster-modal').classList.remove('hidden'); generatePoster(); }
