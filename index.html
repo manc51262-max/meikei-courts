@@ -54,7 +54,7 @@
 
     <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
       <div class="flex flex-col space-y-1">
-        <span id="rule-text" class="font-bold text-gray-700">【1枠30分・最大4名】空いている行（マス）をタップして予約</span>
+        <span id="rule-text" class="font-bold text-gray-700">【1日1枠・最大4名】空いている行をタップして予約</span>
         <div class="flex items-center space-x-2">
           <label for="date-select" id="date-label" class="font-bold">Date:</label>
           <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none font-bold bg-yellow-50">
@@ -88,8 +88,8 @@
     </div>
 
     <div class="mt-4 border border-gray-400 p-3 bg-gray-50 w-full">
-      <h3 id="my-tickets-title" class="font-bold text-sm text-gray-800 border-b border-gray-300 pb-1 mb-2">■ 自分の予約チケット / My Bookings</h3>
-      <div id="my-bookings-list" class="space-y-2"></div>
+      <h3 id="my-tickets-title" class="font-bold text-sm text-gray-800 border-b border-gray-300 pb-1 mb-2">■ 自分の全日程の予約チケット / My Bookings</h3>
+      <div id="my-bookings-list" class="space-y-2 max-h-[300px] overflow-y-auto"></div>
     </div>
 
     <!-- TD用メニュー -->
@@ -209,16 +209,17 @@
     const i18n = {
       ja: {
         lang_label: "日本語", title: "筑波大学MEIKEIオープンテニス PRACTICE SHEET",
-        rule: "【1枠30分・最大4名】空いている行（マス）をタップして予約", update: "更新",
+        rule: "【1日1枠・最大4名】空いている行（マス）をタップして予約", update: "更新",
         date: "Date:", open: "■ 空き", my: "■ 自分の予約", booked: "■ 予約済",
         swipe: "※表を横にスワイプして1〜7番コートを確認できます 👉",
-        my_tickets: "■ 自分の予約チケット / My Bookings",
+        my_tickets: "■ 自分の全日程の予約チケット / My Bookings",
         no_tickets: "現在有効な予約はありません。", btn_cancel_ticket: "取消",
         modal_title: "練習コート予約", label_name: "代表選手氏名 (必須)", label_phone: "連絡先電話番号 (必須)",
         label_pin: "取消用パスワード(数字4桁) *必須", ph_pin: "例: 1234",
         label_partner: "追加の同伴者（残り {n} 名まで可能）", ph_partner: "同伴者 {n}",
         btn_cancel: "キャンセル", btn_submit: "予約確定",
-        alert_1slot: "練習コートの予約は1枠までです。", alert_booked: "この行はすでに予約されています。",
+        alert_1slot: "練習コートの予約は【1日につき1枠まで】です。\n(別の日程であれば追加で予約可能です)", 
+        alert_booked: "この行はすでに予約されています。",
         alert_req: "代表者名、電話番号、4桁のパスワードを入力してください。", alert_cancel: "この予約を取り消しますか？\n(同伴者も一緒にキャンセルされます)",
         alert_double_book: "タッチの差で他の人に予約されてしまいました。\n画面を最新状態に更新します。",
         prompt_cancel_pin: "別端末で予約された枠です。\n取り消すには予約時のパスワード(数字4桁)を入力してください:",
@@ -229,7 +230,6 @@
         btn_bulk: "試合・イベント一括ブロック", bulk_title: "コート一括ブロック設定",
         bulk_reason: "表示名", bulk_reason_def: "試合", bulk_courts: "対象コート",
         bulk_all: "全選択", bulk_period: "対象期間", bulk_exec: "一括ブロック実行",
-        // ★ 追加された安全確認ダイアログ用のテキスト
         confirm_td_block: "この行を大会割当としてブロックしますか？",
         confirm_td_bulk: "選択した条件で一括ブロックを実行しますか？",
         prompt_init: "【警告】スマホ内の設定を初期化します。\n実行するにはTDパスワードを入力してください:",
@@ -237,16 +237,17 @@
       },
       en: {
         lang_label: "English", title: "MEIKEI OPEN Practice Court",
-        rule: "[Max 4/slot, 30m] Tap an empty row to book", update: "Update",
+        rule: "[1 slot/day, 30m] Tap an empty row to book", update: "Update",
         date: "Date:", open: "■ Open", my: "■ My Booking", booked: "■ Booked",
         swipe: "* Swipe right to see Courts 1-7 👉",
-        my_tickets: "■ My Bookings",
+        my_tickets: "■ My All Bookings",
         no_tickets: "No active bookings.", btn_cancel_ticket: "Cancel",
         modal_title: "Book Practice Court", label_name: "Leader Name (Required)", label_phone: "Phone Number (Required)",
         label_pin: "Cancellation PIN (4 digits) *Req", ph_pin: "e.g. 1234",
         label_partner: "Partners (Up to {n} more)", ph_partner: "Partner {n}",
         btn_cancel: "Cancel", btn_submit: "Confirm",
-        alert_1slot: "You can only book 1 slot per day.", alert_booked: "This row is already booked.",
+        alert_1slot: "You can only book [1 slot per day].\n(You can book another slot on a different date.)", 
+        alert_booked: "This row is already booked.",
         alert_req: "Leader name, phone, and 4-digit PIN are required.", alert_cancel: "Cancel this booking? (Partners will also be cancelled)",
         alert_double_book: "This slot was just booked by someone else.\nRefreshing the schedule...",
         prompt_cancel_pin: "This slot was booked on another device.\nEnter the 4-digit PIN to cancel:",
@@ -264,16 +265,17 @@
       },
       ko: {
         lang_label: "한국어", title: "MEIKEI OPEN 연습 코트 예약",
-        rule: "[1타임 30분, 최대 4명] 빈 칸을 탭하여 예약", update: "새로고침",
+        rule: "[하루 1타임, 최대 4명] 빈 칸을 탭하여 예약", update: "새로고침",
         date: "Date:", open: "■ 빈자리", my: "■ 내 예약", booked: "■ 예약됨",
         swipe: "※ 표를 옆으로 스와이프하여 코트를 확인하세요 👉",
-        my_tickets: "■ 내 예약 / My Bookings",
+        my_tickets: "■ 내 모든 예약 / My Bookings",
         no_tickets: "현재 예약이 없습니다.", btn_cancel_ticket: "취소",
         modal_title: "연습 코트 예약", label_name: "대표 선수 이름 (필수)", label_phone: "연락처 (필수)",
         label_pin: "취소용 비밀번호 (숫자 4자리) *필수", ph_pin: "예: 1234",
         label_partner: "동반자 (추가 {n}명 가능)", ph_partner: "동반자 {n}",
         btn_cancel: "취소", btn_submit: "예약 확정",
-        alert_1slot: "예약은 1인당 1타임만 가능합니다.", alert_booked: "이 자리는 이미 예약되었습니다.",
+        alert_1slot: "예약은 [하루 1타임만] 가능합니다.\n(다른 날짜라면 추가 예약 가능)", 
+        alert_booked: "이 자리는 이미 예약되었습니다.",
         alert_req: "이름, 연락처, 4자리 비밀번호를 입력해주세요.", alert_cancel: "이 예약을 취소하시겠습니까? (동반자도 취소됩니다)",
         alert_double_book: "간발의 차이로 다른 사람이 예약했습니다.\n화면을 새로고침합니다.",
         prompt_cancel_pin: "다른 기기에서 예약된 자리입니다.\n취소하려면 예약 시 설정한 4자리 비밀번호를 입력하세요:",
@@ -574,6 +576,7 @@
       const timeCourtBase = parts[0] + '_' + parts[1];
       const b = bookings[key];
       const t = i18n[currentLang];
+      const selectedDate = document.getElementById('date-select').value;
 
       if (currentRole === 'td') {
         let dispName = b ? getLocalizedName(b.name, t) : '';
@@ -590,15 +593,22 @@
            alert(t.alert_booked); return;
         }
         if (myBookedIds.hasOwnProperty(b.id)) {
-          if (confirm(t.alert_cancel)) cancelBookingOnline(b.id, null, myBookedIds[b.id], false);
+          if (confirm(t.alert_cancel)) cancelBookingOnline(b.id, null, myBookedIds[b.id].pin, false, selectedDate);
         } else {
           const pin = prompt(`${t.alert_booked}\n\n${t.prompt_cancel_pin}`);
-          if (pin) cancelBookingOnline(b.id, null, pin, false);
+          if (pin) cancelBookingOnline(b.id, null, pin, false, selectedDate);
         }
         return;
       }
 
-      if (Object.keys(myBookedIds).length >= 1) return alert(t.alert_1slot);
+      // ★ 1日1枠の制限チェック
+      let hasBookingToday = false;
+      for (let id in myBookedIds) {
+        if (typeof myBookedIds[id] === 'object' && myBookedIds[id].date === selectedDate) {
+          hasBookingToday = true; break;
+        }
+      }
+      if (hasBookingToday) return alert(t.alert_1slot);
 
       currentEmptyKeys = [];
       for (let r = 1; r <= 4; r++) {
@@ -675,7 +685,14 @@
       try {
         await sendToServer({ action: 'book', date: selectedDate, pin: pin, bookings: newBookings });
         
-        myBookedIds[bId] = pin; 
+        // ★ ローカルストレージに全日程用の詳細データを保存
+        myBookedIds[bId] = {
+          pin: pin,
+          date: selectedDate,
+          time: currentEmptyKeys[0].split('_')[0],
+          court: currentEmptyKeys[0].split('_')[1],
+          names: newBookings.map(b => b.name)
+        };
         localStorage.setItem('meikei_paper_v4_ids', JSON.stringify(myBookedIds));
         
         newBookings.forEach(b => { bookings[b.key] = { name: b.name, phone: b.phone, status: 'booked', id: bId }; });
@@ -687,16 +704,18 @@
       finally { btn.innerText = t.btn_submit; btn.disabled = false; }
     }
 
-    async function cancelBookingOnline(bId, singleKey, pin, isTD) {
-      const selectedDate = document.getElementById('date-select').value;
-      const t = i18n[currentLang];
+    async function cancelBookingOnline(bId, singleKey, pin, isTD, targetDateStr = null) {
+      const selectedDate = targetDateStr || document.getElementById('date-select').value;
       try {
         await sendToServer({ action: 'cancel', date: selectedDate, id: bId, key: singleKey, pin: pin, isTD: isTD });
         
         if (bId) {
           delete myBookedIds[bId];
           localStorage.setItem('meikei_paper_v4_ids', JSON.stringify(myBookedIds));
-          for (let k in bookings) { if (bookings[k].id === bId) delete bookings[k]; }
+          // 今表示している画面の日付と同じなら bookings からも消す
+          if (selectedDate === document.getElementById('date-select').value) {
+            for (let k in bookings) { if (bookings[k].id === bId) delete bookings[k]; }
+          }
         }
         if (singleKey) {
           delete bookings[singleKey];
@@ -728,7 +747,6 @@
       setTimeout(() => manualSync(), 1500);
     }
 
-    // ★ 誤操作防止：強制取消時にTDパスワードを入力させる
     async function tdCancelSlot() {
       if (!selectedSlot) return; 
       const t = i18n[currentLang];
@@ -796,33 +814,36 @@
       finally { btn.innerText = t.bulk_exec; btn.disabled = false; }
     }
 
+    // ★ 自分の予約一覧に、別日程のものも全て表示するロジック
     function renderMyBookings() {
       const list = document.getElementById('my-bookings-list');
       list.innerHTML = '';
       const t = i18n[currentLang];
       
-      const myGroups = {};
-      for (let key in bookings) {
-        const b = bookings[key];
-        if (b && myBookedIds.hasOwnProperty(b.id)) {
-          if(!myGroups[b.id]) myGroups[b.id] = { baseKey: key, names: [] };
-          myGroups[b.id].names.push(b.name);
+      let count = 0;
+      for (let id in myBookedIds) {
+        const data = myBookedIds[id];
+        // 古いデータ構造が残っていないかチェック
+        if (typeof data === 'object') {
+          count++;
+          const dateStr = data.date;
+          const time = data.time;
+          const court = data.court;
+          const names = data.names.join(' / ');
+          const pin = data.pin;
+          
+          list.innerHTML += `
+            <div class="flex justify-between items-center text-xs border border-gray-400 p-2 bg-white mb-2">
+              <div>
+                <span class="text-blue-700 font-bold mb-0.5 block tracking-wider">${dateStr}</span>
+                <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
+                <span class="font-bold">${names}</span>
+              </div>
+              <button onclick="if(confirm('${t.alert_cancel}')) cancelBookingOnline('${id}', null, '${pin}', false, '${dateStr}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">${t.btn_cancel_ticket}</button>
+            </div>`;
         }
       }
-
-      let count = Object.keys(myGroups).length;
-      for (let id in myGroups) {
-        const g = myGroups[id];
-        const [time, court] = g.baseKey.split('_');
-        list.innerHTML += `
-          <div class="flex justify-between items-center text-xs border border-gray-400 p-2 bg-white">
-            <div>
-              <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
-              <span class="font-bold">${g.names.join(' / ')}</span>
-            </div>
-            <button onclick="if(confirm('${t.alert_cancel}')) cancelBookingOnline('${id}', null, '${myBookedIds[id]}', false)" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">${t.btn_cancel_ticket}</button>
-          </div>`;
-      }
+      
       if (count === 0) list.innerHTML = `<p class="text-xs text-gray-500">${t.no_tickets}</p>`;
     }
 
