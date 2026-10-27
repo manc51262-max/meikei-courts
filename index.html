@@ -601,7 +601,6 @@
         return;
       }
 
-      // ★ 1日1枠の制限チェック
       let hasBookingToday = false;
       for (let id in myBookedIds) {
         if (typeof myBookedIds[id] === 'object' && myBookedIds[id].date === selectedDate) {
@@ -685,7 +684,6 @@
       try {
         await sendToServer({ action: 'book', date: selectedDate, pin: pin, bookings: newBookings });
         
-        // ★ ローカルストレージに全日程用の詳細データを保存
         myBookedIds[bId] = {
           pin: pin,
           date: selectedDate,
@@ -712,7 +710,6 @@
         if (bId) {
           delete myBookedIds[bId];
           localStorage.setItem('meikei_paper_v4_ids', JSON.stringify(myBookedIds));
-          // 今表示している画面の日付と同じなら bookings からも消す
           if (selectedDate === document.getElementById('date-select').value) {
             for (let k in bookings) { if (bookings[k].id === bId) delete bookings[k]; }
           }
@@ -814,7 +811,14 @@
       finally { btn.innerText = t.bulk_exec; btn.disabled = false; }
     }
 
-    // ★ 自分の予約一覧に、別日程のものも全て表示するロジック
+    // ★ 予約チケットからキャンセルするための専用関数（改行エラー対策）
+    function promptCancelMyBooking(id, pin, dateStr) {
+      const t = i18n[currentLang];
+      if (confirm(t.alert_cancel)) {
+        cancelBookingOnline(id, null, pin, false, dateStr);
+      }
+    }
+
     function renderMyBookings() {
       const list = document.getElementById('my-bookings-list');
       list.innerHTML = '';
@@ -823,7 +827,6 @@
       let count = 0;
       for (let id in myBookedIds) {
         const data = myBookedIds[id];
-        // 古いデータ構造が残っていないかチェック
         if (typeof data === 'object') {
           count++;
           const dateStr = data.date;
@@ -839,7 +842,7 @@
                 <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
                 <span class="font-bold">${names}</span>
               </div>
-              <button onclick="if(confirm('${t.alert_cancel}')) cancelBookingOnline('${id}', null, '${pin}', false, '${dateStr}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">${t.btn_cancel_ticket}</button>
+              <button onclick="promptCancelMyBooking('${id}', '${pin}', '${dateStr}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">${t.btn_cancel_ticket}</button>
             </div>`;
         }
       }
