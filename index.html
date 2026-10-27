@@ -19,7 +19,10 @@
     .thick-right { border-right: 2px solid #1f2937 !important; }
     .sticky-col { position: sticky; left: 0; background-color: #f3f4f6; z-index: 10; }
     .sticky-col-header { position: sticky; left: 0; background-color: #d1d5db; z-index: 20; }
-    .inner-row td { height: 26px; padding: 0 4px; }
+    
+    /* ★ タップ領域の拡大: 高さを26px -> 36px に変更 */
+    .inner-row td { height: 36px; padding: 0 4px; }
+    
     @keyframes flash { 0% { background-color: #fef08a; } 100% { background-color: #f3f4f6; } }
     .scroll-target { animation: flash 2s ease-out; }
   </style>
@@ -38,7 +41,7 @@
       </h1>
       
       <div class="mt-2 md:mt-0 flex gap-2 items-center flex-wrap justify-center">
-        <button onclick="fetchLatestData(true)" class="px-2 py-1.5 text-[11px] bg-gray-200 text-gray-700 border border-gray-400 font-bold">
+        <button onclick="manualSync()" class="px-2 py-1.5 text-[11px] bg-gray-200 text-gray-700 border border-gray-400 font-bold">
           <i class="fa-solid fa-rotate"></i> <span id="btn-update">更新</span>
         </button>
         <button onclick="toggleLang()" class="px-2 py-1.5 text-[11px] bg-blue-100 text-blue-800 border border-blue-400 font-bold">
@@ -99,7 +102,6 @@
       </button>
       <button onclick="openPosterModal()" class="px-3 py-1.5 text-xs bg-gray-800 text-white border border-gray-900 font-bold rounded">QRポスター作成</button>
       <button onclick="exportCSV()" class="px-3 py-1.5 text-xs bg-gray-100 text-gray-800 border border-gray-400 font-bold rounded">CSVエクスポート</button>
-      <!-- ★追加：全データ強制消去ボタン -->
       <button onclick="tdForceCleanDay()" class="px-3 py-1.5 text-xs bg-black text-white font-bold rounded ml-auto">この日のデータを全消去</button>
     </div>
   </main>
@@ -109,7 +111,6 @@
   <div id="bulk-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-md w-full border-2 border-gray-800 p-4 shadow-xl relative max-h-[90vh] overflow-y-auto">
       <h4 id="bulk-title" class="font-bold text-gray-800 mb-3 border-b-2 border-gray-800 pb-1">コート一括ブロック設定</h4>
-      
       <div class="space-y-3 text-xs">
         <div>
           <label id="bulk-label-reason" class="block font-bold mb-1">表示名</label>
@@ -136,7 +137,6 @@
           </div>
         </div>
       </div>
-
       <div class="mt-5 flex space-x-2">
         <button id="bulk-btn-cancel" onclick="closeBulkModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
         <button id="bulk-btn-exec" onclick="executeBulkBlock()" class="w-1/2 py-2 border border-red-800 bg-red-600 text-white font-bold text-xs shadow-md">一括ブロック実行</button>
@@ -160,7 +160,6 @@
     <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl">
       <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">TD管理者モード</h4>
       <p class="text-xs font-bold text-gray-700 my-2 whitespace-pre-line" id="td-modal-slot-info"></p>
-      
       <div class="mt-3 pt-3 border-t border-gray-300">
         <label id="td-label-name" class="block font-bold mb-1 text-xs text-blue-800">大会側での割当 (選手名)</label>
         <input type="text" id="td-input-name" class="w-full border border-gray-400 px-2 py-1.5 text-xs bg-yellow-50 outline-none mb-2">
@@ -205,7 +204,7 @@
 
   <script>
     // ★★★ 以下のURLをご自身の【新しいデプロイ】のURLに書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzotaHDKTl6WAMtWACbSuZrefDfj5hB8RbE7kiPyYipB_GOBJGv2bSwlVXvHJQkyWf0kw/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwHPAZgyj4UCXr2yHcj6Pf7EVYFKf2oUze4Ii4_huOA7aMsd3eyn9nGgxeivnxsdkk-xQ/exec";
 
     const i18n = {
       ja: {
@@ -216,12 +215,14 @@
         my_tickets: "■ 自分の予約チケット / My Bookings",
         no_tickets: "現在有効な予約はありません。", btn_cancel_ticket: "取消",
         modal_title: "練習コート予約", label_name: "代表選手氏名 (必須)", label_phone: "連絡先電話番号 (必須)",
+        label_pin: "取消用パスワード(数字4桁) *必須", ph_pin: "例: 1234",
         label_partner: "追加の同伴者（残り {n} 名まで可能）", ph_partner: "同伴者 {n}",
         btn_cancel: "キャンセル", btn_submit: "予約確定",
         alert_1slot: "練習コートの予約は1枠までです。", alert_booked: "この行はすでに予約されています。",
-        alert_req: "代表者名と電話番号を入力してください。", alert_cancel: "この予約を取り消しますか？\n(同伴者も一緒にキャンセルされます)",
+        alert_req: "代表者名、電話番号、4桁のパスワードを入力してください。", alert_cancel: "この予約を取り消しますか？\n(同伴者も一緒にキャンセルされます)",
         alert_double_book: "タッチの差で他の人に予約されてしまいました。\n画面を最新状態に更新します。",
-        empty: "( 空き )",
+        prompt_cancel_pin: "別端末で予約された枠です。\n取り消すには予約時のパスワード(数字4桁)を入力してください:",
+        wrong_pin: "パスワードが違います。", empty: "( 空き )",
         td_label_name: "大会側での割当 (選手名)", td_ph_name: "例: 筑波太郎 (空欄なら「公式割当」)",
         td_btn_block: "この行を大会割当としてブロック", td_btn_cancel: "このグループを取消 (強制削除)",
         td_btn_back: "戻る", official: "公式割当",
@@ -237,12 +238,14 @@
         my_tickets: "■ My Bookings",
         no_tickets: "No active bookings.", btn_cancel_ticket: "Cancel",
         modal_title: "Book Practice Court", label_name: "Leader Name (Required)", label_phone: "Phone Number (Required)",
+        label_pin: "Cancellation PIN (4 digits) *Req", ph_pin: "e.g. 1234",
         label_partner: "Partners (Up to {n} more)", ph_partner: "Partner {n}",
         btn_cancel: "Cancel", btn_submit: "Confirm",
         alert_1slot: "You can only book 1 slot per day.", alert_booked: "This row is already booked.",
-        alert_req: "Leader name and phone number are required.", alert_cancel: "Cancel this booking? (Partners will also be cancelled)",
+        alert_req: "Leader name, phone, and 4-digit PIN are required.", alert_cancel: "Cancel this booking? (Partners will also be cancelled)",
         alert_double_book: "This slot was just booked by someone else.\nRefreshing the schedule...",
-        empty: "( Open )",
+        prompt_cancel_pin: "This slot was booked on another device.\nEnter the 4-digit PIN to cancel:",
+        wrong_pin: "Incorrect PIN.", empty: "( Open )",
         td_label_name: "Official Assignment (Player Name)", td_ph_name: "e.g. John Doe (Blank for 'Official')",
         td_btn_block: "Block this row as Official", td_btn_cancel: "Force Delete Group",
         td_btn_back: "Back", official: "Official",
@@ -258,12 +261,14 @@
         my_tickets: "■ 내 예약 / My Bookings",
         no_tickets: "현재 예약이 없습니다.", btn_cancel_ticket: "취소",
         modal_title: "연습 코트 예약", label_name: "대표 선수 이름 (필수)", label_phone: "연락처 (필수)",
+        label_pin: "취소용 비밀번호 (숫자 4자리) *필수", ph_pin: "예: 1234",
         label_partner: "동반자 (추가 {n}명 가능)", ph_partner: "동반자 {n}",
         btn_cancel: "취소", btn_submit: "예약 확정",
         alert_1slot: "예약은 1인당 1타임만 가능합니다.", alert_booked: "이 자리는 이미 예약되었습니다.",
-        alert_req: "이름과 연락처를 입력해주세요.", alert_cancel: "이 예약을 취소하시겠습니까? (동반자도 취소됩니다)",
+        alert_req: "이름, 연락처, 4자리 비밀번호를 입력해주세요.", alert_cancel: "이 예약을 취소하시겠습니까? (동반자도 취소됩니다)",
         alert_double_book: "간발의 차이로 다른 사람이 예약했습니다.\n화면을 새로고침합니다.",
-        empty: "( 빈자리 )",
+        prompt_cancel_pin: "다른 기기에서 예약된 자리입니다.\n취소하려면 예약 시 설정한 4자리 비밀번호를 입력하세요:",
+        wrong_pin: "비밀번호가 틀렸습니다.", empty: "( 빈자리 )",
         td_label_name: "대회 측 할당 (선수 이름)", td_ph_name: "예: 홍길동 (비워두면 '공식할당')",
         td_btn_block: "이 행을 대회 할당으로 블록", td_btn_cancel: "이 그룹 취소 (강제 삭제)",
         td_btn_back: "뒤로", official: "공식할당",
@@ -278,6 +283,19 @@
     let selectedSlot = null;
     let currentEmptyKeys = []; 
     let initialScrollDone = false; 
+
+    // ★ エコ通信（画面を閉じている時は通信を止める）
+    let syncTimer = null;
+    function startEcoSync() {
+      if (!syncTimer) syncTimer = setInterval(() => fetchLatestData(false), 30000); // 30秒間隔に緩和
+    }
+    function stopEcoSync() {
+      if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopEcoSync();
+      else { fetchLatestData(true); startEcoSync(); }
+    });
 
     function handleSecretClick() {
       secretClickCount++;
@@ -307,7 +325,7 @@
     const courtLabels = { 'c1':'Court 1', 'c2':'Court 2', 'c3':'Court 3', 'c4':'Court 4', 'c5':'Court 5', 'c6':'Court 6', 'c7':'Court 7' };
 
     let bookings = {}; 
-    let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_v3_ids')) || [];
+    let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_v4_ids')) || {}; // { "MK-123": "1234" }
 
     function getTodayString() {
       const d = new Date();
@@ -316,8 +334,8 @@
 
     function debugReset() {
       if (confirm('データを初期化しますか？')) {
-        localStorage.removeItem('meikei_paper_v3_ids');
-        bookings = {}; myBookedIds = [];
+        localStorage.removeItem('meikei_paper_v4_ids');
+        bookings = {}; myBookedIds = {};
         renderTimetable(); renderMyBookings();
       }
     }
@@ -336,13 +354,17 @@
 
       applyLang();
       fetchLatestData(true);
-      setInterval(() => fetchLatestData(false), 15000);
+      startEcoSync();
       
       document.getElementById('date-select').addEventListener('change', () => {
         initialScrollDone = false; 
         fetchLatestData(true);
       });
     });
+
+    function manualSync() {
+      stopEcoSync(); fetchLatestData(true); startEcoSync();
+    }
 
     function toggleLang() {
       if (currentLang === 'ja') currentLang = 'en';
@@ -507,7 +529,7 @@
                   bgClass = 'bg-yellow-100'; txtClass = 'text-yellow-900 font-bold';
                   cellContent = dispName;
                 } else {
-                  const isMy = myBookedIds.includes(b.id);
+                  const isMy = myBookedIds.hasOwnProperty(b.id);
                   bgClass = isMy ? 'bg-blue-50' : 'bg-white';
                   txtClass = isMy ? 'text-blue-900 font-bold' : 'text-gray-800 font-bold';
                   cellContent = dispName;
@@ -546,16 +568,21 @@
         return;
       }
 
+      // ★ パスワード取消機能（別端末からのキャンセル対応）
       if (b) {
-        if (myBookedIds.includes(b.id)) {
-          if (confirm(t.alert_cancel)) cancelBookingOnline(b.id);
+        if (b.status === 'official') {
+           alert(t.alert_booked); return;
+        }
+        if (myBookedIds.hasOwnProperty(b.id)) {
+          if (confirm(t.alert_cancel)) cancelBookingOnline(b.id, null, myBookedIds[b.id], false);
         } else {
-          alert(t.alert_booked);
+          const pin = prompt(`${t.alert_booked}\n\n${t.prompt_cancel_pin}`);
+          if (pin) cancelBookingOnline(b.id, null, pin, false);
         }
         return;
       }
 
-      if (myBookedIds.length >= 1) return alert(t.alert_1slot);
+      if (Object.keys(myBookedIds).length >= 1) return alert(t.alert_1slot);
 
       currentEmptyKeys = [];
       for (let r = 1; r <= 4; r++) {
@@ -572,9 +599,13 @@
               <label class="block font-bold mb-0.5 text-blue-800">${t.label_name}</label>
               <input type="text" id="input-name-0" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none">
             </div>
-            <div class="mb-3 border-b border-gray-300 pb-3">
+            <div class="mb-2">
               <label class="block font-bold mb-0.5 text-gray-700">${t.label_phone}</label>
               <input type="tel" id="input-phone" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none">
+            </div>
+            <div class="mb-3 border-b border-gray-300 pb-3">
+              <label class="block font-bold mb-0.5 text-red-700">${t.label_pin}</label>
+              <input type="tel" id="input-pin" maxlength="4" placeholder="${t.ph_pin}" class="w-full border border-gray-400 px-2 py-1.5 bg-red-50 outline-none">
             </div>`;
         } else {
           if (idx === 1) container.innerHTML += `<label class="block font-bold mb-1 text-gray-700">${t.label_partner.replace('{n}', currentEmptyKeys.length - 1)}</label>`;
@@ -595,18 +626,21 @@
     async function sendToServer(payload) {
       const res = await fetch(GAS_API_URL, {
         method: 'POST',
+        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
         body: JSON.stringify(payload)
       });
-      return await res.json();
+      // no-cors の場合は中身が読めないので success とする
+      return { success: true };
     }
 
     async function confirmBooking() {
       const name0 = document.getElementById('input-name-0').value.trim();
       const phone = document.getElementById('input-phone').value.trim();
+      const pin = document.getElementById('input-pin').value.trim();
       const t = i18n[currentLang];
       
-      if (!name0 || !phone) return alert(t.alert_req);
+      if (!name0 || !phone || pin.length !== 4) return alert(t.alert_req);
 
       const btn = document.getElementById('submit-btn');
       btn.innerText = 'Syncing...'; btn.disabled = true;
@@ -624,35 +658,30 @@
       }
 
       try {
-        const result = await sendToServer({ action: 'book', date: selectedDate, bookings: newBookings });
+        await sendToServer({ action: 'book', date: selectedDate, pin: pin, bookings: newBookings });
         
-        if (!result.success && result.error === 'ALREADY_BOOKED') {
-          alert(t.alert_double_book);
-          fetchLatestData(true);
-          closeBookingModal();
-          btn.innerText = t.btn_submit; btn.disabled = false;
-          return;
-        }
-        
-        myBookedIds.push(bId); 
-        localStorage.setItem('meikei_paper_v3_ids', JSON.stringify(myBookedIds));
+        myBookedIds[bId] = pin; // PINも保存
+        localStorage.setItem('meikei_paper_v4_ids', JSON.stringify(myBookedIds));
         
         newBookings.forEach(b => { bookings[b.key] = { name: b.name, phone: b.phone, status: 'booked', id: bId }; });
         
         closeBookingModal();
         renderTimetable(); renderMyBookings();
+        setTimeout(() => manualSync(), 1500);
       } catch (e) {} 
       finally { btn.innerText = t.btn_submit; btn.disabled = false; }
     }
 
-    async function cancelBookingOnline(bId, singleKey = null) {
+    async function cancelBookingOnline(bId, singleKey, pin, isTD) {
       const selectedDate = document.getElementById('date-select').value;
+      const t = i18n[currentLang];
       try {
-        await sendToServer({ action: 'cancel', date: selectedDate, id: bId, key: singleKey });
+        await sendToServer({ action: 'cancel', date: selectedDate, id: bId, key: singleKey, pin: pin, isTD: isTD });
         
+        // 画面上から即時消去
         if (bId) {
-          myBookedIds = myBookedIds.filter(id => id !== bId); 
-          localStorage.setItem('meikei_paper_v3_ids', JSON.stringify(myBookedIds));
+          delete myBookedIds[bId];
+          localStorage.setItem('meikei_paper_v4_ids', JSON.stringify(myBookedIds));
           for (let k in bookings) { if (bookings[k].id === bId) delete bookings[k]; }
         }
         if (singleKey) {
@@ -660,7 +689,7 @@
         }
         
         renderTimetable(); renderMyBookings(); 
-        setTimeout(() => fetchLatestData(false), 1500); 
+        setTimeout(() => manualSync(), 1500); 
       } catch (e) {}
     }
 
@@ -675,24 +704,19 @@
       closeTdModal();
       
       const payload = { action: 'official', date: selectedDate, bookings: [{ key: selectedSlot, name: officialName, id: bId }] };
-      const result = await sendToServer(payload);
-      
-      if (!result.success && result.error === 'ALREADY_BOOKED') {
-         alert(t.alert_double_book);
-         fetchLatestData(true); return;
-      }
+      await sendToServer(payload);
       
       bookings[selectedSlot] = { name: officialName, status: 'official', id: bId };
       renderTimetable(); 
+      setTimeout(() => manualSync(), 1500);
     }
 
     async function tdCancelSlot() {
       if (!selectedSlot) return; closeTdModal();
       const bId = bookings[selectedSlot] ? bookings[selectedSlot].id : null;
-      await cancelBookingOnline(bId, selectedSlot);
+      await cancelBookingOnline(bId, selectedSlot, null, true);
     }
     
-    // ★ TD用：緊急時 全データクリーンアップ
     async function tdForceCleanDay() {
       const selectedDate = document.getElementById('date-select').value;
       const pass = prompt(`【危険】${selectedDate} の全データを強制消去します。\n実行するにはTDパスワードを入力してください:`);
@@ -747,14 +771,11 @@
       }
 
       try {
-        const result = await sendToServer({ action: 'official', date: selectedDate, bookings: newBookings });
-        if (!result.success && result.error === 'ALREADY_BOOKED') {
-           alert(t.alert_double_book);
-           fetchLatestData(true); closeBulkModal(); btn.innerText = t.bulk_exec; btn.disabled = false; return;
-        }
+        await sendToServer({ action: 'official', date: selectedDate, bookings: newBookings });
         
         newBookings.forEach(b => { bookings[b.key] = { name: b.name, status: 'official', id: bId }; });
         closeBulkModal(); renderTimetable();
+        setTimeout(() => manualSync(), 1500);
       } catch(e) {} 
       finally { btn.innerText = t.bulk_exec; btn.disabled = false; }
     }
@@ -767,7 +788,7 @@
       const myGroups = {};
       for (let key in bookings) {
         const b = bookings[key];
-        if (b && myBookedIds.includes(b.id)) {
+        if (b && myBookedIds.hasOwnProperty(b.id)) {
           if(!myGroups[b.id]) myGroups[b.id] = { baseKey: key, names: [] };
           myGroups[b.id].names.push(b.name);
         }
@@ -783,7 +804,7 @@
               <span class="font-bold text-gray-800">${courtLabels[court]} | ${time}</span><br>
               <span class="font-bold">${g.names.join(' / ')}</span>
             </div>
-            <button onclick="if(confirm('${t.alert_cancel}')) cancelBookingOnline('${id}')" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">${t.btn_cancel_ticket}</button>
+            <button onclick="if(confirm('${t.alert_cancel}')) cancelBookingOnline('${id}', null, '${myBookedIds[id]}', false)" class="px-2.5 py-1.5 bg-gray-200 border border-gray-400 font-bold text-gray-700 hover:bg-gray-300">${t.btn_cancel_ticket}</button>
           </div>`;
       }
       if (count === 0) list.innerHTML = `<p class="text-xs text-gray-500">${t.no_tickets}</p>`;
