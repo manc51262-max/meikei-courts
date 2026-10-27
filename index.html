@@ -54,7 +54,7 @@
 
     <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
       <div class="flex flex-col space-y-1">
-        <span id="rule-text" class="font-bold text-gray-700">【1日1枠・最大4名】空いている行をタップして予約</span>
+        <span id="rule-text" class="font-bold text-gray-700"></span> <!-- JSで枠数を埋め込みます -->
         <div class="flex items-center space-x-2">
           <label for="date-select" id="date-label" class="font-bold">Date:</label>
           <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none font-bold bg-yellow-50">
@@ -93,13 +93,28 @@
     </div>
 
     <!-- TD用メニュー -->
-    <div id="td-controls" class="hidden mt-4 pt-4 border-t border-gray-300 flex flex-wrap gap-2">
-      <button onclick="openBulkModal()" class="px-3 py-2 text-xs bg-red-600 text-white border border-red-800 font-bold shadow-md rounded">
-        <i class="fa-solid fa-ban"></i> <span id="btn-bulk">試合・イベント一括ブロック</span>
-      </button>
-      <button onclick="openPosterModal()" class="px-3 py-1.5 text-xs bg-gray-800 text-white border border-gray-900 font-bold rounded">QRポスター作成</button>
-      <button onclick="exportCSV()" class="px-3 py-1.5 text-xs bg-gray-100 text-gray-800 border border-gray-400 font-bold rounded">CSVエクスポート</button>
-      <button onclick="tdForceCleanDay()" class="px-3 py-1.5 text-xs bg-black text-white font-bold rounded ml-auto">この日のデータを全消去</button>
+    <div id="td-controls" class="hidden mt-4 pt-4 border-t border-gray-300 flex flex-col gap-2">
+      <div class="flex flex-wrap gap-2">
+        <button onclick="openBulkModal()" class="px-3 py-2 text-xs bg-red-600 text-white border border-red-800 font-bold shadow-md rounded">
+          <i class="fa-solid fa-ban"></i> <span id="btn-bulk">試合・イベント一括ブロック</span>
+        </button>
+        <button onclick="openPosterModal()" class="px-3 py-1.5 text-xs bg-gray-800 text-white border border-gray-900 font-bold rounded">QRポスター作成</button>
+        <button onclick="exportCSV()" class="px-3 py-1.5 text-xs bg-gray-100 text-gray-800 border border-gray-400 font-bold rounded">CSVエクスポート</button>
+      </div>
+      
+      <!-- ★ システム設定系（枠の解放・消去） -->
+      <div class="flex flex-wrap gap-2 items-center justify-between border-t border-gray-200 pt-3 mt-1">
+        <div class="flex items-center gap-2 bg-blue-100 px-3 py-2 rounded border border-blue-400 shadow-sm">
+           <span class="text-xs font-bold text-blue-900">選手1人の予約上限:</span>
+           <select id="td-max-slots" onchange="tdSetMaxSlots()" class="border border-blue-500 bg-white text-xs py-1 px-1 outline-none font-bold text-center">
+             <option value="1">1枠 / 日</option>
+             <option value="2">2枠 / 日</option>
+             <option value="3">3枠 / 日</option>
+             <option value="99">無制限</option>
+           </select>
+        </div>
+        <button onclick="tdForceCleanDay()" class="px-3 py-2 text-xs bg-black text-white font-bold rounded shadow-md">この日のデータを全消去</button>
+      </div>
     </div>
   </main>
 
@@ -204,12 +219,12 @@
 
   <script>
     // ★★★ 以下のURLをご自身の【新しいデプロイ】のURLに書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwHPAZgyj4UCXr2yHcj6Pf7EVYFKf2oUze4Ii4_huOA7aMsd3eyn9nGgxeivnxsdkk-xQ/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz-4g2MnvBMCtvHbGphM5SJeEUNgvcvAjSdLamT5SAF7Wdj0H3kJ9FZFH1SEfKpTEHKtA/exec";
 
     const i18n = {
       ja: {
         lang_label: "日本語", title: "筑波大学MEIKEIオープンテニス PRACTICE SHEET",
-        rule: "【1日1枠・最大4名】空いている行（マス）をタップして予約", update: "更新",
+        rule: "【1日 {slots} ・最大4名】空いている行（マス）をタップして予約", update: "更新",
         date: "Date:", open: "■ 空き", my: "■ 自分の予約", booked: "■ 予約済",
         swipe: "※表を横にスワイプして1〜7番コートを確認できます 👉",
         my_tickets: "■ 自分の全日程の予約チケット / My Bookings",
@@ -218,7 +233,7 @@
         label_pin: "取消用パスワード(数字4桁) *必須", ph_pin: "例: 1234",
         label_partner: "追加の同伴者（残り {n} 名まで可能）", ph_partner: "同伴者 {n}",
         btn_cancel: "キャンセル", btn_submit: "予約確定",
-        alert_1slot: "練習コートの予約は【1日につき1枠まで】です。\n(別の日程であれば追加で予約可能です)", 
+        alert_1slot: "練習コートの予約は【1日につき {slots} まで】です。\n(別の日程であれば追加で予約可能です)", 
         alert_booked: "この行はすでに予約されています。",
         alert_req: "代表者名、電話番号、4桁のパスワードを入力してください。", alert_cancel: "この予約を取り消しますか？\n(同伴者も一緒にキャンセルされます)",
         alert_double_book: "タッチの差で他の人に予約されてしまいました。\n画面を最新状態に更新します。",
@@ -237,7 +252,7 @@
       },
       en: {
         lang_label: "English", title: "MEIKEI OPEN Practice Court",
-        rule: "[1 slot/day, 30m] Tap an empty row to book", update: "Update",
+        rule: "[{slots}/day, 30m] Tap an empty row to book", update: "Update",
         date: "Date:", open: "■ Open", my: "■ My Booking", booked: "■ Booked",
         swipe: "* Swipe right to see Courts 1-7 👉",
         my_tickets: "■ My All Bookings",
@@ -246,7 +261,7 @@
         label_pin: "Cancellation PIN (4 digits) *Req", ph_pin: "e.g. 1234",
         label_partner: "Partners (Up to {n} more)", ph_partner: "Partner {n}",
         btn_cancel: "Cancel", btn_submit: "Confirm",
-        alert_1slot: "You can only book [1 slot per day].\n(You can book another slot on a different date.)", 
+        alert_1slot: "You can only book [{slots} per day].\n(You can book another slot on a different date.)", 
         alert_booked: "This row is already booked.",
         alert_req: "Leader name, phone, and 4-digit PIN are required.", alert_cancel: "Cancel this booking? (Partners will also be cancelled)",
         alert_double_book: "This slot was just booked by someone else.\nRefreshing the schedule...",
@@ -265,7 +280,7 @@
       },
       ko: {
         lang_label: "한국어", title: "MEIKEI OPEN 연습 코트 예약",
-        rule: "[하루 1타임, 최대 4명] 빈 칸을 탭하여 예약", update: "새로고침",
+        rule: "[하루 {slots}, 최대 4명] 빈 칸을 탭하여 예약", update: "새로고침",
         date: "Date:", open: "■ 빈자리", my: "■ 내 예약", booked: "■ 예약됨",
         swipe: "※ 표를 옆으로 스와이프하여 코트를 확인하세요 👉",
         my_tickets: "■ 내 모든 예약 / My Bookings",
@@ -274,7 +289,7 @@
         label_pin: "취소용 비밀번호 (숫자 4자리) *필수", ph_pin: "예: 1234",
         label_partner: "동반자 (추가 {n}명 가능)", ph_partner: "동반자 {n}",
         btn_cancel: "취소", btn_submit: "예약 확정",
-        alert_1slot: "예약은 [하루 1타임만] 가능합니다.\n(다른 날짜라면 추가 예약 가능)", 
+        alert_1slot: "예약은 [하루 {slots}만] 가능합니다.\n(다른 날짜라면 추가 예약 가능)", 
         alert_booked: "이 자리는 이미 예약되었습니다.",
         alert_req: "이름, 연락처, 4자리 비밀번호를 입력해주세요.", alert_cancel: "이 예약을 취소하시겠습니까? (동반자도 취소됩니다)",
         alert_double_book: "간발의 차이로 다른 사람이 예약했습니다.\n화면을 새로고침합니다.",
@@ -298,6 +313,7 @@
     let selectedSlot = null;
     let currentEmptyKeys = []; 
     let initialScrollDone = false; 
+    let sysMaxSlots = 1; // サーバーから取得する予約上限枠数
 
     let syncTimer = null;
     function startEcoSync() {
@@ -392,23 +408,25 @@
       applyLang();
     }
 
-    function getLocalizedName(originalName, t) {
-      if (!originalName) return '';
-      const n = originalName.trim();
-      if (n === "試合のため使用不可" || n === "試合 (MATCH)" || n === "試合" || n === "MATCH" || n === "시합 (MATCH)" || n === "Unavailable (Match)") {
-        return t.bulk_reason_def;
+    // 予約枠のテキスト整形
+    function getSlotText(lang, slots) {
+      if (slots >= 99) {
+         if(lang === 'en') return 'Unlimited slots';
+         if(lang === 'ko') return '무제한';
+         return '無制限';
       }
-      if (n === "公式割当" || n === "Official" || n === "공식할당") {
-        return t.official;
-      }
-      return n;
+      if(lang === 'en') return slots + (slots === 1 ? ' slot' : ' slots');
+      if(lang === 'ko') return slots + '타임';
+      return slots + '枠';
     }
 
     function applyLang() {
       const t = i18n[currentLang];
+      const currentSlotText = getSlotText(currentLang, sysMaxSlots);
+      
       document.getElementById('current-lang-label').innerText = t.lang_label;
       document.getElementById('main-title').innerText = t.title;
-      document.getElementById('rule-text').innerText = t.rule;
+      document.getElementById('rule-text').innerText = t.rule.replace('{slots}', currentSlotText);
       document.getElementById('btn-update').innerText = t.update;
       document.getElementById('date-label').innerText = t.date;
       document.getElementById('legend-open').innerText = t.open;
@@ -438,6 +456,39 @@
       renderTimetable(); renderMyBookings();
     }
 
+    function updateMaxSlotsUI() {
+       const sel = document.getElementById('td-max-slots');
+       if(sel) sel.value = sysMaxSlots;
+    }
+    
+    // ★ TDが上限を変更する処理
+    async function tdSetMaxSlots() {
+       const newMax = document.getElementById('td-max-slots').value;
+       const label = newMax === '99' ? '無制限' : newMax + '枠';
+       if (!confirm(`予約上限を【1日 ${label}】に変更しますか？\n(全選手のスマホ画面に即座に反映されます)`)) {
+          updateMaxSlotsUI(); 
+          return;
+       }
+       try {
+         await sendToServer({ action: 'set_max_slots', maxSlots: parseInt(newMax) });
+         sysMaxSlots = parseInt(newMax);
+         applyLang();
+         alert('システム全体の予約上限を変更しました。');
+       } catch(e) {}
+    }
+
+    function getLocalizedName(originalName, t) {
+      if (!originalName) return '';
+      const n = originalName.trim();
+      if (n === "試合のため使用不可" || n === "試合 (MATCH)" || n === "試合" || n === "MATCH" || n === "시합 (MATCH)" || n === "Unavailable (Match)") {
+        return t.bulk_reason_def;
+      }
+      if (n === "公式割当" || n === "Official" || n === "공식할당") {
+        return t.official;
+      }
+      return n;
+    }
+
     async function fetchLatestData(showIndicator = false) {
       if(showIndicator) document.getElementById('sync-indicator').classList.remove('hidden');
       try {
@@ -445,7 +496,15 @@
         const res = await fetch(GAS_API_URL + "?date=" + selectedDate);
         const data = await res.json();
         if (data && typeof data === 'object') {
+          // サーバーから設定値を抜き取る
+          if (data['_sys_max_slots']) {
+             sysMaxSlots = data['_sys_max_slots'];
+             delete data['_sys_max_slots'];
+          }
           bookings = data;
+          applyLang(); // 上限が変わった場合にテキストを更新
+          updateMaxSlotsUI(); // TDメニューの表示を同期
+          
           renderTimetable(); 
           renderMyBookings();
           
@@ -601,13 +660,16 @@
         return;
       }
 
-      let hasBookingToday = false;
+      // ★ サーバー設定に応じた予約上限チェック
+      let myTodayCount = 0;
       for (let id in myBookedIds) {
         if (typeof myBookedIds[id] === 'object' && myBookedIds[id].date === selectedDate) {
-          hasBookingToday = true; break;
+          myTodayCount++;
         }
       }
-      if (hasBookingToday) return alert(t.alert_1slot);
+      if (myTodayCount >= sysMaxSlots) {
+        return alert(t.alert_1slot.replace('{slots}', getSlotText(currentLang, sysMaxSlots)));
+      }
 
       currentEmptyKeys = [];
       for (let r = 1; r <= 4; r++) {
@@ -811,7 +873,6 @@
       finally { btn.innerText = t.bulk_exec; btn.disabled = false; }
     }
 
-    // ★ 予約チケットからキャンセルするための専用関数（改行エラー対策）
     function promptCancelMyBooking(id, pin, dateStr) {
       const t = i18n[currentLang];
       if (confirm(t.alert_cancel)) {
