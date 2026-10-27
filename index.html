@@ -19,10 +19,7 @@
     .thick-right { border-right: 2px solid #1f2937 !important; }
     .sticky-col { position: sticky; left: 0; background-color: #f3f4f6; z-index: 10; }
     .sticky-col-header { position: sticky; left: 0; background-color: #d1d5db; z-index: 20; }
-    
-    /* ★ タップ領域の拡大: 高さを26px -> 36px に変更 */
     .inner-row td { height: 36px; padding: 0 4px; }
-    
     @keyframes flash { 0% { background-color: #fef08a; } 100% { background-color: #f3f4f6; } }
     .scroll-target { animation: flash 2s ease-out; }
   </style>
@@ -228,7 +225,12 @@
         td_btn_back: "戻る", official: "公式割当",
         btn_bulk: "試合・イベント一括ブロック", bulk_title: "コート一括ブロック設定",
         bulk_reason: "表示名", bulk_reason_def: "試合", bulk_courts: "対象コート",
-        bulk_all: "全選択", bulk_period: "対象期間", bulk_exec: "一括ブロック実行"
+        bulk_all: "全選択", bulk_period: "対象期間", bulk_exec: "一括ブロック実行",
+        // ★ 追加された安全確認ダイアログ用のテキスト
+        confirm_td_cancel: "本当にこの予約を強制削除しますか？\n(元に戻せません)",
+        confirm_td_block: "この行を大会割当としてブロックしますか？",
+        confirm_td_bulk: "選択した条件で一括ブロックを実行しますか？",
+        prompt_init: "【警告】スマホ内の設定を初期化します。\n実行するにはTDパスワードを入力してください:"
       },
       en: {
         lang_label: "English", title: "MEIKEI OPEN Practice Court",
@@ -251,7 +253,11 @@
         td_btn_back: "Back", official: "Official",
         btn_bulk: "Bulk Block (Matches)", bulk_title: "Bulk Block Settings",
         bulk_reason: "Display Name", bulk_reason_def: "MATCH", bulk_courts: "Target Courts",
-        bulk_all: "Select All", bulk_period: "Period", bulk_exec: "Execute"
+        bulk_all: "Select All", bulk_period: "Period", bulk_exec: "Execute",
+        confirm_td_cancel: "Are you sure you want to force delete this booking?\n(Cannot be undone)",
+        confirm_td_block: "Block this row as Official?",
+        confirm_td_bulk: "Execute bulk block with selected conditions?",
+        prompt_init: "[Warning] Initialize app settings.\nEnter TD Password:"
       },
       ko: {
         lang_label: "한국어", title: "MEIKEI OPEN 연습 코트 예약",
@@ -274,7 +280,11 @@
         td_btn_back: "뒤로", official: "공식할당",
         btn_bulk: "일괄 블록 (시합 등)", bulk_title: "코트 일괄 블록 설정",
         bulk_reason: "표시 이름", bulk_reason_def: "시합 (MATCH)", bulk_courts: "대상 코트",
-        bulk_all: "전체 선택", bulk_period: "대상 기간", bulk_exec: "일괄 블록 실행"
+        bulk_all: "전체 선택", bulk_period: "대상 기간", bulk_exec: "일괄 블록 실행",
+        confirm_td_cancel: "정말로 이 예약을 강제 삭제하시겠습니까?\n(되돌릴 수 없습니다)",
+        confirm_td_block: "이 행을 대회 할당으로 블록하시겠습니까?",
+        confirm_td_bulk: "선택한 조건으로 일괄 블록을 실행하시겠습니까?",
+        prompt_init: "[경고] 앱 설정을 초기화합니다.\nTD 비밀번호 입력:"
       }
     };
 
@@ -284,10 +294,9 @@
     let currentEmptyKeys = []; 
     let initialScrollDone = false; 
 
-    // ★ エコ通信（画面を閉じている時は通信を止める）
     let syncTimer = null;
     function startEcoSync() {
-      if (!syncTimer) syncTimer = setInterval(() => fetchLatestData(false), 30000); // 30秒間隔に緩和
+      if (!syncTimer) syncTimer = setInterval(() => fetchLatestData(false), 30000); 
     }
     function stopEcoSync() {
       if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
@@ -325,18 +334,24 @@
     const courtLabels = { 'c1':'Court 1', 'c2':'Court 2', 'c3':'Court 3', 'c4':'Court 4', 'c5':'Court 5', 'c6':'Court 6', 'c7':'Court 7' };
 
     let bookings = {}; 
-    let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_v4_ids')) || {}; // { "MK-123": "1234" }
+    let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_v4_ids')) || {}; 
 
     function getTodayString() {
       const d = new Date();
       return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
 
+    // ★ 初期化ボタンの誤操作防止（パスワード要求に変更）
     function debugReset() {
-      if (confirm('データを初期化しますか？')) {
+      const t = i18n[currentLang];
+      const pass = prompt(t.prompt_init);
+      if (pass === "2026") {
         localStorage.removeItem('meikei_paper_v4_ids');
         bookings = {}; myBookedIds = {};
         renderTimetable(); renderMyBookings();
+        alert('初期化しました。');
+      } else if (pass !== null) {
+        alert('パスワードが違います。');
       }
     }
 
@@ -568,7 +583,6 @@
         return;
       }
 
-      // ★ パスワード取消機能（別端末からのキャンセル対応）
       if (b) {
         if (b.status === 'official') {
            alert(t.alert_booked); return;
@@ -630,7 +644,6 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
         body: JSON.stringify(payload)
       });
-      // no-cors の場合は中身が読めないので success とする
       return { success: true };
     }
 
@@ -660,7 +673,7 @@
       try {
         await sendToServer({ action: 'book', date: selectedDate, pin: pin, bookings: newBookings });
         
-        myBookedIds[bId] = pin; // PINも保存
+        myBookedIds[bId] = pin; 
         localStorage.setItem('meikei_paper_v4_ids', JSON.stringify(myBookedIds));
         
         newBookings.forEach(b => { bookings[b.key] = { name: b.name, phone: b.phone, status: 'booked', id: bId }; });
@@ -678,7 +691,6 @@
       try {
         await sendToServer({ action: 'cancel', date: selectedDate, id: bId, key: singleKey, pin: pin, isTD: isTD });
         
-        // 画面上から即時消去
         if (bId) {
           delete myBookedIds[bId];
           localStorage.setItem('meikei_paper_v4_ids', JSON.stringify(myBookedIds));
@@ -693,9 +705,13 @@
       } catch (e) {}
     }
 
+    // ★ 誤操作防止：ブロック時の確認ダイアログ追加
     async function tdSetOfficial() {
       if (!selectedSlot) return; 
       const t = i18n[currentLang];
+      
+      if (!confirm(t.confirm_td_block)) return; // 確認ポップアップ
+      
       const selectedDate = document.getElementById('date-select').value;
       const inputName = document.getElementById('td-input-name').value.trim();
       const officialName = inputName ? inputName : t.official;
@@ -711,23 +727,16 @@
       setTimeout(() => manualSync(), 1500);
     }
 
+    // ★ 誤操作防止：強制取消時の確認ダイアログ追加
     async function tdCancelSlot() {
-      if (!selectedSlot) return; closeTdModal();
+      if (!selectedSlot) return; 
+      const t = i18n[currentLang];
+      
+      if (!confirm(t.confirm_td_cancel)) return; // 確認ポップアップ
+      
+      closeTdModal();
       const bId = bookings[selectedSlot] ? bookings[selectedSlot].id : null;
       await cancelBookingOnline(bId, selectedSlot, null, true);
-    }
-    
-    async function tdForceCleanDay() {
-      const selectedDate = document.getElementById('date-select').value;
-      const pass = prompt(`【危険】${selectedDate} の全データを強制消去します。\n実行するにはTDパスワードを入力してください:`);
-      if(pass === "2026") {
-         await sendToServer({ action: 'clean_day', date: selectedDate });
-         bookings = {};
-         renderTimetable();
-         alert('この日の全データを消去しました。');
-      } else if (pass !== null) {
-         alert('パスワードが違います。');
-      }
     }
 
     function openBulkModal() { 
@@ -740,8 +749,12 @@
       for(let i=1; i<=7; i++) document.getElementById('bulk-c'+i).checked = true;
     }
     
+    // ★ 誤操作防止：一括ブロック時の確認ダイアログ追加
     async function executeBulkBlock() {
       const t = i18n[currentLang];
+      
+      if (!confirm(t.confirm_td_bulk)) return; // 確認ポップアップ
+      
       const selectedDate = document.getElementById('date-select').value;
       const reason = document.getElementById('bulk-reason').value.trim() || t.bulk_reason_def;
       const startIdx = parseInt(document.getElementById('bulk-start').value);
