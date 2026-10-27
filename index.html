@@ -54,6 +54,7 @@
 
     <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
       <div class="flex flex-col space-y-1">
+        <!-- ★ 変動する可能性がある旨を明記 -->
         <span id="rule-text" class="font-bold text-gray-700"></span>
         <div class="flex items-center space-x-2">
           <label for="date-select" id="date-label" class="font-bold">Date:</label>
@@ -115,7 +116,6 @@
                <option value="99">無制限</option>
              </select>
           </div>
-          <!-- ★ 追加：OP発表後の日付解放機能 -->
           <div class="flex items-center gap-2 bg-green-100 px-3 py-1.5 rounded border border-green-400 shadow-sm">
              <span class="text-xs font-bold text-green-900">予約解放日(OP発表後):</span>
              <input type="date" id="td-max-date" onchange="tdSetMaxDate()" class="border border-green-500 bg-white text-xs py-1 px-1 outline-none font-bold text-center">
@@ -233,7 +233,8 @@
     const i18n = {
       ja: {
         lang_label: "日本語", title: "筑波大学MEIKEIオープンテニス PRACTICE SHEET",
-        rule: "【1日 {slots} ・最大4名】空いている行（マス）をタップして予約", update: "更新",
+        // ★ 状況により変動ありの文言を追加
+        rule: "【1日 {slots} ・最大4名】空きマスをタップして予約\n(※枠の上限は状況により変動します)", update: "更新",
         date: "Date:", open: "■ 空き", my: "■ 自分の予約", booked: "■ 予約済",
         swipe: "※表を横にスワイプして1〜7番コートを確認できます 👉",
         my_tickets: "■ 自分の全日程の予約チケット / My Bookings",
@@ -262,7 +263,7 @@
       },
       en: {
         lang_label: "English", title: "MEIKEI OPEN Practice Court",
-        rule: "[{slots}/day, 30m] Tap an empty row to book", update: "Update",
+        rule: "[{slots}/day, 30m] Tap an empty row to book\n(*Limits may change based on availability)", update: "Update",
         date: "Date:", open: "■ Open", my: "■ My Booking", booked: "■ Booked",
         swipe: "* Swipe right to see Courts 1-7 👉",
         my_tickets: "■ My All Bookings",
@@ -291,7 +292,7 @@
       },
       ko: {
         lang_label: "한국어", title: "MEIKEI OPEN 연습 코트 예약",
-        rule: "[하루 {slots}, 최대 4명] 빈 칸을 탭하여 예약", update: "새로고침",
+        rule: "[하루 {slots}, 최대 4명] 빈 칸 탭하여 예약\n(※상황에 따라 예약 제한 변동 가능)", update: "새로고침",
         date: "Date:", open: "■ 빈자리", my: "■ 내 예약", booked: "■ 예약됨",
         swipe: "※ 표를 옆으로 스와이프하여 코트를 확인하세요 👉",
         my_tickets: "■ 내 모든 예약 / My Bookings",
@@ -326,7 +327,7 @@
     let currentEmptyKeys = []; 
     let initialScrollDone = false; 
     let sysMaxSlots = 1; 
-    let sysMaxDate = ""; // ★ サーバーから取得する予約解放日
+    let sysMaxDate = ""; 
 
     let syncTimer = null;
     function startEcoSync() {
@@ -349,8 +350,7 @@
         if (password === "2026") {
           document.getElementById('admin-buttons').classList.remove('hidden');
           alert('【TD管理者メニュー】のロックを解除しました。');
-          // TDは未来の日程も強制的に見れるようにmax属性を解除
-          document.getElementById('date-select').removeAttribute('max');
+          document.getElementById('date-select').removeAttribute('max'); 
         } else if (password !== null) {
           alert('パスワードが違います。');
         }
@@ -393,7 +393,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       sysMaxDate = getTodayString();
       document.getElementById('date-select').value = sysMaxDate;
-      document.getElementById('date-select').max = sysMaxDate; // 未来の日付をブロック
+      document.getElementById('date-select').max = sysMaxDate; 
       
       const pUrl = document.getElementById('poster-base-url');
       if(pUrl) pUrl.value = window.location.href.split('?')[0];
@@ -443,6 +443,7 @@
       
       document.getElementById('current-lang-label').innerText = t.lang_label;
       document.getElementById('main-title').innerText = t.title;
+      // ★ 状況により変動ありの文言を適用 (innerTextを使うと改行\nが効く)
       document.getElementById('rule-text').innerText = t.rule.replace('{slots}', currentSlotText);
       document.getElementById('btn-update').innerText = t.update;
       document.getElementById('date-label').innerText = t.date;
@@ -478,7 +479,6 @@
        if(sel) sel.value = sysMaxSlots;
        const dateInput = document.getElementById('td-max-date');
        if(dateInput) dateInput.value = sysMaxDate;
-       // 選手の場合は max 属性で未来をブロック
        if (currentRole !== 'td') document.getElementById('date-select').max = sysMaxDate;
     }
     
@@ -497,7 +497,6 @@
        } catch(e) {}
     }
 
-    // ★ TDが予約の解放日を変更する処理
     async function tdSetMaxDate() {
        const newDate = document.getElementById('td-max-date').value;
        if (!confirm(`選手の予約カレンダーを【${newDate}】まで解放しますか？`)) {
@@ -588,7 +587,7 @@
       if (currentRole === 'td') {
         roleBtn.innerText = '選手モードに戻る'; roleBtn.className = 'px-3 py-1 text-[11px] bg-red-600 text-white border border-red-800 font-bold';
         tdControls.classList.remove('hidden');
-        document.getElementById('date-select').removeAttribute('max'); // TDは未来を見れる
+        document.getElementById('date-select').removeAttribute('max'); 
       } else {
         roleBtn.innerText = 'TD管理者'; roleBtn.className = 'px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold';
         tdControls.classList.add('hidden');
@@ -686,7 +685,6 @@
         return;
       }
       
-      // ★ 解放日前のチェック（TD以外が未来の日程を直リン等で操作しようとした場合ブロック）
       if (selectedDate > sysMaxDate) {
          return alert(t.alert_not_open);
       }
@@ -928,7 +926,6 @@
       list.innerHTML = '';
       const t = i18n[currentLang];
       
-      // ★ 日付が近い順（降順）に並び替えるための配列化
       let bookingArray = [];
       for (let id in myBookedIds) {
         if (typeof myBookedIds[id] === 'object') {
