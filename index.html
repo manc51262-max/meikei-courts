@@ -20,7 +20,6 @@
     .sticky-col { position: sticky; left: 0; background-color: #f3f4f6; z-index: 10; }
     .sticky-col-header { position: sticky; left: 0; background-color: #d1d5db; z-index: 20; }
     .inner-row td { height: 26px; padding: 0 4px; }
-    /* 自動スクロール時にハイライトさせるアニメーション */
     @keyframes flash { 0% { background-color: #fef08a; } 100% { background-color: #f3f4f6; } }
     .scroll-target { animation: flash 2s ease-out; }
   </style>
@@ -34,7 +33,6 @@
     </div>
 
     <div class="flex flex-col md:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
-      <!-- 5回タップでロック解除 -->
       <h1 id="main-title" onclick="handleSecretClick()" class="text-base sm:text-xl font-black tracking-wide text-gray-900 cursor-pointer select-none">
         筑波大学MEIKEIオープンテニス PRACTICE SHEET
       </h1>
@@ -59,7 +57,6 @@
         <span id="rule-text" class="font-bold text-gray-700">【1枠30分・最大4名】空いている行（マス）をタップして予約</span>
         <div class="flex items-center space-x-2">
           <label for="date-select" id="date-label" class="font-bold">Date:</label>
-          <!-- 日付ピッカー -->
           <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none font-bold bg-yellow-50">
         </div>
       </div>
@@ -168,7 +165,7 @@
         <button id="td-btn-block" onclick="tdSetOfficial()" class="w-full py-2 border border-yellow-600 bg-yellow-300 text-black font-bold text-xs">この行を大会割当としてブロック</button>
       </div>
       <div class="space-y-2 mt-4 pt-4 border-t border-gray-300">
-        <button id="td-btn-cancel" onclick="tdCancelSlot()" class="w-full py-2 border border-red-800 bg-red-600 text-white font-bold text-xs">このグループを取消 (空きに戻す)</button>
+        <button id="td-btn-cancel" onclick="tdCancelSlot()" class="w-full py-2 border border-red-800 bg-red-600 text-white font-bold text-xs">このグループを取消 (強制削除)</button>
         <button id="td-btn-back" onclick="closeTdModal()" class="w-full py-1.5 bg-gray-200 border border-gray-400 font-bold text-xs mt-2">戻る</button>
       </div>
     </div>
@@ -206,7 +203,7 @@
 
   <script>
     // ★★★ 以下のURLをご自身のGASのURLに書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxByqdMSzbHo_9DtgZhFZfiPgEPyZykDYiuoLaVHi9KgqUftq7lT8OnNP_BNwg5hTwYTA/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx8sMgy5h1iiA6sZAVR5IvrQDFEALvbnQLuYmV6XYQIC7aIj59gNmBOIIHfJTWMIQGBceg/exec";
 
     const i18n = {
       ja: {
@@ -224,7 +221,7 @@
         alert_double_book: "タッチの差で他の人に予約されてしまいました。\n画面を最新状態に更新します。",
         empty: "( 空き )",
         td_label_name: "大会側での割当 (選手名)", td_ph_name: "例: 筑波太郎 (空欄なら「公式割当」)",
-        td_btn_block: "この行を大会割当としてブロック", td_btn_cancel: "このグループを取消 (空きに戻す)",
+        td_btn_block: "この行を大会割当としてブロック", td_btn_cancel: "このグループを取消 (強制削除)",
         td_btn_back: "戻る", official: "公式割当",
         btn_bulk: "試合・イベント一括ブロック", bulk_title: "コート一括ブロック設定",
         bulk_reason: "表示名", bulk_reason_def: "試合", bulk_courts: "対象コート",
@@ -245,7 +242,7 @@
         alert_double_book: "This slot was just booked by someone else.\nRefreshing the schedule...",
         empty: "( Open )",
         td_label_name: "Official Assignment (Player Name)", td_ph_name: "e.g. John Doe (Blank for 'Official')",
-        td_btn_block: "Block this row as Official", td_btn_cancel: "Cancel this group",
+        td_btn_block: "Block this row as Official", td_btn_cancel: "Force Delete Group",
         td_btn_back: "Back", official: "Official",
         btn_bulk: "Bulk Block (Matches)", bulk_title: "Bulk Block Settings",
         bulk_reason: "Display Name", bulk_reason_def: "MATCH", bulk_courts: "Target Courts",
@@ -266,7 +263,7 @@
         alert_double_book: "간발의 차이로 다른 사람이 예약했습니다.\n화면을 새로고침합니다.",
         empty: "( 빈자리 )",
         td_label_name: "대회 측 할당 (선수 이름)", td_ph_name: "예: 홍길동 (비워두면 '공식할당')",
-        td_btn_block: "이 행을 대회 할당으로 블록", td_btn_cancel: "이 그룹 취소",
+        td_btn_block: "이 행을 대회 할당으로 블록", td_btn_cancel: "이 그룹 취소 (강제 삭제)",
         td_btn_back: "뒤로", official: "공식할당",
         btn_bulk: "일괄 블록 (시합 등)", bulk_title: "코트 일괄 블록 설정",
         bulk_reason: "표시 이름", bulk_reason_def: "시합 (MATCH)", bulk_courts: "대상 코트",
@@ -278,7 +275,7 @@
     let currentRole = 'player';
     let selectedSlot = null;
     let currentEmptyKeys = []; 
-    let initialScrollDone = false; // 自動スクロールの完了フラグ
+    let initialScrollDone = false; 
 
     function handleSecretClick() {
       secretClickCount++;
@@ -307,10 +304,9 @@
     const courts = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7'];
     const courtLabels = { 'c1':'Court 1', 'c2':'Court 2', 'c3':'Court 3', 'c4':'Court 4', 'c5':'Court 5', 'c6':'Court 6', 'c7':'Court 7' };
 
-    let bookings = {}; // 日付切り替えのためメモリのみで管理
+    let bookings = {}; 
     let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_v3_ids')) || [];
 
-    // 今日の日付を取得 (日本時間)
     function getTodayString() {
       const d = new Date();
       return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -340,9 +336,8 @@
       fetchLatestData(true);
       setInterval(() => fetchLatestData(false), 15000);
       
-      // 日付を変えたら即座に通信して再描画
       document.getElementById('date-select').addEventListener('change', () => {
-        initialScrollDone = false; // 日付を変えたらまた自動スクロールさせる
+        initialScrollDone = false; 
         fetchLatestData(true);
       });
     });
@@ -411,7 +406,6 @@
           renderTimetable(); 
           renderMyBookings();
           
-          // ★ 現在時刻への自動スクロール（今日のスケジュールを見た時のみ）
           if (!initialScrollDone && selectedDate === getTodayString()) {
             scrollToCurrentTime();
             initialScrollDone = true;
@@ -421,7 +415,6 @@
       finally { if(showIndicator) document.getElementById('sync-indicator').classList.add('hidden'); }
     }
 
-    // ★自動スクロールの魔法★
     function scrollToCurrentTime() {
       const now = new Date();
       const nowTotalMin = now.getHours() * 60 + now.getMinutes();
@@ -433,7 +426,6 @@
         const m = parseInt(start.split(':')[1]);
         const slotTotalMin = h * 60 + m;
         
-        // 現在時刻が枠の中にいる、または最も近い未来の枠を探す
         if (slotTotalMin <= nowTotalMin && nowTotalMin < slotTotalMin + 30) {
            targetId = 'time-row-' + i; break;
         } else if (slotTotalMin > nowTotalMin && !targetId) {
@@ -444,7 +436,7 @@
         const el = document.getElementById(targetId);
         if(el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          el.classList.add('scroll-target'); // 一瞬だけ黄色く光らせる
+          el.classList.add('scroll-target'); 
           setTimeout(() => el.classList.remove('scroll-target'), 2000);
         }
       }
@@ -471,7 +463,7 @@
 
       timeSlots.forEach((time, index) => {
         const tr1 = document.createElement('tr'); tr1.className = 'inner-row bg-white';
-        tr1.id = 'time-row-' + index; // スクロール用の目印
+        tr1.id = 'time-row-' + index; 
         const tr2 = document.createElement('tr'); tr2.className = 'inner-row bg-white';
         const tr3 = document.createElement('tr'); tr3.className = 'inner-row bg-white';
         const tr4 = document.createElement('tr'); tr4.className = 'inner-row bg-white thick-bottom';
@@ -598,11 +590,10 @@
     function closeBookingModal() { document.getElementById('booking-modal').classList.add('hidden'); }
     function closeTdModal() { document.getElementById('td-modal').classList.add('hidden'); }
 
-    // ★GASとの通信方法を「プレーンテキスト」にしてダブルブッキングを検出
     async function sendToServer(payload) {
       const res = await fetch(GAS_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // エラー結果を読み取るための工夫
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
         body: JSON.stringify(payload)
       });
       return await res.json();
@@ -633,7 +624,6 @@
       try {
         const result = await sendToServer({ action: 'book', date: selectedDate, bookings: newBookings });
         
-        // ★ダブルブッキングが発覚した場合
         if (!result.success && result.error === 'ALREADY_BOOKED') {
           alert(t.alert_double_book);
           fetchLatestData(true);
@@ -658,15 +648,18 @@
       try {
         await sendToServer({ action: 'cancel', date: selectedDate, id: bId, key: singleKey });
         
+        // ★ ローカルの画面上から確実に消去するロジック
         if (bId) {
           myBookedIds = myBookedIds.filter(id => id !== bId); 
           localStorage.setItem('meikei_paper_v3_ids', JSON.stringify(myBookedIds));
           for (let k in bookings) { if (bookings[k].id === bId) delete bookings[k]; }
-        } else if (singleKey) {
+        }
+        if (singleKey) {
           delete bookings[singleKey];
         }
         
         renderTimetable(); renderMyBookings(); 
+        setTimeout(() => fetchLatestData(false), 1500); // サーバーと同期して完全確認
       } catch (e) {}
     }
 
