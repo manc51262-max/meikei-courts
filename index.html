@@ -23,7 +23,6 @@
     @keyframes flash { 0% { background-color: #fef08a; } 100% { background-color: #f3f4f6; } }
     .scroll-target { animation: flash 2s ease-out; }
     
-    /* 検索ヒット時の点滅アニメーション */
     @keyframes highlightSearch { 0% { background-color: #fef08a; border-color: #dc2626; } 50% { background-color: #fca5a5; border-color: #991b1b; } 100% { background-color: #fef08a; border-color: #dc2626; } }
     .search-hit { animation: highlightSearch 1.5s infinite; border: 2px solid #dc2626 !important; font-weight: 900 !important; color: #7f1d1d !important; z-index: 5; position: relative; }
   </style>
@@ -99,7 +98,6 @@
     <!-- TD用メニュー -->
     <div id="td-controls" class="hidden mt-4 pt-4 border-t border-gray-300 flex flex-col gap-3">
       
-      <!-- ★ 追加：TD用 選手名検索バー -->
       <div class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded border border-gray-400 shadow-inner w-full">
          <i class="fa-solid fa-magnifying-glass text-gray-500"></i>
          <input type="text" id="td-search-input" oninput="renderTimetable()" placeholder="選手名で検索するとハイライトされます..." class="w-full bg-transparent outline-none text-xs font-bold text-gray-800">
@@ -419,7 +417,13 @@
       fetchLatestData(true);
       startEcoSync();
       
-      document.getElementById('date-select').addEventListener('change', () => {
+      // ★ スマホ特有のバグ対策：未来の日付を強制的にブロック
+      document.getElementById('date-select').addEventListener('change', (e) => {
+        if (currentRole !== 'td' && e.target.value > sysMaxDate) {
+          alert(i18n[currentLang].alert_not_open);
+          e.target.value = sysMaxDate; // 解放日に強制リセット
+          e.target.blur(); // カレンダーUIを閉じる
+        }
         initialScrollDone = false; 
         fetchLatestData(true);
       });
@@ -615,7 +619,6 @@
       const now = new Date();
       const nowMin = now.getHours() * 60 + now.getMinutes();
 
-      // ★ TD検索キーワードの取得
       const searchInput = document.getElementById('td-search-input');
       const searchKeyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
@@ -626,7 +629,6 @@
         const tr3 = document.createElement('tr'); tr3.className = 'inner-row bg-white';
         const tr4 = document.createElement('tr'); tr4.className = 'inner-row bg-white thick-bottom';
 
-        // ★ 現在時刻の「NOW」判定とハイライト
         const startMin = parseInt(time.split(' - ')[0].split(':')[0]) * 60 + parseInt(time.split(' - ')[0].split(':')[1]);
         const endMin = parseInt(time.split(' - ')[1].split(':')[0]) * 60 + parseInt(time.split(' - ')[1].split(':')[1]);
         const isNow = (isToday && nowMin >= startMin && nowMin < endMin);
@@ -656,7 +658,6 @@
           if (isBulkBlocked) {
             let dispName = getLocalizedName(b1.name, t);
             
-            // ★ TD検索ヒット判定（ブロック要素）
             let isHighlighted = false;
             if (currentRole === 'td' && searchKeyword !== '' && b1.name && b1.name.toLowerCase().includes(searchKeyword)) {
                isHighlighted = true;
@@ -679,7 +680,6 @@
               if (b) {
                 let dispName = getLocalizedName(b.name, t);
                 
-                // ★ TD検索ヒット判定（通常予約）
                 if (currentRole === 'td' && searchKeyword !== '' && b.name && b.name.toLowerCase().includes(searchKeyword)) {
                    isHighlighted = true;
                 }
@@ -695,7 +695,7 @@
                 }
               }
 
-              if (isHighlighted) bgClass = 'search-hit'; // 検索ヒット時は色を上書き
+              if (isHighlighted) bgClass = 'search-hit'; 
 
               const cellAttr = `onclick="handleSlotClick('${key}')" class="cursor-pointer text-center text-[10px] sm:text-[11px] align-middle ${bgClass} ${txtClass}"`;
               const tdHtml = `<td ${cellAttr}>${cellContent}</td>`;
