@@ -22,6 +22,10 @@
     .inner-row td { height: 36px; padding: 0 4px; }
     @keyframes flash { 0% { background-color: #fef08a; } 100% { background-color: #f3f4f6; } }
     .scroll-target { animation: flash 2s ease-out; }
+    
+    /* 検索ヒット時の点滅アニメーション */
+    @keyframes highlightSearch { 0% { background-color: #fef08a; border-color: #dc2626; } 50% { background-color: #fca5a5; border-color: #991b1b; } 100% { background-color: #fef08a; border-color: #dc2626; } }
+    .search-hit { animation: highlightSearch 1.5s infinite; border: 2px solid #dc2626 !important; font-weight: 900 !important; color: #7f1d1d !important; z-index: 5; position: relative; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans min-h-screen flex flex-col items-center py-2 sm:py-4">
@@ -54,7 +58,6 @@
 
     <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
       <div class="flex flex-col space-y-1">
-        <!-- ★ 変動する可能性がある旨を明記 -->
         <span id="rule-text" class="font-bold text-gray-700"></span>
         <div class="flex items-center space-x-2">
           <label for="date-select" id="date-label" class="font-bold">Date:</label>
@@ -94,7 +97,15 @@
     </div>
 
     <!-- TD用メニュー -->
-    <div id="td-controls" class="hidden mt-4 pt-4 border-t border-gray-300 flex flex-col gap-2">
+    <div id="td-controls" class="hidden mt-4 pt-4 border-t border-gray-300 flex flex-col gap-3">
+      
+      <!-- ★ 追加：TD用 選手名検索バー -->
+      <div class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded border border-gray-400 shadow-inner w-full">
+         <i class="fa-solid fa-magnifying-glass text-gray-500"></i>
+         <input type="text" id="td-search-input" oninput="renderTimetable()" placeholder="選手名で検索するとハイライトされます..." class="w-full bg-transparent outline-none text-xs font-bold text-gray-800">
+         <button onclick="document.getElementById('td-search-input').value=''; renderTimetable();" class="text-gray-400 hover:text-gray-700 px-2"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
       <div class="flex flex-wrap gap-2">
         <button onclick="openBulkModal()" class="px-3 py-2 text-xs bg-red-600 text-white border border-red-800 font-bold shadow-md rounded">
           <i class="fa-solid fa-ban"></i> <span id="btn-bulk">試合・イベント一括ブロック</span>
@@ -104,7 +115,7 @@
       </div>
       
       <!-- システム設定系 -->
-      <div class="flex flex-wrap gap-2 items-center justify-between border-t border-gray-200 pt-3 mt-1">
+      <div class="flex flex-wrap gap-2 items-center justify-between border-t border-gray-200 pt-3">
         
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-2 bg-blue-100 px-3 py-1.5 rounded border border-blue-400 shadow-sm">
@@ -233,7 +244,6 @@
     const i18n = {
       ja: {
         lang_label: "日本語", title: "筑波大学MEIKEIオープンテニス PRACTICE SHEET",
-        // ★ 状況により変動ありの文言を追加
         rule: "【1日 {slots} ・最大4名】空きマスをタップして予約\n(※枠の上限は状況により変動します)", update: "更新",
         date: "Date:", open: "■ 空き", my: "■ 自分の予約", booked: "■ 予約済",
         swipe: "※表を横にスワイプして1〜7番コートを確認できます 👉",
@@ -443,7 +453,6 @@
       
       document.getElementById('current-lang-label').innerText = t.lang_label;
       document.getElementById('main-title').innerText = t.title;
-      // ★ 状況により変動ありの文言を適用 (innerTextを使うと改行\nが効く)
       document.getElementById('rule-text').innerText = t.rule.replace('{slots}', currentSlotText);
       document.getElementById('btn-update').innerText = t.update;
       document.getElementById('date-label').innerText = t.date;
@@ -600,6 +609,15 @@
       const tbody = document.getElementById('timetable-body');
       tbody.innerHTML = '';
       const t = i18n[currentLang];
+      
+      const selectedDate = document.getElementById('date-select').value;
+      const isToday = (selectedDate === getTodayString());
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+
+      // ★ TD検索キーワードの取得
+      const searchInput = document.getElementById('td-search-input');
+      const searchKeyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
       timeSlots.forEach((time, index) => {
         const tr1 = document.createElement('tr'); tr1.className = 'inner-row bg-white';
@@ -608,7 +626,16 @@
         const tr3 = document.createElement('tr'); tr3.className = 'inner-row bg-white';
         const tr4 = document.createElement('tr'); tr4.className = 'inner-row bg-white thick-bottom';
 
-        let tdTime = `<td rowspan="4" class="sticky-col thick-right thick-bottom font-bold text-gray-700 align-middle text-center text-[10px] sm:text-[11px]">${time}</td>`;
+        // ★ 現在時刻の「NOW」判定とハイライト
+        const startMin = parseInt(time.split(' - ')[0].split(':')[0]) * 60 + parseInt(time.split(' - ')[0].split(':')[1]);
+        const endMin = parseInt(time.split(' - ')[1].split(':')[0]) * 60 + parseInt(time.split(' - ')[1].split(':')[1]);
+        const isNow = (isToday && nowMin >= startMin && nowMin < endMin);
+
+        let timeHtml = time;
+        if (isNow) {
+            timeHtml += `<br><span class="bg-red-600 text-white px-1.5 py-0.5 rounded text-[9px] animate-pulse">NOW</span>`;
+        }
+        let tdTime = `<td rowspan="4" class="sticky-col thick-right thick-bottom font-bold align-middle text-center text-[10px] sm:text-[11px] ${isNow ? 'bg-red-50 text-red-800' : 'bg-gray-50 text-gray-700'}">${timeHtml}</td>`;
         tr1.innerHTML = tdTime;
 
         let html1='', html2='', html3='', html4='';
@@ -628,8 +655,17 @@
 
           if (isBulkBlocked) {
             let dispName = getLocalizedName(b1.name, t);
+            
+            // ★ TD検索ヒット判定（ブロック要素）
+            let isHighlighted = false;
+            if (currentRole === 'td' && searchKeyword !== '' && b1.name && b1.name.toLowerCase().includes(searchKeyword)) {
+               isHighlighted = true;
+            }
+            
             let sizeClass = currentLang === 'ko' ? 'text-[9px] sm:text-[10px] tracking-normal' : 'text-[10px] sm:text-xs tracking-widest';
-            const cellAttr = `onclick="handleSlotClick('${keys[0]}')" rowspan="4" class="cursor-pointer text-center align-middle bg-slate-200 hover:bg-slate-300 transition !border-b-2 !border-gray-800"`;
+            const extraClass = isHighlighted ? 'search-hit' : 'bg-slate-200 hover:bg-slate-300';
+            
+            const cellAttr = `onclick="handleSlotClick('${keys[0]}')" rowspan="4" class="cursor-pointer text-center align-middle transition !border-b-2 !border-gray-800 ${extraClass}"`;
             const cellContent = `<div class="font-bold text-slate-600 ${sizeClass} px-0.5 whitespace-nowrap overflow-hidden text-ellipsis w-full max-w-[85px] mx-auto">${dispName}</div>`;
             html1 += `<td ${cellAttr}>${cellContent}</td>`;
           } else {
@@ -638,9 +674,16 @@
               let cellContent = `<span class="text-[9px] text-gray-300 tracking-widest">${t.empty}</span>`;
               let bgClass = 'bg-white hover:bg-green-50';
               let txtClass = 'text-gray-800';
+              let isHighlighted = false;
 
               if (b) {
                 let dispName = getLocalizedName(b.name, t);
+                
+                // ★ TD検索ヒット判定（通常予約）
+                if (currentRole === 'td' && searchKeyword !== '' && b.name && b.name.toLowerCase().includes(searchKeyword)) {
+                   isHighlighted = true;
+                }
+
                 if (b.status === 'official') {
                   bgClass = 'bg-yellow-100'; txtClass = 'text-yellow-900 font-bold';
                   cellContent = dispName;
@@ -651,6 +694,8 @@
                   cellContent = dispName;
                 }
               }
+
+              if (isHighlighted) bgClass = 'search-hit'; // 検索ヒット時は色を上書き
 
               const cellAttr = `onclick="handleSlotClick('${key}')" class="cursor-pointer text-center text-[10px] sm:text-[11px] align-middle ${bgClass} ${txtClass}"`;
               const tdHtml = `<td ${cellAttr}>${cellContent}</td>`;
