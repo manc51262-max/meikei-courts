@@ -181,7 +181,16 @@
       <h4 id="modal-title-text" class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">練習コート予約</h4>
       <p class="text-sm font-bold text-green-700 my-2" id="modal-slot-info"></p>
       <div id="modal-inputs-container" class="space-y-2 text-xs mt-3"></div>
-      <div class="mt-5 flex space-x-2">
+      
+      <!-- ★ 同意チェックボックスを追加 -->
+      <div class="mb-3 mt-3 bg-gray-100 p-2 border border-gray-300 text-[10px]">
+        <label class="flex items-start space-x-2 cursor-pointer">
+          <input type="checkbox" id="check-agree" class="mt-0.5 h-4 w-4">
+          <span id="agree-text" class="text-gray-800 font-bold"></span>
+        </label>
+      </div>
+
+      <div class="mt-2 flex space-x-2">
         <button id="btn-cancel" onclick="closeBookingModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
         <button id="submit-btn" onclick="confirmBooking()" class="w-1/2 py-2 border border-green-800 bg-green-600 text-white font-bold text-xs">予約確定</button>
       </div>
@@ -237,7 +246,7 @@
 
   <script>
     // ★★★ 以下のURLをご自身の【新しいデプロイ】のURLに書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxIgKNY83VtR2VRifzv2RHdZr2ceLhphNQ1wS1a7DDFRQKLExxKO8jx_ijK8eDYcvAHjg/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycby3nx8fBsJJxctgpAmWmDE358rhTSCmZgm5H_obtaxe7KCITA18mmcD3M236ksRY_ZxhA/exec";
 
     const i18n = {
       ja: {
@@ -247,10 +256,17 @@
         swipe: "※表を横にスワイプして1〜7番コートを確認できます 👉",
         my_tickets: "■ 自分の全日程の予約チケット / My Bookings",
         no_tickets: "現在有効な予約はありません。", btn_cancel_ticket: "取消",
-        modal_title: "練習コート予約", label_name: "代表選手氏名 (必須)", label_phone: "連絡先電話番号 (必須)",
-        label_pin: "取消用パスワード(数字4桁) *必須", ph_pin: "例: 1234",
-        label_partner: "追加の同伴者（残り {n} 名まで可能）", ph_partner: "同伴者 {n}",
+        modal_title: "練習コート予約", label_name: "代表選手氏名 (リストから選択)", label_phone: "連絡先電話番号 (必須)",
+        label_pin: "本人確認・取消用PIN (数字4桁)", ph_pin: "例: 1234",
+        label_partner: "追加の同伴者（残り {n} 名まで可能）", ph_partner: "同伴者 {n} (手入力)",
         btn_cancel: "キャンセル", btn_submit: "予約確定",
+        
+        // ★ エラー文言等の追加
+        agreement: "本人以外の予約や不正な複数予約ではありません。不正が発覚した場合、練習コートの利用を制限されることに同意します。",
+        alert_agree: "注意事項に同意するチェックを入れてください。",
+        alert_wrong_player_pin: "【エラー】選手名とPIN（暗証番号）の組み合わせが間違っています。",
+        alert_limit_reached: "【エラー】サーバーで予約上限に達していることが確認されました。\n(別の端末で予約済み等の理由)",
+        
         alert_1slot: "練習コートの予約は【1日につき {slots} まで】です。\n(別の日程であれば追加で予約可能です)", 
         alert_booked: "この行はすでに予約されています。",
         alert_req: "代表者名、電話番号、4桁のパスワードを入力してください。", alert_cancel: "この予約を取り消しますか？\n(同伴者も一緒にキャンセルされます)",
@@ -276,10 +292,16 @@
         swipe: "* Swipe right to see Courts 1-7 👉",
         my_tickets: "■ My All Bookings",
         no_tickets: "No active bookings.", btn_cancel_ticket: "Cancel",
-        modal_title: "Book Practice Court", label_name: "Leader Name (Required)", label_phone: "Phone Number (Required)",
-        label_pin: "Cancellation PIN (4 digits) *Req", ph_pin: "e.g. 1234",
-        label_partner: "Partners (Up to {n} more)", ph_partner: "Partner {n}",
+        modal_title: "Book Practice Court", label_name: "Leader Name (Select from list)", label_phone: "Phone Number (Required)",
+        label_pin: "Verification PIN (4 digits)", ph_pin: "e.g. 1234",
+        label_partner: "Partners (Up to {n} more)", ph_partner: "Partner {n} (Type name)",
         btn_cancel: "Cancel", btn_submit: "Confirm",
+        
+        agreement: "I confirm this is not a fraudulent booking. I agree that if fraud is discovered, I may be banned from using the practice courts.",
+        alert_agree: "Please check the agreement box to proceed.",
+        alert_wrong_player_pin: "[Error] Player name and PIN combination is incorrect.",
+        alert_limit_reached: "[Error] Booking limit reached on the server (e.g. booked on another device).",
+        
         alert_1slot: "You can only book [{slots} per day].\n(You can book another slot on a different date.)", 
         alert_booked: "This row is already booked.",
         alert_req: "Leader name, phone, and 4-digit PIN are required.", alert_cancel: "Cancel this booking? (Partners will also be cancelled)",
@@ -305,10 +327,16 @@
         swipe: "※ 표를 옆으로 스와이프하여 코트를 확인하세요 👉",
         my_tickets: "■ 내 모든 예약 / My Bookings",
         no_tickets: "현재 예약이 없습니다.", btn_cancel_ticket: "취소",
-        modal_title: "연습 코트 예약", label_name: "대표 선수 이름 (필수)", label_phone: "연락처 (필수)",
-        label_pin: "취소용 비밀번호 (숫자 4자리) *필수", ph_pin: "예: 1234",
-        label_partner: "동반자 (추가 {n}명 가능)", ph_partner: "동반자 {n}",
+        modal_title: "연습 코트 예약", label_name: "대표 선수 이름 (선택)", label_phone: "연락처 (필수)",
+        label_pin: "본인 확인 PIN (숫자 4자리)", ph_pin: "예: 1234",
+        label_partner: "동반자 (추가 {n}명 가능)", ph_partner: "동반자 {n} (직접 입력)",
         btn_cancel: "취소", btn_submit: "예약 확정",
+        
+        agreement: "본인 이외의 예약이나 부정 예약이 아님을 확인합니다. 부정 예약 적발 시 연습 코트 이용이 제한될 수 있음에 동의합니다.",
+        alert_agree: "동의란에 체크해주세요.",
+        alert_wrong_player_pin: "[오류] 선수 이름과 PIN 번호 조합이 틀립니다.",
+        alert_limit_reached: "[오류] 서버에서 예약 한도 초과가 확인되었습니다. (다른 기기에서 예약 등)",
+        
         alert_1slot: "예약은 [하루 {slots}만] 가능합니다.\n(다른 날짜라면 추가 예약 가능)", 
         alert_booked: "이 자리는 이미 예약되었습니다.",
         alert_req: "이름, 연락처, 4자리 비밀번호를 입력해주세요.", alert_cancel: "이 예약을 취소하시겠습니까? (동반자도 취소됩니다)",
@@ -336,6 +364,7 @@
     let initialScrollDone = false; 
     let sysMaxSlots = 1; 
     let sysMaxDate = ""; 
+    let sysPlayers = []; // ★ サーバーから取得した選手リスト
 
     let syncTimer = null;
     function startEcoSync() {
@@ -417,12 +446,11 @@
       fetchLatestData(true);
       startEcoSync();
       
-      // ★ スマホ特有のバグ対策：未来の日付を強制的にブロック
       document.getElementById('date-select').addEventListener('change', (e) => {
         if (currentRole !== 'td' && e.target.value > sysMaxDate) {
           alert(i18n[currentLang].alert_not_open);
-          e.target.value = sysMaxDate; // 解放日に強制リセット
-          e.target.blur(); // カレンダーUIを閉じる
+          e.target.value = sysMaxDate; 
+          e.target.blur(); 
         }
         initialScrollDone = false; 
         fetchLatestData(true);
@@ -469,6 +497,9 @@
       document.getElementById('modal-title-text').innerText = t.modal_title;
       document.getElementById('btn-cancel').innerText = t.btn_cancel;
       document.getElementById('submit-btn').innerText = t.btn_submit;
+      
+      const agreeEl = document.getElementById('agree-text');
+      if(agreeEl) agreeEl.innerText = t.agreement;
 
       document.getElementById('td-label-name').innerText = t.td_label_name;
       document.getElementById('td-input-name').placeholder = t.td_ph_name;
@@ -543,12 +574,9 @@
         const res = await fetch(GAS_API_URL + "?date=" + selectedDate);
         const data = await res.json();
         if (data && typeof data === 'object') {
-          if (data['_sys_max_slots']) {
-             sysMaxSlots = data['_sys_max_slots']; delete data['_sys_max_slots'];
-          }
-          if (data['_sys_max_date']) {
-             sysMaxDate = data['_sys_max_date']; delete data['_sys_max_date'];
-          }
+          if (data['_sys_max_slots']) { sysMaxSlots = data['_sys_max_slots']; delete data['_sys_max_slots']; }
+          if (data['_sys_max_date']) { sysMaxDate = data['_sys_max_date']; delete data['_sys_max_date']; }
+          if (data['_sys_players']) { sysPlayers = data['_sys_players']; delete data['_sys_players']; }
           
           bookings = data;
           applyLang(); 
@@ -570,18 +598,12 @@
       const now = new Date();
       const nowTotalMin = now.getHours() * 60 + now.getMinutes();
       let targetId = null;
-      
       for(let i=0; i<timeSlots.length; i++) {
         const start = timeSlots[i].split(' - ')[0];
-        const h = parseInt(start.split(':')[0]);
-        const m = parseInt(start.split(':')[1]);
+        const h = parseInt(start.split(':')[0]); const m = parseInt(start.split(':')[1]);
         const slotTotalMin = h * 60 + m;
-        
-        if (slotTotalMin <= nowTotalMin && nowTotalMin < slotTotalMin + 30) {
-           targetId = 'time-row-' + i; break;
-        } else if (slotTotalMin > nowTotalMin && !targetId) {
-           targetId = 'time-row-' + i; break;
-        }
+        if (slotTotalMin <= nowTotalMin && nowTotalMin < slotTotalMin + 30) { targetId = 'time-row-' + i; break; } 
+        else if (slotTotalMin > nowTotalMin && !targetId) { targetId = 'time-row-' + i; break; }
       }
       if(targetId) {
         const el = document.getElementById(targetId);
@@ -623,8 +645,7 @@
       const searchKeyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
       timeSlots.forEach((time, index) => {
-        const tr1 = document.createElement('tr'); tr1.className = 'inner-row bg-white';
-        tr1.id = 'time-row-' + index; 
+        const tr1 = document.createElement('tr'); tr1.className = 'inner-row bg-white'; tr1.id = 'time-row-' + index; 
         const tr2 = document.createElement('tr'); tr2.className = 'inner-row bg-white';
         const tr3 = document.createElement('tr'); tr3.className = 'inner-row bg-white';
         const tr4 = document.createElement('tr'); tr4.className = 'inner-row bg-white thick-bottom';
@@ -634,9 +655,7 @@
         const isNow = (isToday && nowMin >= startMin && nowMin < endMin);
 
         let timeHtml = time;
-        if (isNow) {
-            timeHtml += `<br><span class="bg-red-600 text-white px-1.5 py-0.5 rounded text-[9px] animate-pulse">NOW</span>`;
-        }
+        if (isNow) timeHtml += `<br><span class="bg-red-600 text-white px-1.5 py-0.5 rounded text-[9px] animate-pulse">NOW</span>`;
         let tdTime = `<td rowspan="4" class="sticky-col thick-right thick-bottom font-bold align-middle text-center text-[10px] sm:text-[11px] ${isNow ? 'bg-red-50 text-red-800' : 'bg-gray-50 text-gray-700'}">${timeHtml}</td>`;
         tr1.innerHTML = tdTime;
 
@@ -657,12 +676,7 @@
 
           if (isBulkBlocked) {
             let dispName = getLocalizedName(b1.name, t);
-            
-            let isHighlighted = false;
-            if (currentRole === 'td' && searchKeyword !== '' && b1.name && b1.name.toLowerCase().includes(searchKeyword)) {
-               isHighlighted = true;
-            }
-            
+            let isHighlighted = (currentRole === 'td' && searchKeyword !== '' && b1.name && b1.name.toLowerCase().includes(searchKeyword));
             let sizeClass = currentLang === 'ko' ? 'text-[9px] sm:text-[10px] tracking-normal' : 'text-[10px] sm:text-xs tracking-widest';
             const extraClass = isHighlighted ? 'search-hit' : 'bg-slate-200 hover:bg-slate-300';
             
@@ -679,11 +693,8 @@
 
               if (b) {
                 let dispName = getLocalizedName(b.name, t);
+                if (currentRole === 'td' && searchKeyword !== '' && b.name && b.name.toLowerCase().includes(searchKeyword)) isHighlighted = true;
                 
-                if (currentRole === 'td' && searchKeyword !== '' && b.name && b.name.toLowerCase().includes(searchKeyword)) {
-                   isHighlighted = true;
-                }
-
                 if (b.status === 'official') {
                   bgClass = 'bg-yellow-100'; txtClass = 'text-yellow-900 font-bold';
                   cellContent = dispName;
@@ -700,10 +711,8 @@
               const cellAttr = `onclick="handleSlotClick('${key}')" class="cursor-pointer text-center text-[10px] sm:text-[11px] align-middle ${bgClass} ${txtClass}"`;
               const tdHtml = `<td ${cellAttr}>${cellContent}</td>`;
               
-              if(idx === 0) html1 += tdHtml;
-              if(idx === 1) html2 += tdHtml;
-              if(idx === 2) html3 += tdHtml;
-              if(idx === 3) html4 += tdHtml;
+              if(idx === 0) html1 += tdHtml; if(idx === 1) html2 += tdHtml;
+              if(idx === 2) html3 += tdHtml; if(idx === 3) html4 += tdHtml;
             });
           }
         });
@@ -765,30 +774,37 @@
       const container = document.getElementById('modal-inputs-container');
       container.innerHTML = '';
       
+      // ★ 代表者の入力を名簿からの「プルダウン」に変更
+      let playerOptions = `<option value="">-- 選択してください --</option>`;
+      sysPlayers.forEach(p => { playerOptions += `<option value="${p}">${p}</option>`; });
+      
       currentEmptyKeys.forEach((k, idx) => {
         if (idx === 0) {
           container.innerHTML += `
             <div class="mb-2">
               <label class="block font-bold mb-0.5 text-blue-800">${t.label_name}</label>
-              <input type="text" id="input-name-0" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none">
+              <select id="input-name-0" class="w-full border border-blue-400 px-2 py-1.5 bg-blue-50 outline-none font-bold text-gray-800">
+                ${playerOptions}
+              </select>
             </div>
             <div class="mb-2">
               <label class="block font-bold mb-0.5 text-gray-700">${t.label_phone}</label>
               <input type="tel" id="input-phone" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none">
             </div>
-            <div class="mb-3 border-b border-gray-300 pb-3">
+            <div class="mb-2 border-b border-gray-300 pb-3">
               <label class="block font-bold mb-0.5 text-red-700">${t.label_pin}</label>
-              <input type="tel" id="input-pin" maxlength="4" placeholder="${t.ph_pin}" class="w-full border border-gray-400 px-2 py-1.5 bg-red-50 outline-none">
+              <input type="password" id="input-pin" maxlength="4" placeholder="${t.ph_pin}" class="w-full border border-red-400 px-2 py-1.5 bg-red-50 outline-none font-bold text-center tracking-widest">
             </div>`;
         } else {
-          if (idx === 1) container.innerHTML += `<label class="block font-bold mb-1 text-gray-700">${t.label_partner.replace('{n}', currentEmptyKeys.length - 1)}</label>`;
+          if (idx === 1) container.innerHTML += `<label class="block font-bold mb-1 mt-2 text-gray-700">${t.label_partner.replace('{n}', currentEmptyKeys.length - 1)}</label>`;
           container.innerHTML += `
             <div class="mb-1">
               <input type="text" id="input-name-${idx}" placeholder="${t.ph_partner.replace('{n}', idx)}" class="w-full border border-gray-300 px-2 py-1.5 outline-none">
             </div>`;
         }
       });
-
+      
+      document.getElementById('check-agree').checked = false; // 開くたびにリセット
       document.getElementById('modal-slot-info').innerText = `${courtLabels[parts[1]]} | ${parts[0]}`;
       document.getElementById('booking-modal').classList.remove('hidden');
     }
@@ -799,11 +815,10 @@
     async function sendToServer(payload) {
       const res = await fetch(GAS_API_URL, {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
         body: JSON.stringify(payload)
       });
-      return { success: true };
+      return await res.json(); // 今回はサーバーの返事をしっかり読み取るためにno-corsを外しています
     }
 
     async function confirmBooking() {
@@ -813,6 +828,9 @@
       const t = i18n[currentLang];
       
       if (!name0 || !phone || pin.length !== 4) return alert(t.alert_req);
+      
+      // ★ 同意チェックの確認
+      if (!document.getElementById('check-agree').checked) return alert(t.alert_agree);
 
       const btn = document.getElementById('submit-btn');
       btn.innerText = 'Syncing...'; btn.disabled = true;
@@ -830,7 +848,23 @@
       }
 
       try {
-        await sendToServer({ action: 'book', date: selectedDate, pin: pin, bookings: newBookings });
+        const result = await sendToServer({ action: 'book', date: selectedDate, pin: pin, bookings: newBookings });
+        
+        // ★ サーバー側からのエラー処理（PIN間違い・上限到達・先取り）
+        if (!result.success) {
+           if (result.error === 'WRONG_PLAYER_PIN') {
+              alert(t.alert_wrong_player_pin);
+           } else if (result.error === 'LIMIT_REACHED') {
+              alert(t.alert_limit_reached);
+           } else if (result.error === 'ALREADY_BOOKED') {
+              alert(t.alert_double_book);
+           } else if (result.error === 'NOT_OPEN') {
+              alert(t.alert_not_open);
+           }
+           fetchLatestData(true);
+           btn.innerText = t.btn_submit; btn.disabled = false;
+           return;
+        }
         
         myBookedIds[bId] = {
           pin: pin,
@@ -846,14 +880,18 @@
         closeBookingModal();
         renderTimetable(); renderMyBookings();
         setTimeout(() => manualSync(), 1500);
-      } catch (e) {} 
-      finally { btn.innerText = t.btn_submit; btn.disabled = false; }
+      } catch (e) {
+         // ネットワークエラー等
+      } finally { btn.innerText = t.btn_submit; btn.disabled = false; }
     }
 
     async function cancelBookingOnline(bId, singleKey, pin, isTD, targetDateStr = null) {
       const selectedDate = targetDateStr || document.getElementById('date-select').value;
       try {
-        await sendToServer({ action: 'cancel', date: selectedDate, id: bId, key: singleKey, pin: pin, isTD: isTD });
+        const result = await sendToServer({ action: 'cancel', date: selectedDate, id: bId, key: singleKey, pin: pin, isTD: isTD });
+        if(result && !result.success && result.error === 'WRONG_PIN') {
+           alert(i18n[currentLang].wrong_pin); return;
+        }
         
         if (bId) {
           delete myBookedIds[bId];
