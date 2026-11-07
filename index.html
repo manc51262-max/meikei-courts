@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MEIKEI OPEN Practice Court</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MEIKEI OPEN Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,14 +22,17 @@
     .inner-row td { height: 36px; padding: 0 4px; }
     @keyframes flash { 0% { background-color: #fef08a; } 100% { background-color: #f3f4f6; } }
     .scroll-target { animation: flash 2s ease-out; }
-    
     @keyframes highlightSearch { 0% { background-color: #fef08a; border-color: #dc2626; } 50% { background-color: #fca5a5; border-color: #991b1b; } 100% { background-color: #fef08a; border-color: #dc2626; } }
     .search-hit { animation: highlightSearch 1.5s infinite; border: 2px solid #dc2626 !important; font-weight: 900 !important; color: #7f1d1d !important; z-index: 5; position: relative; }
+    
+    /* アプリ風の余白調整 */
+    body { padding-bottom: 70px; } /* 下部ナビゲーション用の余白 */
   </style>
 </head>
-<body class="bg-gray-100 text-gray-900 font-sans min-h-screen flex flex-col items-center py-2 sm:py-4">
+<body class="bg-gray-100 text-gray-900 font-sans min-h-screen flex flex-col items-center">
 
-  <main class="w-full max-w-6xl bg-white shadow-md border border-gray-300 p-2 sm:p-4 overflow-hidden flex flex-col relative">
+  <!-- ================= タブ1：練習コート予約システム (既存機能) ================= -->
+  <main id="page-practice" class="tab-page w-full max-w-6xl bg-white shadow-md border border-gray-300 p-2 sm:p-4 overflow-hidden flex flex-col relative mt-2">
     
     <div id="sync-indicator" class="hidden absolute top-0 left-0 w-full bg-green-600 text-white text-[10px] py-0.5 text-center font-bold z-50">
       <i class="fa-solid fa-rotate fa-spin mr-1"></i> Syncing...
@@ -37,20 +40,20 @@
 
     <div class="flex flex-col md:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
       <h1 id="main-title" onclick="handleSecretClick()" class="text-base sm:text-xl font-black tracking-wide text-gray-900 cursor-pointer select-none">
-        筑波大学MEIKEIオープンテニス PRACTICE SHEET
+        MEIKEI OPEN 練習コート予約
       </h1>
       
       <div class="mt-2 md:mt-0 flex gap-2 items-center flex-wrap justify-center">
-        <button onclick="manualSync()" class="px-2 py-1.5 text-[11px] bg-gray-200 text-gray-700 border border-gray-400 font-bold">
+        <button onclick="manualSync()" class="px-2 py-1.5 text-[11px] bg-gray-200 text-gray-700 border border-gray-400 font-bold rounded shadow-sm">
           <i class="fa-solid fa-rotate"></i> <span id="btn-update">更新</span>
         </button>
-        <button onclick="toggleLang()" class="px-2 py-1.5 text-[11px] bg-blue-100 text-blue-800 border border-blue-400 font-bold">
+        <button onclick="toggleLang()" class="px-2 py-1.5 text-[11px] bg-blue-100 text-blue-800 border border-blue-400 font-bold rounded shadow-sm">
           <i class="fa-solid fa-globe"></i> <span id="current-lang-label">日本語</span>
         </button>
         
         <div id="admin-buttons" class="hidden flex gap-2 ml-2 p-1 bg-yellow-100 border border-yellow-300 rounded">
-          <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300">初期化</button>
-          <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold">TD管理者</button>
+          <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300 rounded">初期化</button>
+          <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold rounded">TD管理者</button>
         </div>
       </div>
     </div>
@@ -60,7 +63,7 @@
         <span id="rule-text" class="font-bold text-gray-700"></span>
         <div class="flex items-center space-x-2">
           <label for="date-select" id="date-label" class="font-bold">Date:</label>
-          <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none font-bold bg-yellow-50 cursor-pointer">
+          <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none font-bold bg-yellow-50 cursor-pointer rounded">
         </div>
       </div>
       <div class="flex gap-2 mt-2 sm:mt-0 font-medium text-[10px] sm:text-xs">
@@ -90,7 +93,7 @@
       </table>
     </div>
 
-    <div class="mt-4 border border-gray-400 p-3 bg-gray-50 w-full">
+    <div class="mt-4 border border-gray-400 p-3 bg-gray-50 w-full rounded">
       <h3 id="my-tickets-title" class="font-bold text-sm text-gray-800 border-b border-gray-300 pb-1 mb-2">■ 自分の全日程の予約チケット / My Bookings</h3>
       <div id="my-bookings-list" class="space-y-2 max-h-[300px] overflow-y-auto"></div>
     </div>
@@ -100,78 +103,154 @@
       
       <div class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded border border-gray-400 shadow-inner w-full">
          <i class="fa-solid fa-magnifying-glass text-gray-500"></i>
-         <input type="text" id="td-search-input" oninput="renderTimetable()" placeholder="選手名で検索するとハイライトされます..." class="w-full bg-transparent outline-none text-xs font-bold text-gray-800">
+         <input type="text" id="td-search-input" oninput="renderTimetable()" placeholder="選手名で検索..." class="w-full bg-transparent outline-none text-xs font-bold text-gray-800">
          <button onclick="document.getElementById('td-search-input').value=''; renderTimetable();" class="text-gray-400 hover:text-gray-700 px-2"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
       <div class="flex flex-wrap gap-2">
         <button onclick="openBulkModal()" class="px-3 py-2 text-xs bg-red-600 text-white border border-red-800 font-bold shadow-md rounded">
-          <i class="fa-solid fa-ban"></i> <span id="btn-bulk">試合・イベント一括ブロック</span>
+          <i class="fa-solid fa-ban"></i> <span id="btn-bulk">一括ブロック</span>
         </button>
-        <button onclick="openPosterModal()" class="px-3 py-1.5 text-xs bg-gray-800 text-white border border-gray-900 font-bold rounded">QRポスター作成</button>
-        <button onclick="exportCSV()" class="px-3 py-1.5 text-xs bg-gray-100 text-gray-800 border border-gray-400 font-bold rounded">CSVエクスポート</button>
+        <button onclick="openPosterModal()" class="px-3 py-1.5 text-xs bg-gray-800 text-white border border-gray-900 font-bold rounded">QR作成</button>
+        <button onclick="exportCSV()" class="px-3 py-1.5 text-xs bg-gray-100 text-gray-800 border border-gray-400 font-bold rounded">CSV</button>
       </div>
       
       <!-- システム設定系 -->
       <div class="flex flex-wrap gap-2 items-center justify-between border-t border-gray-200 pt-3">
-        
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-2 bg-blue-100 px-3 py-1.5 rounded border border-blue-400 shadow-sm">
-             <span class="text-xs font-bold text-blue-900">選手1人の予約上限:</span>
+             <span class="text-xs font-bold text-blue-900">1人の予約上限:</span>
              <select id="td-max-slots" onchange="tdSetMaxSlots()" class="border border-blue-500 bg-white text-xs py-1 px-1 outline-none font-bold text-center">
-               <option value="1">1枠 / 日</option>
-               <option value="2">2枠 / 日</option>
-               <option value="3">3枠 / 日</option>
-               <option value="99">無制限</option>
+               <option value="1">1枠 / 日</option><option value="2">2枠 / 日</option><option value="3">3枠 / 日</option><option value="99">無制限</option>
              </select>
           </div>
           <div class="flex items-center gap-2 bg-green-100 px-3 py-1.5 rounded border border-green-400 shadow-sm">
-             <span class="text-xs font-bold text-green-900">予約解放日(OP発表後):</span>
+             <span class="text-xs font-bold text-green-900">解放日(OP発表後):</span>
              <input type="date" id="td-max-date" onchange="tdSetMaxDate()" class="border border-green-500 bg-white text-xs py-1 px-1 outline-none font-bold text-center">
           </div>
         </div>
-
-        <button onclick="tdForceCleanDay()" class="px-3 py-2 text-xs bg-black text-white font-bold rounded shadow-md mt-auto mb-1">この日のデータを全消去</button>
+        <button onclick="tdForceCleanDay()" class="px-3 py-2 text-xs bg-black text-white font-bold rounded shadow-md mt-auto mb-1">全消去</button>
       </div>
     </div>
   </main>
 
-  <!-- ================= モーダル群 ================= -->
-  
+  <!-- ================= タブ2：OP / ドロー (モックアップ) ================= -->
+  <div id="page-oop" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
+    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4">📋 OP & ドロー / Order of Play</h2>
+    <div class="bg-white p-4 rounded shadow border border-gray-300 text-center space-y-4">
+      <p class="text-sm text-gray-600 font-bold">本日のOP・ドロー表はこちらから確認できます。</p>
+      
+      <!-- ※実際はここにGoogle DriveのPDFリンクなどを貼ります -->
+      <a href="#" class="block w-full bg-blue-600 text-white font-bold py-3 rounded shadow hover:bg-blue-700 transition">
+        <i class="fa-solid fa-file-pdf mr-2"></i> 本日のOP (PDF)
+      </a>
+      <a href="#" class="block w-full bg-green-600 text-white font-bold py-3 rounded shadow hover:bg-green-700 transition">
+        <i class="fa-solid fa-sitemap mr-2"></i> 最新のドロー表 (PDF)
+      </a>
+      
+      <p class="text-xs text-gray-400 mt-4">※OPは毎日夕方頃に更新されます。</p>
+    </div>
+  </div>
+
+  <!-- ================= タブ3：掲示板 / お知らせ (モックアップ) ================= -->
+  <div id="page-notice" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
+    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4">📢 大会掲示板 / Notice</h2>
+    <div class="space-y-3">
+      <!-- 記事1 -->
+      <div class="bg-white p-4 rounded shadow-sm border-l-4 border-red-500">
+        <span class="text-[10px] bg-red-100 text-red-800 px-2 py-1 font-bold rounded">重要 / IMPORTANT</span>
+        <span class="text-xs text-gray-500 ml-2">2026/04/10 07:30</span>
+        <h3 class="font-bold mt-2">【雨天による試合開始遅延のお知らせ】</h3>
+        <p class="text-xs text-gray-700 mt-1 mt-2">現在雨天のため、本日の試合開始を「1時間遅らせて 10:00 スタート」とします。次のお知らせは 09:00 に更新します。</p>
+      </div>
+      <!-- 記事2 -->
+      <div class="bg-white p-4 rounded shadow-sm border-l-4 border-blue-500">
+        <span class="text-[10px] bg-blue-100 text-blue-800 px-2 py-1 font-bold rounded">連絡 / INFO</span>
+        <span class="text-xs text-gray-500 ml-2">2026/04/09 18:00</span>
+        <h3 class="font-bold mt-2">明日のOPを発表しました</h3>
+        <p class="text-xs text-gray-700 mt-1 mt-2">OPタブよりご確認ください。あわせて明日の練習コート予約も解放しました。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= タブ4：観客向けインフォメーション (モックアップ) ================= -->
+  <div id="page-info" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
+    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4">🗺️ 会場・大会情報 / Information</h2>
+    
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <a href="#" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50">
+        <i class="fa-solid fa-utensils text-2xl text-orange-500 mb-2"></i>
+        <h4 class="font-bold text-sm">つくばグルメマップ</h4>
+        <p class="text-[10px] text-gray-500 mt-1">おすすめの飲食店をご紹介</p>
+      </a>
+      <a href="#" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50">
+        <i class="fa-brands fa-instagram text-2xl text-pink-500 mb-2"></i>
+        <h4 class="font-bold text-sm">公式 Instagram</h4>
+        <p class="text-[10px] text-gray-500 mt-1">試合結果や写真を速報</p>
+      </a>
+      <a href="#" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50">
+        <i class="fa-solid fa-map-location-dot text-2xl text-blue-500 mb-2"></i>
+        <h4 class="font-bold text-sm">会場アクセス</h4>
+        <p class="text-[10px] text-gray-500 mt-1">駐車場・バスのご案内</p>
+      </a>
+      <a href="#" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50">
+        <i class="fa-solid fa-globe text-2xl text-gray-700 mb-2"></i>
+        <h4 class="font-bold text-sm">大会公式HP</h4>
+        <p class="text-[10px] text-gray-500 mt-1">大会概要・スポンサー</p>
+      </a>
+    </div>
+    
+    <div class="bg-gray-800 text-white p-4 rounded text-center text-xs">
+      <p class="font-bold mb-1">筑波大学MEIKEIオープンテニス</p>
+      <p class="text-gray-400">© 2026 筑波大学硬式庭球部</p>
+    </div>
+  </div>
+
+
+  <!-- ================= スマホ風 下部ナビゲーション（Bottom Navigation） ================= -->
+  <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 flex justify-around items-center h-16 pb-2 pt-1">
+    
+    <button onclick="switchTab('practice')" id="nav-practice" class="nav-btn flex flex-col items-center justify-center w-1/4 text-blue-600 font-bold transition">
+      <i class="fa-solid fa-calendar-check text-xl mb-1"></i>
+      <span class="text-[10px]">Practice</span>
+    </button>
+    
+    <button onclick="switchTab('oop')" id="nav-oop" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
+      <i class="fa-solid fa-list-ol text-xl mb-1"></i>
+      <span class="text-[10px]">OP/Draw</span>
+    </button>
+    
+    <button onclick="switchTab('notice')" id="nav-notice" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
+      <i class="fa-solid fa-bullhorn text-xl mb-1"></i>
+      <span class="text-[10px]">Notice</span>
+    </button>
+    
+    <button onclick="switchTab('info')" id="nav-info" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
+      <i class="fa-solid fa-circle-info text-xl mb-1"></i>
+      <span class="text-[10px]">Info</span>
+    </button>
+    
+  </div>
+
+
+  <!-- ================= モーダル群 (練習コート用) ================= -->
+  <!-- ※既存のモーダルコード -->
   <div id="bulk-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-md w-full border-2 border-gray-800 p-4 shadow-xl relative max-h-[90vh] overflow-y-auto">
       <h4 id="bulk-title" class="font-bold text-gray-800 mb-3 border-b-2 border-gray-800 pb-1">コート一括ブロック設定</h4>
-      
       <div class="space-y-3 text-xs">
+        <div><label id="bulk-label-reason" class="block font-bold mb-1">表示名</label><input type="text" id="bulk-reason" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none"></div>
         <div>
-          <label id="bulk-label-reason" class="block font-bold mb-1">表示名</label>
-          <input type="text" id="bulk-reason" class="w-full border border-gray-400 px-2 py-1.5 bg-yellow-50 outline-none">
-        </div>
-        <div>
-          <div class="flex justify-between items-center mb-1">
-            <label id="bulk-label-courts" class="font-bold">対象コート</label>
-            <button onclick="selectAllCourts()" id="bulk-btn-all" class="px-2 py-1 bg-gray-200 border border-gray-400 rounded text-[10px] font-bold">全選択</button>
-          </div>
-          <div class="grid grid-cols-4 gap-2 mb-2">
-            <label><input type="checkbox" id="bulk-c1"> Court 1</label><label><input type="checkbox" id="bulk-c2"> Court 2</label>
-            <label><input type="checkbox" id="bulk-c3"> Court 3</label><label><input type="checkbox" id="bulk-c4"> Court 4</label>
-            <label><input type="checkbox" id="bulk-c5"> Court 5</label><label><input type="checkbox" id="bulk-c6"> Court 6</label>
-            <label><input type="checkbox" id="bulk-c7"> Court 7</label>
-          </div>
+          <div class="flex justify-between items-center mb-1"><label id="bulk-label-courts" class="font-bold">対象コート</label><button onclick="selectAllCourts()" id="bulk-btn-all" class="px-2 py-1 bg-gray-200 border border-gray-400 rounded text-[10px] font-bold">全選択</button></div>
+          <div class="grid grid-cols-4 gap-2 mb-2"><label><input type="checkbox" id="bulk-c1"> Court 1</label><label><input type="checkbox" id="bulk-c2"> Court 2</label><label><input type="checkbox" id="bulk-c3"> Court 3</label><label><input type="checkbox" id="bulk-c4"> Court 4</label><label><input type="checkbox" id="bulk-c5"> Court 5</label><label><input type="checkbox" id="bulk-c6"> Court 6</label><label><input type="checkbox" id="bulk-c7"> Court 7</label></div>
         </div>
         <div>
           <label id="bulk-label-period" class="block font-bold mb-1 border-t border-gray-300 pt-2">対象期間</label>
-          <div class="flex items-center space-x-2">
-            <select id="bulk-start" class="w-1/2 border border-gray-400 px-1 py-1.5 outline-none bg-white"></select>
-            <span class="font-bold">〜</span>
-            <select id="bulk-end" class="w-1/2 border border-gray-400 px-1 py-1.5 outline-none bg-white"></select>
-          </div>
+          <div class="flex items-center space-x-2"><select id="bulk-start" class="w-1/2 border border-gray-400 px-1 py-1.5 outline-none bg-white"></select><span class="font-bold">〜</span><select id="bulk-end" class="w-1/2 border border-gray-400 px-1 py-1.5 outline-none bg-white"></select></div>
         </div>
       </div>
-
       <div class="mt-5 flex space-x-2">
-        <button id="bulk-btn-cancel" onclick="closeBulkModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button>
-        <button id="bulk-btn-exec" onclick="executeBulkBlock()" class="w-1/2 py-2 border border-red-800 bg-red-600 text-white font-bold text-xs shadow-md">一括ブロック実行</button>
+        <button id="bulk-btn-cancel" onclick="closeBulkModal()" class="w-1/2 py-2 border border-gray-400 bg-gray-200 font-bold text-xs">キャンセル</button><button id="bulk-btn-exec" onclick="executeBulkBlock()" class="w-1/2 py-2 border border-red-800 bg-red-600 text-white font-bold text-xs shadow-md">一括ブロック実行</button>
       </div>
     </div>
   </div>
@@ -182,7 +261,6 @@
       <p class="text-sm font-bold text-green-700 my-2" id="modal-slot-info"></p>
       <div id="modal-inputs-container" class="space-y-2 text-xs mt-3"></div>
       
-      <!-- ★ 同意チェックボックスを追加 -->
       <div class="mb-3 mt-3 bg-gray-100 p-2 border border-gray-300 text-[10px]">
         <label class="flex items-start space-x-2 cursor-pointer">
           <input type="checkbox" id="check-agree" class="mt-0.5 h-4 w-4">
@@ -201,7 +279,6 @@
     <div class="bg-white max-w-sm w-full border-2 border-gray-800 p-4 shadow-xl">
       <h4 class="font-bold text-gray-800 mb-1 border-b-2 border-gray-800 pb-1">TD管理者モード</h4>
       <p class="text-xs font-bold text-gray-700 my-2 whitespace-pre-line" id="td-modal-slot-info"></p>
-      
       <div class="mt-3 pt-3 border-t border-gray-300">
         <label id="td-label-name" class="block font-bold mb-1 text-xs text-blue-800">大会側での割当 (選手名)</label>
         <input type="text" id="td-input-name" class="w-full border border-gray-400 px-2 py-1.5 text-xs bg-yellow-50 outline-none mb-2">
@@ -223,10 +300,7 @@
           <label class="font-bold mb-1 block">掲示用コート指定</label>
           <div class="flex gap-2">
             <select id="poster-court-select" class="flex-grow border border-gray-400 py-1.5 px-2 bg-gray-50 outline-none">
-              <option value="all">総合案内 (全コート)</option>
-              <option value="c1">Court 1</option><option value="c2">Court 2</option>
-              <option value="c3">Court 3</option><option value="c4">Court 4</option>
-              <option value="c5">Court 5</option><option value="c6">Court 6</option><option value="c7">Court 7</option>
+              <option value="all">総合案内 (全コート)</option><option value="c1">Court 1</option><option value="c2">Court 2</option><option value="c3">Court 3</option><option value="c4">Court 4</option><option value="c5">Court 5</option><option value="c6">Court 6</option><option value="c7">Court 7</option>
             </select>
             <button onclick="generatePoster()" class="px-3 border border-gray-800 bg-gray-100 font-bold">QR生成</button>
           </div>
@@ -246,8 +320,30 @@
 
   <script>
     // ★★★ 以下のURLをご自身の【新しいデプロイ】のURLに書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycby3nx8fBsJJxctgpAmWmDE358rhTSCmZgm5H_obtaxe7KCITA18mmcD3M236ksRY_ZxhA/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx8sMgy5h1iiA6sZAVR5IvrQDFEALvbnQLuYmV6XYQIC7aIj59gNmBOIIHfJTWMIQGBceg/exec";
 
+    // ★ タブ切り替えロジック
+    function switchTab(tabId) {
+      // 全てのページを隠す
+      document.querySelectorAll('.tab-page').forEach(el => el.classList.add('hidden'));
+      // 選択されたページを表示
+      document.getElementById('page-' + tabId).classList.remove('hidden');
+      
+      // アイコンの色をリセット
+      document.querySelectorAll('.nav-btn').forEach(el => {
+        el.classList.remove('text-blue-600', 'font-bold');
+        el.classList.add('text-gray-400');
+      });
+      // 選択されたアイコンを青くする
+      const activeBtn = document.getElementById('nav-' + tabId);
+      activeBtn.classList.remove('text-gray-400');
+      activeBtn.classList.add('text-blue-600', 'font-bold');
+      
+      // 画面上部にスクロール
+      window.scrollTo(0, 0);
+    }
+
+    // 以降は既存のロジック（そのまま）=================================
     const i18n = {
       ja: {
         lang_label: "日本語", title: "筑波大学MEIKEIオープンテニス PRACTICE SHEET",
@@ -261,7 +357,6 @@
         label_partner: "追加の同伴者（残り {n} 名まで可能）", ph_partner: "同伴者 {n} (手入力)",
         btn_cancel: "キャンセル", btn_submit: "予約確定",
         
-        // ★ エラー文言等の追加
         agreement: "本人以外の予約や不正な複数予約ではありません。不正が発覚した場合、練習コートの利用を制限されることに同意します。",
         alert_agree: "注意事項に同意するチェックを入れてください。",
         alert_wrong_player_pin: "【エラー】選手名とPIN（暗証番号）の組み合わせが間違っています。",
@@ -364,7 +459,7 @@
     let initialScrollDone = false; 
     let sysMaxSlots = 1; 
     let sysMaxDate = ""; 
-    let sysPlayers = []; // ★ サーバーから取得した選手リスト
+    let sysPlayers = []; 
 
     let syncTimer = null;
     function startEcoSync() {
@@ -484,7 +579,6 @@
       const currentSlotText = getSlotText(currentLang, sysMaxSlots);
       
       document.getElementById('current-lang-label').innerText = t.lang_label;
-      document.getElementById('main-title').innerText = t.title;
       document.getElementById('rule-text').innerText = t.rule.replace('{slots}', currentSlotText);
       document.getElementById('btn-update').innerText = t.update;
       document.getElementById('date-label').innerText = t.date;
@@ -620,11 +714,11 @@
       const roleBtn = document.getElementById('role-btn');
       const tdControls = document.getElementById('td-controls');
       if (currentRole === 'td') {
-        roleBtn.innerText = '選手モードに戻る'; roleBtn.className = 'px-3 py-1 text-[11px] bg-red-600 text-white border border-red-800 font-bold';
+        roleBtn.innerText = '選手モードに戻る'; roleBtn.className = 'px-3 py-1 text-[11px] bg-red-600 text-white border border-red-800 font-bold rounded';
         tdControls.classList.remove('hidden');
         document.getElementById('date-select').removeAttribute('max'); 
       } else {
-        roleBtn.innerText = 'TD管理者'; roleBtn.className = 'px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold';
+        roleBtn.innerText = 'TD管理者'; roleBtn.className = 'px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold rounded';
         tdControls.classList.add('hidden');
         document.getElementById('date-select').max = sysMaxDate;
       }
@@ -774,7 +868,6 @@
       const container = document.getElementById('modal-inputs-container');
       container.innerHTML = '';
       
-      // ★ 代表者の入力を名簿からの「プルダウン」に変更
       let playerOptions = `<option value="">-- 選択してください --</option>`;
       sysPlayers.forEach(p => { playerOptions += `<option value="${p}">${p}</option>`; });
       
@@ -804,7 +897,7 @@
         }
       });
       
-      document.getElementById('check-agree').checked = false; // 開くたびにリセット
+      document.getElementById('check-agree').checked = false; 
       document.getElementById('modal-slot-info').innerText = `${courtLabels[parts[1]]} | ${parts[0]}`;
       document.getElementById('booking-modal').classList.remove('hidden');
     }
@@ -818,7 +911,7 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
         body: JSON.stringify(payload)
       });
-      return await res.json(); // 今回はサーバーの返事をしっかり読み取るためにno-corsを外しています
+      return await res.json(); 
     }
 
     async function confirmBooking() {
@@ -828,8 +921,6 @@
       const t = i18n[currentLang];
       
       if (!name0 || !phone || pin.length !== 4) return alert(t.alert_req);
-      
-      // ★ 同意チェックの確認
       if (!document.getElementById('check-agree').checked) return alert(t.alert_agree);
 
       const btn = document.getElementById('submit-btn');
@@ -850,17 +941,11 @@
       try {
         const result = await sendToServer({ action: 'book', date: selectedDate, pin: pin, bookings: newBookings });
         
-        // ★ サーバー側からのエラー処理（PIN間違い・上限到達・先取り）
         if (!result.success) {
-           if (result.error === 'WRONG_PLAYER_PIN') {
-              alert(t.alert_wrong_player_pin);
-           } else if (result.error === 'LIMIT_REACHED') {
-              alert(t.alert_limit_reached);
-           } else if (result.error === 'ALREADY_BOOKED') {
-              alert(t.alert_double_book);
-           } else if (result.error === 'NOT_OPEN') {
-              alert(t.alert_not_open);
-           }
+           if (result.error === 'WRONG_PLAYER_PIN') alert(t.alert_wrong_player_pin);
+           else if (result.error === 'LIMIT_REACHED') alert(t.alert_limit_reached);
+           else if (result.error === 'ALREADY_BOOKED') alert(t.alert_double_book);
+           else if (result.error === 'NOT_OPEN') alert(t.alert_not_open);
            fetchLatestData(true);
            btn.innerText = t.btn_submit; btn.disabled = false;
            return;
@@ -881,7 +966,6 @@
         renderTimetable(); renderMyBookings();
         setTimeout(() => manualSync(), 1500);
       } catch (e) {
-         // ネットワークエラー等
       } finally { btn.innerText = t.btn_submit; btn.disabled = false; }
     }
 
@@ -956,7 +1040,6 @@
     
     async function executeBulkBlock() {
       const t = i18n[currentLang];
-      
       if (!confirm(t.confirm_td_bulk)) return; 
       
       const selectedDate = document.getElementById('date-select').value;
