@@ -191,7 +191,6 @@
   <!-- ================= スマホ風 下部ナビゲーション ================= -->
   <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 flex justify-around items-center h-16 pb-2 pt-1">
     
-    <!-- ★ 観客モードの時はこのPracticeボタンがJSで非表示になります -->
     <button onclick="switchTab('practice')" id="nav-practice" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
       <i class="fa-solid fa-calendar-check text-xl mb-1"></i><span class="text-[10px]">Practice</span>
     </button>
@@ -265,7 +264,6 @@
     </div>
   </div>
 
-  <!-- ★ QRポスター作成モーダルを強化（観客用を追加） -->
   <div id="poster-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-lg w-full border-2 border-gray-800 p-4 shadow-xl">
       <h4 class="font-bold text-gray-800 mb-2 border-b-2 border-gray-800 pb-1">QRポスター作成</h4>
@@ -309,10 +307,8 @@
     // ★★★ 以下のURLをご自身の【新しいデプロイ】のURLに書き換えてください ★★★
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyv4lkNv7A0dP2JKXCZFtpCiLVPT1cDYwNXpmvzlx3_E7mnnn7Wk-v23S4no_FF0MKn5g/exec";
 
-    // ★ 観客モードかどうかの判定用変数
     let isGuestMode = false;
 
-    // ★ タブ切り替えロジック
     function switchTab(tabId) {
       document.querySelectorAll('.tab-page').forEach(el => el.classList.add('hidden'));
       document.getElementById('page-' + tabId).classList.remove('hidden');
@@ -513,7 +509,6 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      // ★ URLパラメータの確認（?mode=guest なら観客モード）
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('mode') === 'guest') {
          isGuestMode = true;
@@ -547,12 +542,11 @@
         fetchLatestData(true);
       });
       
-      // ★ 観客モードの場合はPracticeを隠してInfoタブを初期表示する
       if (isGuestMode) {
          document.getElementById('nav-practice').style.display = 'none';
          switchTab('info');
       } else {
-         switchTab('practice'); // 通常は予約タブ
+         switchTab('practice'); 
       }
     });
 
@@ -584,7 +578,6 @@
       
       document.getElementById('current-lang-label').innerText = t.lang_label;
       
-      // ★ 観客モードと通常モードでタイトルを出し分ける
       if (isGuestMode) {
          document.getElementById('title-info').innerText = t.title_guest;
       } else {
@@ -682,14 +675,22 @@
         if (data && typeof data === 'object') {
           if (data['_sys_max_slots']) { sysMaxSlots = data['_sys_max_slots']; delete data['_sys_max_slots']; }
           if (data['_sys_max_date']) { sysMaxDate = data['_sys_max_date']; delete data['_sys_max_date']; }
-          if (data['_sys_players']) { sysPlayers = data['_sys_players']; delete data['_sys_players']; }
           
-          if (data['_sys_notices']) { sysNotices = data['_sys_notices']; delete data['_sys_notices']; renderNotices(); }
-          if (data['_sys_links']) { sysLinks = data['_sys_links']; delete data['_sys_links']; updateLinks(); }
+          // ★ 追加：undefined の場合は空配列にフォールバックしてエラーを防ぐ
+          sysPlayers = data['_sys_players'] || [];
+          sysNotices = data['_sys_notices'] || [];
+          sysLinks = data['_sys_links'] || {};
+          
+          delete data['_sys_players'];
+          delete data['_sys_notices'];
+          delete data['_sys_links'];
           
           bookings = data;
           applyLang(); 
           updateSettingsUI(); 
+          
+          renderNotices();
+          updateLinks();
           
           renderTimetable(); 
           renderMyBookings();
@@ -699,14 +700,16 @@
             initialScrollDone = true;
           }
         }
-      } catch (err) {} 
+      } catch (err) {
+         console.error("Fetch Data Error:", err); // デバッグ用
+      } 
       finally { if(showIndicator) document.getElementById('sync-indicator').classList.add('hidden'); }
     }
     
     function renderNotices() {
       const container = document.getElementById('notice-container');
       container.innerHTML = '';
-      if (sysNotices.length === 0) {
+      if (!sysNotices || sysNotices.length === 0) {
         container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">現在お知らせはありません。</p>';
         return;
       }
@@ -729,6 +732,7 @@
     }
 
     function updateLinks() {
+      if(!sysLinks) return;
       if(sysLinks['OP_URL']) document.getElementById('link-op').href = sysLinks['OP_URL'];
       if(sysLinks['DRAW_URL']) document.getElementById('link-draw').href = sysLinks['DRAW_URL'];
       if(sysLinks['GOURMET_URL']) document.getElementById('link-gourmet').href = sysLinks['GOURMET_URL'];
@@ -918,7 +922,9 @@
       container.innerHTML = '';
       
       let playerOptions = `<option value="">-- 選択してください --</option>`;
-      sysPlayers.forEach(p => { playerOptions += `<option value="${p}">${p}</option>`; });
+      if (sysPlayers && sysPlayers.length > 0) {
+        sysPlayers.forEach(p => { playerOptions += `<option value="${p}">${p}</option>`; });
+      }
       
       currentEmptyKeys.forEach((k, idx) => {
         if (idx === 0) {
@@ -1178,13 +1184,12 @@
     function openPosterModal() { document.getElementById('poster-modal').classList.remove('hidden'); generatePoster(); }
     function closePosterModal() { document.getElementById('poster-modal').classList.add('hidden'); }
     
-    // ★ QR生成ロジックのアップデート（観客用を選ぶと ?mode=guest が付与される）
     function generatePoster() {
       const baseUrl = document.getElementById('poster-base-url').value.trim();
       const target = document.getElementById('poster-type-select').value;
       const qc = document.getElementById('qrcode-container'); qc.innerHTML = '';
       
-      let tUrl = baseUrl.split('?')[0]; // 一旦クエリパラメータをリセット
+      let tUrl = baseUrl.split('?')[0]; 
       
       if (target === 'guest_info') {
          tUrl += '?mode=guest';
