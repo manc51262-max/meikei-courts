@@ -59,7 +59,7 @@
 
     <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
       <div class="flex flex-col space-y-1">
-        <span id="rule-text" class="font-bold text-gray-700"></span>
+        <span id="rule-text" class="font-bold text-gray-700 whitespace-pre-line"></span>
         <div class="flex items-center space-x-2">
           <label for="date-select" id="date-label" class="font-bold">Date:</label>
           <input type="date" id="date-select" class="border border-gray-400 px-1 py-0.5 outline-none font-bold bg-yellow-50 cursor-pointer rounded">
@@ -271,7 +271,8 @@
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-page').forEach(el => el.classList.add('hidden'));
-      document.getElementById('page-' + tabId).classList.remove('hidden');
+      const targetPage = document.getElementById('page-' + tabId);
+      if (targetPage) targetPage.classList.remove('hidden');
       
       document.querySelectorAll('.nav-btn').forEach(el => {
         el.classList.remove('text-blue-600', 'font-bold');
@@ -390,6 +391,8 @@
       }
     };
 
+    // ★ 抜けてしまっていた言語変数を復活！これで全てのエラーが直ります
+    let currentLang = 'ja';
     let currentRole = 'player';
     let selectedSlot = null;
     let currentEmptyKeys = []; 
@@ -441,7 +444,12 @@
     const courtLabels = { 'c1':'Court 1', 'c2':'Court 2', 'c3':'Court 3', 'c4':'Court 4', 'c5':'Court 5', 'c6':'Court 6', 'c7':'Court 7' };
 
     let bookings = {}; 
-    let myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_v4_ids')) || {}; 
+    let myBookedIds = {};
+    try {
+      myBookedIds = JSON.parse(localStorage.getItem('meikei_paper_v4_ids')) || {}; 
+    } catch(e) {
+      myBookedIds = {};
+    }
 
     function getTodayString() {
       const d = new Date();
@@ -468,39 +476,44 @@
       }
       
       sysMaxDate = getTodayString();
-      document.getElementById('date-select').value = sysMaxDate;
-      document.getElementById('date-select').max = sysMaxDate; 
+      const dateEl = document.getElementById('date-select');
+      if (dateEl) {
+        dateEl.value = sysMaxDate;
+        dateEl.max = sysMaxDate;
+        dateEl.addEventListener('change', (e) => {
+          if (currentRole !== 'td' && e.target.value > sysMaxDate) {
+            alert(i18n[currentLang].alert_not_open);
+            e.target.value = sysMaxDate; 
+            e.target.blur(); 
+          }
+          initialScrollDone = false; 
+          fetchLatestData(true);
+        });
+      }
       
       const pUrl = document.getElementById('poster-base-url');
       if(pUrl) pUrl.value = window.location.href.split('?')[0];
 
       const startSel = document.getElementById('bulk-start');
       const endSel = document.getElementById('bulk-end');
-      timeSlots.forEach((t, i) => {
-        startSel.innerHTML += `<option value="${i}">${t}</option>`;
-        endSel.innerHTML += `<option value="${i}">${t}</option>`;
-      });
+      if (startSel && endSel) {
+        timeSlots.forEach((t, i) => {
+          startSel.innerHTML += `<option value="${i}">${t}</option>`;
+          endSel.innerHTML += `<option value="${i}">${t}</option>`;
+        });
+      }
 
-      applyLang();
-      fetchLatestData(true);
-      startEcoSync();
-      
-      document.getElementById('date-select').addEventListener('change', (e) => {
-        if (currentRole !== 'td' && e.target.value > sysMaxDate) {
-          alert(i18n[currentLang].alert_not_open);
-          e.target.value = sysMaxDate; 
-          e.target.blur(); 
-        }
-        initialScrollDone = false; 
-        fetchLatestData(true);
-      });
-      
       if (isGuestMode) {
-         document.getElementById('nav-practice').style.display = 'none';
+         const navPrac = document.getElementById('nav-practice');
+         if (navPrac) navPrac.style.display = 'none';
          switchTab('info');
       } else {
          switchTab('practice'); 
       }
+
+      applyLang();
+      fetchLatestData(true);
+      startEcoSync();
     });
 
     function manualSync() {
@@ -525,49 +538,48 @@
       return slots + '枠';
     }
 
+    function setElText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.innerText = text;
+    }
+
     function applyLang() {
-      const t = i18n[currentLang];
+      const t = i18n[currentLang] || i18n['ja'];
       const currentSlotText = getSlotText(currentLang, sysMaxSlots);
       
-      document.getElementById('current-lang-label').innerText = t.lang_label;
+      setElText('current-lang-label', t.lang_label);
+      setElText('title-info', t.title_guest);
+      setElText('main-title-practice', t.title);
+      setElText('rule-text', t.rule.replace('{slots}', currentSlotText));
+      setElText('btn-update', t.update);
+      setElText('date-label', t.date);
+      setElText('legend-open', t.open);
+      setElText('legend-my', t.my);
+      setElText('legend-booked', t.booked);
+      setElText('swipe-hint', t.swipe);
+      setElText('my-tickets-title', t.my_tickets);
+      setElText('modal-title-text', t.modal_title);
+      setElText('btn-cancel', t.btn_cancel);
+      setElText('submit-btn', t.btn_submit);
+      setElText('agree-text', t.agreement);
+      setElText('td-label-name', t.td_label_name);
       
-      if (isGuestMode) {
-         document.getElementById('title-info').innerText = t.title_guest;
-      } else {
-         document.getElementById('main-title-practice').innerText = t.title;
-      }
+      const tdInput = document.getElementById('td-input-name');
+      if (tdInput) tdInput.placeholder = t.td_ph_name;
       
-      document.getElementById('rule-text').innerText = t.rule.replace('{slots}', currentSlotText);
-      document.getElementById('btn-update').innerText = t.update;
-      document.getElementById('date-label').innerText = t.date;
-      document.getElementById('legend-open').innerText = t.open;
-      document.getElementById('legend-my').innerText = t.my;
-      document.getElementById('legend-booked').innerText = t.booked;
-      document.getElementById('swipe-hint').innerText = t.swipe;
-      document.getElementById('my-tickets-title').innerText = t.my_tickets;
-      
-      document.getElementById('modal-title-text').innerText = t.modal_title;
-      document.getElementById('btn-cancel').innerText = t.btn_cancel;
-      document.getElementById('submit-btn').innerText = t.btn_submit;
-      
-      const agreeEl = document.getElementById('agree-text');
-      if(agreeEl) agreeEl.innerText = t.agreement;
+      setElText('td-btn-block', t.td_btn_block);
+      setElText('td-btn-cancel', t.td_btn_cancel);
+      setElText('td-btn-back', t.td_btn_back);
+      setElText('btn-bulk', t.btn_bulk);
+      setElText('bulk-title', t.bulk_title);
+      setElText('bulk-label-reason', t.bulk_reason);
+      setElText('bulk-btn-all', t.bulk_all);
+      setElText('bulk-label-period', t.bulk_period);
+      setElText('bulk-btn-exec', t.bulk_exec);
+      setElText('bulk-btn-cancel', t.btn_cancel);
 
-      document.getElementById('td-label-name').innerText = t.td_label_name;
-      document.getElementById('td-input-name').placeholder = t.td_ph_name;
-      document.getElementById('td-btn-block').innerText = t.td_btn_block;
-      document.getElementById('td-btn-cancel').innerText = t.td_btn_cancel;
-      document.getElementById('td-btn-back').innerText = t.td_btn_back;
-
-      document.getElementById('btn-bulk').innerText = t.btn_bulk;
-      document.getElementById('bulk-title').innerText = t.bulk_title;
-      document.getElementById('bulk-label-reason').innerText = t.bulk_reason;
-      document.getElementById('bulk-btn-all').innerText = t.bulk_all;
-      document.getElementById('bulk-label-period').innerText = t.bulk_period;
-      document.getElementById('bulk-btn-exec').innerText = t.bulk_exec;
-      document.getElementById('bulk-btn-cancel').innerText = t.btn_cancel;
-
-      renderTimetable(); renderMyBookings();
+      renderTimetable(); 
+      renderMyBookings();
     }
 
     function updateSettingsUI() {
@@ -575,7 +587,8 @@
        if(sel) sel.value = sysMaxSlots;
        const dateInput = document.getElementById('td-max-date');
        if(dateInput) dateInput.value = sysMaxDate;
-       if (currentRole !== 'td') document.getElementById('date-select').max = sysMaxDate;
+       const dateSelect = document.getElementById('date-select');
+       if (currentRole !== 'td' && dateSelect) dateSelect.max = sysMaxDate;
     }
     
     async function tdSetMaxSlots() {
@@ -607,7 +620,6 @@
        } catch(e) {}
     }
 
-    // ★ エラー回避：文字でないデータ（数字など）が来ても絶対に文字列に変換する
     function getLocalizedName(originalName, t) {
       if (!originalName) return '';
       const n = String(originalName).trim();
@@ -621,7 +633,8 @@
     }
 
     async function fetchLatestData(showIndicator = false) {
-      if(showIndicator) document.getElementById('sync-indicator').classList.remove('hidden');
+      const ind = document.getElementById('sync-indicator');
+      if(showIndicator && ind) ind.classList.remove('hidden');
       try {
         const selectedDate = document.getElementById('date-select').value;
         const res = await fetch(GAS_API_URL + "?date=" + selectedDate);
@@ -630,9 +643,9 @@
           if (data['_sys_max_slots']) { sysMaxSlots = data['_sys_max_slots']; delete data['_sys_max_slots']; }
           if (data['_sys_max_date']) { sysMaxDate = data['_sys_max_date']; delete data['_sys_max_date']; }
           
-          sysPlayers = data['_sys_players'] || [];
-          sysNotices = data['_sys_notices'] || [];
-          sysLinks = data['_sys_links'] || {};
+          sysPlayers = Array.isArray(data['_sys_players']) ? data['_sys_players'] : [];
+          sysNotices = Array.isArray(data['_sys_notices']) ? data['_sys_notices'] : [];
+          sysLinks = (data['_sys_links'] && typeof data['_sys_links'] === 'object') ? data['_sys_links'] : {};
           
           delete data['_sys_players'];
           delete data['_sys_notices'];
@@ -641,10 +654,8 @@
           bookings = data;
           applyLang(); 
           updateSettingsUI(); 
-          
           renderNotices();
           updateLinks();
-          
           renderTimetable(); 
           renderMyBookings();
           
@@ -654,11 +665,15 @@
           }
         }
       } catch (err) {
-      } finally { if(showIndicator) document.getElementById('sync-indicator').classList.add('hidden'); }
+        console.error("Fetch error:", err);
+      } finally { 
+        if(showIndicator && ind) ind.classList.add('hidden'); 
+      }
     }
     
     function renderNotices() {
       const container = document.getElementById('notice-container');
+      if (!container) return;
       container.innerHTML = '';
       if (!sysNotices || sysNotices.length === 0) {
         container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">現在お知らせはありません。</p>';
@@ -674,9 +689,9 @@
         container.innerHTML += `
           <div class="bg-white p-4 rounded shadow-sm border-l-4 ${borderClass}">
             <span class="text-[10px] ${badgeBgClass} px-2 py-1 font-bold rounded">${labelStr}</span>
-            <span class="text-xs text-gray-500 ml-2">${n.date}</span>
-            <h3 class="font-bold mt-2">${n.title}</h3>
-            <p class="text-xs text-gray-700 mt-2 whitespace-pre-line">${n.content}</p>
+            <span class="text-xs text-gray-500 ml-2">${n.date || ''}</span>
+            <h3 class="font-bold mt-2">${n.title || ''}</h3>
+            <p class="text-xs text-gray-700 mt-2 whitespace-pre-line">${n.content || ''}</p>
           </div>
         `;
       });
@@ -684,12 +699,13 @@
 
     function updateLinks() {
       if(!sysLinks) return;
-      if(sysLinks['OP_URL']) document.getElementById('link-op').href = sysLinks['OP_URL'];
-      if(sysLinks['DRAW_URL']) document.getElementById('link-draw').href = sysLinks['DRAW_URL'];
-      if(sysLinks['GOURMET_URL']) document.getElementById('link-gourmet').href = sysLinks['GOURMET_URL'];
-      if(sysLinks['INSTA_URL']) document.getElementById('link-insta').href = sysLinks['INSTA_URL'];
-      if(sysLinks['ACCESS_URL']) document.getElementById('link-access').href = sysLinks['ACCESS_URL'];
-      if(sysLinks['HP_URL']) document.getElementById('link-hp').href = sysLinks['HP_URL'];
+      const setHref = (id, url) => { const el = document.getElementById(id); if(el && url) el.href = url; };
+      setHref('link-op', sysLinks['OP_URL']);
+      setHref('link-draw', sysLinks['DRAW_URL']);
+      setHref('link-gourmet', sysLinks['GOURMET_URL']);
+      setHref('link-insta', sysLinks['INSTA_URL']);
+      setHref('link-access', sysLinks['ACCESS_URL']);
+      setHref('link-hp', sysLinks['HP_URL']);
     }
 
     function scrollToCurrentTime() {
@@ -731,10 +747,12 @@
 
     function renderTimetable() {
       const tbody = document.getElementById('timetable-body');
+      if (!tbody) return;
       tbody.innerHTML = '';
-      const t = i18n[currentLang];
+      const t = i18n[currentLang] || i18n['ja'];
       
-      const selectedDate = document.getElementById('date-select').value;
+      const dateEl = document.getElementById('date-select');
+      const selectedDate = dateEl ? dateEl.value : getTodayString();
       const isToday = (selectedDate === getTodayString());
       const now = new Date();
       const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -768,16 +786,13 @@
             b1 && b2 && b3 && b4 &&
             b1.status === 'official' && b2.status === 'official' &&
             b3.status === 'official' && b4.status === 'official' &&
-            b1.name === b2.name && b2.name === b3.name && b3.name === b4.name &&
+            String(b1.name) === String(b2.name) && String(b2.name) === String(b3.name) && String(b3.name) === String(b4.name) &&
             b1.id === b2.id && b2.id === b3.id && b3.id === b4.id
           );
 
           if (isBulkBlocked) {
             let dispName = getLocalizedName(b1.name, t);
-            
-            // ★ エラー回避：b1.name を文字列に変換してから小文字化する
             let isHighlighted = (currentRole === 'td' && searchKeyword !== '' && b1.name && String(b1.name).toLowerCase().includes(searchKeyword));
-            
             let sizeClass = currentLang === 'ko' ? 'text-[9px] sm:text-[10px] tracking-normal' : 'text-[10px] sm:text-xs tracking-widest';
             const extraClass = isHighlighted ? 'search-hit' : 'bg-slate-200 hover:bg-slate-300';
             
@@ -794,8 +809,6 @@
 
               if (b) {
                 let dispName = getLocalizedName(b.name, t);
-                
-                // ★ エラー回避：b.name を文字列に変換してから小文字化する
                 if (currentRole === 'td' && searchKeyword !== '' && b.name && String(b.name).toLowerCase().includes(searchKeyword)) isHighlighted = true;
                 
                 if (b.status === 'official') {
@@ -1098,15 +1111,15 @@
       }
     }
 
-    // ★ エラー回避：もし古いデータ（名前が配列じゃないなど）が混ざっていても絶対に落ちないように強化
     function renderMyBookings() {
       const list = document.getElementById('my-bookings-list');
+      if (!list) return;
       list.innerHTML = '';
-      const t = i18n[currentLang];
+      const t = i18n[currentLang] || i18n['ja'];
       
       let bookingArray = [];
       for (let id in myBookedIds) {
-        if (typeof myBookedIds[id] === 'object') {
+        if (myBookedIds[id] && typeof myBookedIds[id] === 'object') {
           bookingArray.push({ id: id, data: myBookedIds[id] });
         }
       }
