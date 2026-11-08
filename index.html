@@ -31,14 +31,14 @@
 <body class="bg-gray-100 text-gray-900 font-sans min-h-screen flex flex-col items-center">
 
   <!-- ================= タブ1：練習コート予約システム ================= -->
-  <main id="page-practice" class="tab-page w-full max-w-6xl bg-white shadow-md border border-gray-300 p-2 sm:p-4 overflow-hidden flex flex-col relative mt-2">
+  <main id="page-practice" class="tab-page hidden w-full max-w-6xl bg-white shadow-md border border-gray-300 p-2 sm:p-4 overflow-hidden flex flex-col relative mt-2">
     
     <div id="sync-indicator" class="hidden absolute top-0 left-0 w-full bg-green-600 text-white text-[10px] py-0.5 text-center font-bold z-50">
       <i class="fa-solid fa-rotate fa-spin mr-1"></i> Syncing...
     </div>
 
     <div class="flex flex-col md:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
-      <h1 id="main-title" onclick="handleSecretClick()" class="text-base sm:text-xl font-black tracking-wide text-gray-900 cursor-pointer select-none">
+      <h1 id="main-title-practice" onclick="handleSecretClick()" class="text-base sm:text-xl font-black tracking-wide text-gray-900 cursor-pointer select-none">
         MEIKEI OPEN 練習コート予約
       </h1>
       
@@ -131,11 +131,10 @@
 
   <!-- ================= タブ2：OP / ドロー ================= -->
   <div id="page-oop" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
-    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4">📋 OP & ドロー / Order of Play</h2>
+    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4" id="title-oop">📋 OP & ドロー / Order of Play</h2>
     <div class="bg-white p-4 rounded shadow border border-gray-300 text-center space-y-4">
       <p class="text-sm text-gray-600 font-bold">本日のOP・ドロー表はこちらから確認できます。</p>
       
-      <!-- ★ idを付与してJSからURLを書き換えられるようにする -->
       <a id="link-op" href="#" target="_blank" class="block w-full bg-blue-600 text-white font-bold py-3 rounded shadow hover:bg-blue-700 transition">
         <i class="fa-solid fa-file-pdf mr-2"></i> 本日のOP (PDF)
       </a>
@@ -149,8 +148,7 @@
 
   <!-- ================= タブ3：掲示板 ================= -->
   <div id="page-notice" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
-    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4">📢 大会掲示板 / Notice</h2>
-    <!-- ★ JSでここに動的にお知らせを追加します -->
+    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4" id="title-notice">📢 大会掲示板 / Notice</h2>
     <div id="notice-container" class="space-y-3">
        <p class="text-sm text-gray-500 text-center py-4">お知らせを読み込み中...</p>
     </div>
@@ -158,10 +156,9 @@
 
   <!-- ================= タブ4：観客向けインフォメーション ================= -->
   <div id="page-info" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
-    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4">🗺️ 会場・大会情報 / Information</h2>
+    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4" id="title-info">🗺️ 会場・大会情報 / Information</h2>
     
     <div class="grid grid-cols-2 gap-3 mb-4">
-      <!-- ★ idを付与してJSからURLを書き換えられるようにする -->
       <a id="link-gourmet" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50">
         <i class="fa-solid fa-utensils text-2xl text-orange-500 mb-2"></i>
         <h4 class="font-bold text-sm">つくばグルメマップ</h4>
@@ -193,9 +190,12 @@
 
   <!-- ================= スマホ風 下部ナビゲーション ================= -->
   <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 flex justify-around items-center h-16 pb-2 pt-1">
-    <button onclick="switchTab('practice')" id="nav-practice" class="nav-btn flex flex-col items-center justify-center w-1/4 text-blue-600 font-bold transition">
+    
+    <!-- ★ 観客モードの時はこのPracticeボタンがJSで非表示になります -->
+    <button onclick="switchTab('practice')" id="nav-practice" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
       <i class="fa-solid fa-calendar-check text-xl mb-1"></i><span class="text-[10px]">Practice</span>
     </button>
+    
     <button onclick="switchTab('oop')" id="nav-oop" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
       <i class="fa-solid fa-list-ol text-xl mb-1"></i><span class="text-[10px]">OP/Draw</span>
     </button>
@@ -265,29 +265,42 @@
     </div>
   </div>
 
+  <!-- ★ QRポスター作成モーダルを強化（観客用を追加） -->
   <div id="poster-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white max-w-lg w-full border-2 border-gray-800 p-4 shadow-xl">
       <h4 class="font-bold text-gray-800 mb-2 border-b-2 border-gray-800 pb-1">QRポスター作成</h4>
       <div class="text-xs space-y-3 mb-4">
-        <div><label class="font-bold mb-1 block">ベースURL</label><input type="text" id="poster-base-url" class="w-full border border-gray-400 px-2 py-1.5"></div>
+        <div><label class="font-bold mb-1 block text-gray-400">ベースURL (自動設定)</label><input type="text" id="poster-base-url" class="w-full border border-gray-300 px-2 py-1.5 bg-gray-100" readonly></div>
         <div>
-          <label class="font-bold mb-1 block">掲示用コート指定</label>
+          <label class="font-bold mb-1 block">ポスターの種類 (QRの飛び先)</label>
           <div class="flex gap-2">
-            <select id="poster-court-select" class="flex-grow border border-gray-400 py-1.5 px-2 bg-gray-50 outline-none">
-              <option value="all">総合案内 (全コート)</option><option value="c1">Court 1</option><option value="c2">Court 2</option><option value="c3">Court 3</option><option value="c4">Court 4</option><option value="c5">Court 5</option><option value="c6">Court 6</option><option value="c7">Court 7</option>
+            <select id="poster-type-select" class="flex-grow border border-gray-400 py-1.5 px-2 bg-gray-50 outline-none font-bold">
+              <optgroup label="■ 選手向け (予約機能あり)">
+                <option value="player_all">【選手用】総合案内 (全コート)</option>
+                <option value="player_c1">【選手用】Court 1 専用</option>
+                <option value="player_c2">【選手用】Court 2 専用</option>
+                <option value="player_c3">【選手用】Court 3 専用</option>
+                <option value="player_c4">【選手用】Court 4 専用</option>
+                <option value="player_c5">【選手用】Court 5 専用</option>
+                <option value="player_c6">【選手用】Court 6 専用</option>
+                <option value="player_c7">【選手用】Court 7 専用</option>
+              </optgroup>
+              <optgroup label="■ 観客向け (予約機能なし)">
+                <option value="guest_info">【観客用】インフォメーション案内</option>
+              </optgroup>
             </select>
-            <button onclick="generatePoster()" class="px-3 border border-gray-800 bg-gray-100 font-bold">QR生成</button>
+            <button onclick="generatePoster()" class="px-3 border border-gray-800 bg-gray-100 font-bold hover:bg-gray-200">QR生成</button>
           </div>
         </div>
       </div>
       <div id="poster-print-area" class="border-2 border-black p-4 text-center bg-white mt-2">
-        <h2 class="font-bold text-gray-900 tracking-wide text-sm">筑波大学MEIKEIオープンテニス</h2>
+        <h2 class="font-bold text-gray-900 tracking-wide text-sm" id="poster-main-title">筑波大学MEIKEIオープンテニス</h2>
         <h3 id="poster-court-title" class="text-xl font-black mt-1 border-b-2 border-black inline-block pb-1 px-4">PRACTICE SHEET</h3>
         <div id="qrcode-container" class="my-5 flex justify-center min-h-[160px]"></div>
       </div>
       <div class="mt-4 flex space-x-2">
         <button onclick="closePosterModal()" class="w-1/2 border border-gray-400 py-2 bg-gray-200 text-xs font-bold">閉じる</button>
-        <button onclick="window.print()" class="w-1/2 border border-gray-800 py-2 bg-gray-800 text-white text-xs font-bold">A4印刷</button>
+        <button onclick="window.print()" class="w-1/2 border border-gray-800 py-2 bg-gray-800 text-white text-xs font-bold hover:bg-black">A4印刷</button>
       </div>
     </div>
   </div>
@@ -295,6 +308,9 @@
   <script>
     // ★★★ 以下のURLをご自身の【新しいデプロイ】のURLに書き換えてください ★★★
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyv4lkNv7A0dP2JKXCZFtpCiLVPT1cDYwNXpmvzlx3_E7mnnn7Wk-v23S4no_FF0MKn5g/exec";
+
+    // ★ 観客モードかどうかの判定用変数
+    let isGuestMode = false;
 
     // ★ タブ切り替えロジック
     function switchTab(tabId) {
@@ -306,8 +322,10 @@
         el.classList.add('text-gray-400');
       });
       const activeBtn = document.getElementById('nav-' + tabId);
-      activeBtn.classList.remove('text-gray-400');
-      activeBtn.classList.add('text-blue-600', 'font-bold');
+      if(activeBtn) {
+        activeBtn.classList.remove('text-gray-400');
+        activeBtn.classList.add('text-blue-600', 'font-bold');
+      }
       
       window.scrollTo(0, 0);
     }
@@ -315,6 +333,7 @@
     const i18n = {
       ja: {
         lang_label: "日本語", title: "筑波大学MEIKEIオープンテニス PRACTICE SHEET",
+        title_guest: "筑波大学MEIKEIオープンテニス 大会情報",
         rule: "【1日 {slots} ・最大4名】空きマスをタップして予約\n(※枠の上限は状況により変動します)", update: "更新",
         date: "Date:", open: "■ 空き", my: "■ 自分の予約", booked: "■ 予約済",
         swipe: "※表を横にスワイプして1〜7番コートを確認できます 👉",
@@ -350,6 +369,7 @@
       },
       en: {
         lang_label: "English", title: "MEIKEI OPEN Practice Court",
+        title_guest: "MEIKEI OPEN Tournament Info",
         rule: "[{slots}/day, 30m] Tap an empty row to book\n(*Limits may change based on availability)", update: "Update",
         date: "Date:", open: "■ Open", my: "■ My Booking", booked: "■ Booked",
         swipe: "* Swipe right to see Courts 1-7 👉",
@@ -385,6 +405,7 @@
       },
       ko: {
         lang_label: "한국어", title: "MEIKEI OPEN 연습 코트 예약",
+        title_guest: "MEIKEI OPEN 대회 정보",
         rule: "[하루 {slots}, 최대 4명] 빈 칸 탭하여 예약\n(※상황에 따라 예약 제한 변동 가능)", update: "새로고침",
         date: "Date:", open: "■ 빈자리", my: "■ 내 예약", booked: "■ 예약됨",
         swipe: "※ 표를 옆으로 스와이프하여 코트를 확인하세요 👉",
@@ -420,7 +441,6 @@
       }
     };
 
-    let currentLang = 'ja';
     let currentRole = 'player';
     let selectedSlot = null;
     let currentEmptyKeys = []; 
@@ -428,8 +448,8 @@
     let sysMaxSlots = 1; 
     let sysMaxDate = ""; 
     let sysPlayers = []; 
-    let sysNotices = []; // ★ お知らせ用データ
-    let sysLinks = {};   // ★ リンク設定用データ
+    let sysNotices = []; 
+    let sysLinks = {};   
 
     let syncTimer = null;
     function startEcoSync() {
@@ -493,6 +513,12 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      // ★ URLパラメータの確認（?mode=guest なら観客モード）
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('mode') === 'guest') {
+         isGuestMode = true;
+      }
+      
       sysMaxDate = getTodayString();
       document.getElementById('date-select').value = sysMaxDate;
       document.getElementById('date-select').max = sysMaxDate; 
@@ -520,6 +546,14 @@
         initialScrollDone = false; 
         fetchLatestData(true);
       });
+      
+      // ★ 観客モードの場合はPracticeを隠してInfoタブを初期表示する
+      if (isGuestMode) {
+         document.getElementById('nav-practice').style.display = 'none';
+         switchTab('info');
+      } else {
+         switchTab('practice'); // 通常は予約タブ
+      }
     });
 
     function manualSync() {
@@ -549,6 +583,14 @@
       const currentSlotText = getSlotText(currentLang, sysMaxSlots);
       
       document.getElementById('current-lang-label').innerText = t.lang_label;
+      
+      // ★ 観客モードと通常モードでタイトルを出し分ける
+      if (isGuestMode) {
+         document.getElementById('title-info').innerText = t.title_guest;
+      } else {
+         document.getElementById('main-title-practice').innerText = t.title;
+      }
+      
       document.getElementById('rule-text').innerText = t.rule.replace('{slots}', currentSlotText);
       document.getElementById('btn-update').innerText = t.update;
       document.getElementById('date-label').innerText = t.date;
@@ -642,7 +684,6 @@
           if (data['_sys_max_date']) { sysMaxDate = data['_sys_max_date']; delete data['_sys_max_date']; }
           if (data['_sys_players']) { sysPlayers = data['_sys_players']; delete data['_sys_players']; }
           
-          // ★ お知らせとリンクのデータを取得して描画関数を呼ぶ
           if (data['_sys_notices']) { sysNotices = data['_sys_notices']; delete data['_sys_notices']; renderNotices(); }
           if (data['_sys_links']) { sysLinks = data['_sys_links']; delete data['_sys_links']; updateLinks(); }
           
@@ -662,7 +703,6 @@
       finally { if(showIndicator) document.getElementById('sync-indicator').classList.add('hidden'); }
     }
     
-    // ★ 動的にお知らせをHTMLに書き出す関数
     function renderNotices() {
       const container = document.getElementById('notice-container');
       container.innerHTML = '';
@@ -688,7 +728,6 @@
       });
     }
 
-    // ★ スプレッドシートのURLをボタンのhrefに適用する関数
     function updateLinks() {
       if(sysLinks['OP_URL']) document.getElementById('link-op').href = sysLinks['OP_URL'];
       if(sysLinks['DRAW_URL']) document.getElementById('link-draw').href = sysLinks['DRAW_URL'];
@@ -1138,13 +1177,29 @@
 
     function openPosterModal() { document.getElementById('poster-modal').classList.remove('hidden'); generatePoster(); }
     function closePosterModal() { document.getElementById('poster-modal').classList.add('hidden'); }
+    
+    // ★ QR生成ロジックのアップデート（観客用を選ぶと ?mode=guest が付与される）
     function generatePoster() {
       const baseUrl = document.getElementById('poster-base-url').value.trim();
-      const target = document.getElementById('poster-court-select').value;
+      const target = document.getElementById('poster-type-select').value;
       const qc = document.getElementById('qrcode-container'); qc.innerHTML = '';
-      let tUrl = baseUrl;
-      if (target !== 'all') { tUrl += (tUrl.includes('?') ? '&' : '?') + 'court=' + target; document.getElementById('poster-court-title').innerText = courtLabels[target] + ' 専用'; } 
-      else { document.getElementById('poster-court-title').innerText = 'PRACTICE SHEET'; }
+      
+      let tUrl = baseUrl.split('?')[0]; // 一旦クエリパラメータをリセット
+      
+      if (target === 'guest_info') {
+         tUrl += '?mode=guest';
+         document.getElementById('poster-main-title').innerText = '筑波大学MEIKEIオープンテニス';
+         document.getElementById('poster-court-title').innerText = '大会インフォメーション';
+      } else if (target === 'player_all') {
+         document.getElementById('poster-main-title').innerText = '筑波大学MEIKEIオープンテニス';
+         document.getElementById('poster-court-title').innerText = 'PRACTICE SHEET';
+      } else {
+         const cNum = target.replace('player_', '');
+         tUrl += '?court=' + cNum;
+         document.getElementById('poster-main-title').innerText = '筑波大学MEIKEIオープンテニス';
+         document.getElementById('poster-court-title').innerText = courtLabels[cNum] + ' 専用';
+      }
+      
       new QRCode(qc, { text: tUrl, width: 150, height: 150, colorDark: "#000", colorLight: "#fff" });
     }
   </script>
