@@ -129,26 +129,84 @@
     </div>
   </main>
 
-  <!-- ================= タブ2：OP / ドロー ================= -->
+  <!-- ================= タブ2：OP / ドロー & 試合進行状況 ================= -->
   <div id="page-oop" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
-    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4" id="title-oop">📋 OP & ドロー / Order of Play</h2>
+    <div class="flex justify-between items-center border-b-2 border-gray-800 pb-2 mb-4">
+      <h2 class="text-xl font-black" id="title-oop">📋 試合進行 & OP / Schedule</h2>
+      <button onclick="manualSync()" class="px-2.5 py-1 text-xs bg-gray-200 text-gray-700 border border-gray-400 font-bold rounded shadow-sm">
+        <i class="fa-solid fa-rotate"></i> 更新
+      </button>
+    </div>
+
+    <!-- ★ 追加機能2：各コートの試合進行状況 (Court Status) -->
+    <div class="bg-white p-3.5 rounded shadow border border-gray-300 mb-4">
+      <div class="flex justify-between items-center border-b border-gray-200 pb-1.5 mb-2.5">
+        <h3 class="font-bold text-sm text-gray-800 flex items-center">
+          <span class="inline-block w-2.5 h-2.5 bg-green-500 rounded-full mr-1.5 animate-ping"></span>
+          <span id="status-section-title">現在のコート状況 / Court Status</span>
+        </h3>
+        <span class="text-[10px] text-gray-400 font-bold">Auto Sync</span>
+      </div>
+      <div id="court-status-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <p class="text-gray-400 text-xs col-span-2 py-2">読み込み中...</p>
+      </div>
+    </div>
+
     <div class="bg-white p-4 rounded shadow border border-gray-300 text-center space-y-4">
-      <p class="text-sm text-gray-600 font-bold">本日のOP・ドロー表はこちらから確認できます。</p>
-      <a id="link-op" href="#" target="_blank" class="block w-full bg-blue-600 text-white font-bold py-3 rounded shadow hover:bg-blue-700 transition"><i class="fa-solid fa-file-pdf mr-2"></i> 本日のOP (PDF)</a>
-      <a id="link-draw" href="#" target="_blank" class="block w-full bg-green-600 text-white font-bold py-3 rounded shadow hover:bg-green-700 transition"><i class="fa-solid fa-sitemap mr-2"></i> 最新のドロー表 (PDF)</a>
+      <p class="text-sm text-gray-600 font-bold" id="oop-desc">本日のOP・ドロー表はこちらから確認できます。</p>
+      <a id="link-op" href="#" target="_blank" class="block w-full bg-blue-600 text-white font-bold py-3 rounded shadow hover:bg-blue-700 transition"><i class="fa-solid fa-file-pdf mr-2"></i> <span id="btn-op-pdf">本日のOP (PDF)</span></a>
+      <a id="link-draw" href="#" target="_blank" class="block w-full bg-green-600 text-white font-bold py-3 rounded shadow hover:bg-green-700 transition"><i class="fa-solid fa-sitemap mr-2"></i> <span id="btn-draw-pdf">最新のドロー表 (PDF)</span></a>
       <p class="text-xs text-gray-400 mt-4">※OPは毎日夕方頃に更新されます。</p>
     </div>
   </div>
 
   <!-- ================= タブ3：掲示板 ================= -->
   <div id="page-notice" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
-    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4" id="title-notice">📢 大会掲示板 / Notice</h2>
+    <div class="flex justify-between items-center border-b-2 border-gray-800 pb-2 mb-4">
+      <h2 class="text-xl font-black" id="title-notice">📢 大会掲示板 / Notice</h2>
+      <button onclick="manualSync()" class="px-2.5 py-1 text-xs bg-gray-200 text-gray-700 border border-gray-400 font-bold rounded shadow-sm">
+        <i class="fa-solid fa-rotate"></i> 更新
+      </button>
+    </div>
     <div id="notice-container" class="space-y-3"><p class="text-sm text-gray-500 text-center py-4">お知らせを読み込み中...</p></div>
   </div>
 
-  <!-- ================= タブ4：観客向けインフォメーション ================= -->
+  <!-- ================= タブ4：観客向けインフォメーション & 会場マップ ================= -->
   <div id="page-info" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
     <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4" id="title-info">🗺️ 会場・大会情報 / Information</h2>
+    
+    <!-- ★ 追加機能3：会場内マップ＆施設案内 -->
+    <div class="bg-white p-4 rounded shadow border border-gray-300 mb-4">
+      <h3 class="font-bold text-sm text-gray-800 border-b border-gray-200 pb-1.5 mb-3">
+        <i class="fa-solid fa-map text-blue-600 mr-1"></i> <span id="map-section-title">会場内マップ・施設案内 / Venue Map</span>
+      </h3>
+      
+      <!-- マップ画像（SettingsシートにURLが入力されている場合のみ自動表示） -->
+      <div id="map-img-wrapper" class="hidden mb-3">
+        <img id="venue-map-img" src="" alt="Venue Map" class="w-full rounded border border-gray-300 shadow-sm">
+      </div>
+      
+      <!-- 常に表示される施設ガイド -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-700 bg-gray-50 p-3 rounded border border-gray-200">
+        <div class="flex items-start space-x-2">
+          <i class="fa-solid fa-tent text-blue-600 mt-0.5 w-4 text-center"></i>
+          <div><span class="font-bold">大会本部 (TD Desk):</span><br>ハードコート中央通路付近</div>
+        </div>
+        <div class="flex items-start space-x-2">
+          <i class="fa-solid fa-restroom text-green-600 mt-0.5 w-4 text-center"></i>
+          <div><span class="font-bold">お手洗い・更衣室 (Restroom):</span><br>クラブハウス（部室棟）内</div>
+        </div>
+        <div class="flex items-start space-x-2">
+          <i class="fa-solid fa-table-tennis-paddle-ball text-purple-600 mt-0.5 w-4 text-center"></i>
+          <div><span class="font-bold">ストリンガー (Stringer):</span><br>大会本部横 特設ブース</div>
+        </div>
+        <div class="flex items-start space-x-2">
+          <i class="fa-solid fa-trash-can text-gray-600 mt-0.5 w-4 text-center"></i>
+          <div><span class="font-bold">ゴミ箱 (Trash):</span><br>※ゴミは各自でお持ち帰りください</div>
+        </div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-2 gap-3 mb-4">
       <a id="link-gourmet" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50"><i class="fa-solid fa-utensils text-2xl text-orange-500 mb-2"></i><h4 class="font-bold text-sm">つくばグルメマップ</h4><p class="text-[10px] text-gray-500 mt-1">おすすめの飲食店をご紹介</p></a>
       <a id="link-insta" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50"><i class="fa-brands fa-instagram text-2xl text-pink-500 mb-2"></i><h4 class="font-bold text-sm">公式 Instagram</h4><p class="text-[10px] text-gray-500 mt-1">試合結果や写真を速報</p></a>
@@ -166,9 +224,16 @@
     <button onclick="switchTab('oop')" id="nav-oop" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
       <i class="fa-solid fa-list-ol text-xl mb-1"></i><span class="text-[10px]">OP/Draw</span>
     </button>
-    <button onclick="switchTab('notice')" id="nav-notice" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
-      <i class="fa-solid fa-bullhorn text-xl mb-1"></i><span class="text-[10px]">Notice</span>
+    
+    <!-- ★ 追加機能1：未読バッジ（赤い丸）付きのNoticeボタン -->
+    <button onclick="switchTab('notice')" id="nav-notice" class="nav-btn relative flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
+      <div class="relative">
+        <i class="fa-solid fa-bullhorn text-xl mb-1"></i>
+        <span id="notice-badge" class="hidden absolute -top-1 -right-2.5 bg-red-600 text-white text-[8px] font-black px-1 py-0.2 rounded-full animate-bounce shadow">NEW</span>
+      </div>
+      <span class="text-[10px]">Notice</span>
     </button>
+    
     <button onclick="switchTab('info')" id="nav-info" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
       <i class="fa-solid fa-circle-info text-xl mb-1"></i><span class="text-[10px]">Info</span>
     </button>
@@ -265,11 +330,13 @@
 
   <script>
     // ★★★ 以下のURLをご自身の【新しいデプロイ】のURLに書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyv4lkNv7A0dP2JKXCZFtpCiLVPT1cDYwNXpmvzlx3_E7mnnn7Wk-v23S4no_FF0MKn5g/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwhU1gJDsIgtbuM1iPe_EFrTAzmMZu_sGtfZmNBlnK8JoIYKC9yF5ehWF33fkuYPBAbnA/exec";
 
     let isGuestMode = false;
+    let activeTabId = 'practice';
 
     function switchTab(tabId) {
+      activeTabId = tabId;
       document.querySelectorAll('.tab-page').forEach(el => el.classList.add('hidden'));
       const targetPage = document.getElementById('page-' + tabId);
       if (targetPage) targetPage.classList.remove('hidden');
@@ -283,6 +350,12 @@
         activeBtn.classList.remove('text-gray-400');
         activeBtn.classList.add('text-blue-600', 'font-bold');
       }
+
+      // ★ Noticeタブを開いたら「既読」にして赤いバッジを消す
+      if (tabId === 'notice') {
+        markNoticesAsRead();
+      }
+
       window.scrollTo(0, 0);
     }
 
@@ -391,7 +464,6 @@
       }
     };
 
-    // ★ 抜けてしまっていた言語変数を復活！これで全てのエラーが直ります
     let currentLang = 'ja';
     let currentRole = 'player';
     let selectedSlot = null;
@@ -401,6 +473,7 @@
     let sysMaxDate = ""; 
     let sysPlayers = []; 
     let sysNotices = []; 
+    let sysMatchStatus = [];
     let sysLinks = {};   
 
     let syncTimer = null;
@@ -461,6 +534,7 @@
       const pass = prompt(t.prompt_init);
       if (pass === "2026") {
         localStorage.removeItem('meikei_paper_v4_ids');
+        localStorage.removeItem('meikei_last_read_notice');
         bookings = {}; myBookedIds = {};
         renderTimetable(); renderMyBookings();
         alert('初期化しました。');
@@ -506,7 +580,7 @@
       if (isGuestMode) {
          const navPrac = document.getElementById('nav-practice');
          if (navPrac) navPrac.style.display = 'none';
-         switchTab('info');
+         switchTab('oop'); // 観客はまず試合進行・OPタブを開くように設定
       } else {
          switchTab('practice'); 
       }
@@ -645,16 +719,19 @@
           
           sysPlayers = Array.isArray(data['_sys_players']) ? data['_sys_players'] : [];
           sysNotices = Array.isArray(data['_sys_notices']) ? data['_sys_notices'] : [];
+          sysMatchStatus = Array.isArray(data['_sys_match_status']) ? data['_sys_match_status'] : [];
           sysLinks = (data['_sys_links'] && typeof data['_sys_links'] === 'object') ? data['_sys_links'] : {};
           
           delete data['_sys_players'];
           delete data['_sys_notices'];
+          delete data['_sys_match_status'];
           delete data['_sys_links'];
           
           bookings = data;
           applyLang(); 
           updateSettingsUI(); 
           renderNotices();
+          renderMatchStatus();
           updateLinks();
           renderTimetable(); 
           renderMyBookings();
@@ -671,6 +748,19 @@
       }
     }
     
+    // ★ 追加機能1：お知らせの描画＆未読バッジの判定
+    function getNoticeSignature() {
+      if (!sysNotices || sysNotices.length === 0) return '';
+      return sysNotices.length + '_' + (sysNotices[0].date || '') + '_' + (sysNotices[0].title || '');
+    }
+
+    function markNoticesAsRead() {
+      const sig = getNoticeSignature();
+      if (sig) localStorage.setItem('meikei_last_read_notice', sig);
+      const badge = document.getElementById('notice-badge');
+      if (badge) badge.classList.add('hidden');
+    }
+
     function renderNotices() {
       const container = document.getElementById('notice-container');
       if (!container) return;
@@ -695,8 +785,62 @@
           </div>
         `;
       });
+
+      // 未読チェック（現在Noticeタブを開いていない場合のみバッジを表示）
+      const currentSig = getNoticeSignature();
+      const lastReadSig = localStorage.getItem('meikei_last_read_notice');
+      const badge = document.getElementById('notice-badge');
+      if (badge) {
+        if (activeTabId === 'notice') {
+          localStorage.setItem('meikei_last_read_notice', currentSig);
+          badge.classList.add('hidden');
+        } else if (currentSig && currentSig !== lastReadSig) {
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
     }
 
+    // ★ 追加機能2：各コートの試合進行状況を描画
+    function renderMatchStatus() {
+      const grid = document.getElementById('court-status-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      if (!sysMatchStatus || sysMatchStatus.length === 0) {
+        grid.innerHTML = '<p class="text-gray-400 text-xs col-span-2">現在ステータス情報はありません</p>';
+        return;
+      }
+      sysMatchStatus.forEach(item => {
+        const st = String(item.status || '-');
+        let bg = 'bg-gray-50 border-gray-300 text-gray-700';
+        let dot = 'bg-gray-400';
+        if (st.includes('進行中') || st.includes('Match') || st.includes('LIVE')) {
+          bg = 'bg-green-50 border-green-400 text-green-900';
+          dot = 'bg-green-500 animate-pulse';
+        } else if (st.includes('雨') || st.includes('中断') || st.includes('Rain') || st.includes('Delay')) {
+          bg = 'bg-red-50 border-red-400 text-red-900';
+          dot = 'bg-red-500';
+        } else if (st.includes('終了') || st.includes('Fin')) {
+          bg = 'bg-slate-100 border-slate-300 text-slate-500';
+          dot = 'bg-slate-400';
+        } else if (st.includes('練習') || st.includes('Practice')) {
+          bg = 'bg-blue-50 border-blue-400 text-blue-900';
+          dot = 'bg-blue-500';
+        }
+        grid.innerHTML += `
+          <div class="border rounded p-2 flex flex-col justify-between shadow-sm ${bg}">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-black text-[11px]">${item.court}</span>
+              <span class="w-2 h-2 rounded-full ${dot}"></span>
+            </div>
+            <div class="font-bold text-xs truncate">${st}</div>
+          </div>
+        `;
+      });
+    }
+
+    // ★ 追加機能3：リンクと会場マップ画像の更新
     function updateLinks() {
       if(!sysLinks) return;
       const setHref = (id, url) => { const el = document.getElementById(id); if(el && url) el.href = url; };
@@ -706,6 +850,19 @@
       setHref('link-insta', sysLinks['INSTA_URL']);
       setHref('link-access', sysLinks['ACCESS_URL']);
       setHref('link-hp', sysLinks['HP_URL']);
+
+      // 会場マップ画像のURLが設定されていれば表示する
+      const mapWrapper = document.getElementById('map-img-wrapper');
+      const mapImg = document.getElementById('venue-map-img');
+      if (mapWrapper && mapImg) {
+        const mapUrl = sysLinks['MAP_IMG_URL'] ? String(sysLinks['MAP_IMG_URL']).trim() : '';
+        if (mapUrl && mapUrl !== '#' && mapUrl !== '') {
+          mapImg.src = mapUrl;
+          mapWrapper.classList.remove('hidden');
+        } else {
+          mapWrapper.classList.add('hidden');
+        }
+      }
     }
 
     function scrollToCurrentTime() {
