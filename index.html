@@ -25,39 +25,41 @@
     @keyframes highlightSearch { 0% { background-color: #fef08a; border-color: #dc2626; } 50% { background-color: #fca5a5; border-color: #991b1b; } 100% { background-color: #fef08a; border-color: #dc2626; } }
     .search-hit { animation: highlightSearch 1.5s infinite; border: 2px solid #dc2626 !important; font-weight: 900 !important; color: #7f1d1d !important; z-index: 5; position: relative; }
     
-    body { padding-bottom: 70px; }
+    body { padding-bottom: 75px; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans min-h-screen flex flex-col items-center">
 
-  <!-- ================= タブ1：練習コート予約システム ================= -->
-  <main id="page-practice" class="tab-page hidden w-full max-w-6xl bg-white shadow-md border border-gray-300 p-2 sm:p-4 overflow-hidden flex flex-col relative mt-2">
-    
-    <div id="sync-indicator" class="hidden absolute top-0 left-0 w-full bg-green-600 text-white text-[10px] py-0.5 text-center font-bold z-50">
-      <i class="fa-solid fa-rotate fa-spin mr-1"></i> Syncing...
-    </div>
+  <!-- ★ 同期インジケーター（全画面共通） -->
+  <div id="sync-indicator" class="hidden fixed top-0 left-0 w-full bg-green-600 text-white text-[10px] py-0.5 text-center font-bold z-50 shadow">
+    <i class="fa-solid fa-rotate fa-spin mr-1"></i> Syncing...
+  </div>
 
-    <div class="flex flex-col md:flex-row justify-between items-center border-b-2 border-gray-800 pb-2 mb-3 mt-2">
-      <h1 id="main-title-practice" onclick="handleSecretClick()" class="text-base sm:text-xl font-black tracking-wide text-gray-900 cursor-pointer select-none">
-        MEIKEI OPEN 練習コート予約
-      </h1>
+  <!-- ★ 全タブ共通のトップヘッダー（どの画面でも言語切替・更新が可能） -->
+  <header class="w-full max-w-6xl bg-white shadow-sm border-b-2 border-gray-800 px-3 py-2.5 mt-0 sm:mt-2 flex flex-col md:flex-row justify-between items-center z-30">
+    <h1 id="global-header-title" onclick="handleSecretClick()" class="text-base sm:text-xl font-black tracking-wide text-gray-900 cursor-pointer select-none text-center md:text-left">
+      筑波大学MEIKEIオープンテニス PRACTICE SHEET
+    </h1>
+    
+    <div class="mt-2 md:mt-0 flex gap-2 items-center flex-wrap justify-center">
+      <button onclick="manualSync()" class="px-2.5 py-1.5 text-[11px] bg-gray-200 text-gray-700 border border-gray-400 font-bold rounded shadow-sm hover:bg-gray-300">
+        <i class="fa-solid fa-rotate"></i> <span id="btn-update">更新</span>
+      </button>
+      <button onclick="toggleLang()" class="px-2.5 py-1.5 text-[11px] bg-blue-100 text-blue-800 border border-blue-400 font-bold rounded shadow-sm hover:bg-blue-200">
+        <i class="fa-solid fa-globe"></i> <span id="current-lang-label">日本語</span>
+      </button>
       
-      <div class="mt-2 md:mt-0 flex gap-2 items-center flex-wrap justify-center">
-        <button onclick="manualSync()" class="px-2 py-1.5 text-[11px] bg-gray-200 text-gray-700 border border-gray-400 font-bold rounded shadow-sm">
-          <i class="fa-solid fa-rotate"></i> <span id="btn-update">更新</span>
-        </button>
-        <button onclick="toggleLang()" class="px-2 py-1.5 text-[11px] bg-blue-100 text-blue-800 border border-blue-400 font-bold rounded shadow-sm">
-          <i class="fa-solid fa-globe"></i> <span id="current-lang-label">日本語</span>
-        </button>
-        
-        <div id="admin-buttons" class="hidden flex gap-2 ml-2 p-1 bg-yellow-100 border border-yellow-300 rounded">
-          <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300 rounded">初期化</button>
-          <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold rounded">TD管理者</button>
-        </div>
+      <div id="admin-buttons" class="hidden flex gap-2 ml-1 p-1 bg-yellow-100 border border-yellow-300 rounded">
+        <button onclick="debugReset()" class="px-2 py-1 text-[10px] bg-red-100 text-red-700 border border-red-300 rounded">初期化</button>
+        <button onclick="toggleRole()" id="role-btn" class="px-3 py-1 text-[11px] bg-yellow-400 text-black border border-yellow-600 font-bold rounded">TD管理者</button>
       </div>
     </div>
+  </header>
 
-    <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs">
+  <!-- ================= タブ1：練習コート予約システム ================= -->
+  <main id="page-practice" class="tab-page hidden w-full max-w-6xl bg-white shadow-md border-x border-b border-gray-300 p-2 sm:p-4 overflow-hidden flex flex-col relative">
+
+    <div class="flex flex-col sm:flex-row justify-between items-end mb-2 text-xs mt-1">
       <div class="flex flex-col space-y-1">
         <span id="rule-text" class="font-bold text-gray-700 whitespace-pre-line"></span>
         <div class="flex items-center space-x-2">
@@ -131,14 +133,9 @@
 
   <!-- ================= タブ2：OP / ドロー & 試合進行状況 ================= -->
   <div id="page-oop" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
-    <div class="flex justify-between items-center border-b-2 border-gray-800 pb-2 mb-4">
-      <h2 class="text-xl font-black" id="title-oop">📋 試合進行 & OP / Schedule</h2>
-      <button onclick="manualSync()" class="px-2.5 py-1 text-xs bg-gray-200 text-gray-700 border border-gray-400 font-bold rounded shadow-sm">
-        <i class="fa-solid fa-rotate"></i> 更新
-      </button>
-    </div>
+    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4" id="title-oop">📋 試合進行 & OP / Schedule</h2>
 
-    <!-- ★ 追加機能2：各コートの試合進行状況 (Court Status) -->
+    <!-- 各コートの試合進行状況 (Court Status) -->
     <div class="bg-white p-3.5 rounded shadow border border-gray-300 mb-4">
       <div class="flex justify-between items-center border-b border-gray-200 pb-1.5 mb-2.5">
         <h3 class="font-bold text-sm text-gray-800 flex items-center">
@@ -148,94 +145,109 @@
         <span class="text-[10px] text-gray-400 font-bold">Auto Sync</span>
       </div>
       <div id="court-status-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        <p class="text-gray-400 text-xs col-span-2 py-2">読み込み中...</p>
+        <p class="text-gray-400 text-xs col-span-2 py-2">Loading...</p>
       </div>
     </div>
 
     <div class="bg-white p-4 rounded shadow border border-gray-300 text-center space-y-4">
       <p class="text-sm text-gray-600 font-bold" id="oop-desc">本日のOP・ドロー表はこちらから確認できます。</p>
-      <a id="link-op" href="#" target="_blank" class="block w-full bg-blue-600 text-white font-bold py-3 rounded shadow hover:bg-blue-700 transition"><i class="fa-solid fa-file-pdf mr-2"></i> <span id="btn-op-pdf">本日のOP (PDF)</span></a>
-      <a id="link-draw" href="#" target="_blank" class="block w-full bg-green-600 text-white font-bold py-3 rounded shadow hover:bg-green-700 transition"><i class="fa-solid fa-sitemap mr-2"></i> <span id="btn-draw-pdf">最新のドロー表 (PDF)</span></a>
-      <p class="text-xs text-gray-400 mt-4">※OPは毎日夕方頃に更新されます。</p>
+      <a id="link-op" href="#" target="_blank" class="block w-full bg-blue-600 text-white font-bold py-3 rounded shadow hover:bg-blue-700 transition">
+        <i class="fa-solid fa-file-pdf mr-2"></i> <span id="btn-op-pdf">本日のOP (PDF)</span>
+      </a>
+      <a id="link-draw" href="#" target="_blank" class="block w-full bg-green-600 text-white font-bold py-3 rounded shadow hover:bg-green-700 transition">
+        <i class="fa-solid fa-sitemap mr-2"></i> <span id="btn-draw-pdf">最新のドロー表 (PDF)</span>
+      </a>
+      <p class="text-xs text-gray-400 mt-4" id="oop-note">※OPは毎日夕方頃に更新されます。</p>
     </div>
   </div>
 
   <!-- ================= タブ3：掲示板 ================= -->
   <div id="page-notice" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
-    <div class="flex justify-between items-center border-b-2 border-gray-800 pb-2 mb-4">
-      <h2 class="text-xl font-black" id="title-notice">📢 大会掲示板 / Notice</h2>
-      <button onclick="manualSync()" class="px-2.5 py-1 text-xs bg-gray-200 text-gray-700 border border-gray-400 font-bold rounded shadow-sm">
-        <i class="fa-solid fa-rotate"></i> 更新
-      </button>
+    <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4" id="title-notice">📢 大会掲示板 / Notice</h2>
+    <div id="notice-container" class="space-y-3">
+      <p class="text-sm text-gray-500 text-center py-4">Loading...</p>
     </div>
-    <div id="notice-container" class="space-y-3"><p class="text-sm text-gray-500 text-center py-4">お知らせを読み込み中...</p></div>
   </div>
 
   <!-- ================= タブ4：観客向けインフォメーション & 会場マップ ================= -->
   <div id="page-info" class="tab-page hidden w-full max-w-4xl mt-4 px-4">
     <h2 class="text-xl font-black border-b-2 border-gray-800 pb-2 mb-4" id="title-info">🗺️ 会場・大会情報 / Information</h2>
     
-    <!-- ★ 追加機能3：会場内マップ＆施設案内 -->
+    <!-- 会場内マップ＆施設案内 -->
     <div class="bg-white p-4 rounded shadow border border-gray-300 mb-4">
       <h3 class="font-bold text-sm text-gray-800 border-b border-gray-200 pb-1.5 mb-3">
         <i class="fa-solid fa-map text-blue-600 mr-1"></i> <span id="map-section-title">会場内マップ・施設案内 / Venue Map</span>
       </h3>
       
-      <!-- マップ画像（SettingsシートにURLが入力されている場合のみ自動表示） -->
       <div id="map-img-wrapper" class="hidden mb-3">
         <img id="venue-map-img" src="" alt="Venue Map" class="w-full rounded border border-gray-300 shadow-sm">
       </div>
       
-      <!-- 常に表示される施設ガイド -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-700 bg-gray-50 p-3 rounded border border-gray-200">
         <div class="flex items-start space-x-2">
           <i class="fa-solid fa-tent text-blue-600 mt-0.5 w-4 text-center"></i>
-          <div><span class="font-bold">大会本部 (TD Desk):</span><br>ハードコート中央通路付近</div>
+          <div><span class="font-bold" id="fac-td-title">大会本部 (TD Desk):</span><br><span id="fac-td-desc">ハードコート中央通路付近</span></div>
         </div>
         <div class="flex items-start space-x-2">
           <i class="fa-solid fa-restroom text-green-600 mt-0.5 w-4 text-center"></i>
-          <div><span class="font-bold">お手洗い・更衣室 (Restroom):</span><br>クラブハウス（部室棟）内</div>
+          <div><span class="font-bold" id="fac-wc-title">お手洗い・更衣室 (Restroom):</span><br><span id="fac-wc-desc">クラブハウス（部室棟）内</span></div>
         </div>
         <div class="flex items-start space-x-2">
           <i class="fa-solid fa-table-tennis-paddle-ball text-purple-600 mt-0.5 w-4 text-center"></i>
-          <div><span class="font-bold">ストリンガー (Stringer):</span><br>大会本部横 特設ブース</div>
+          <div><span class="font-bold" id="fac-str-title">ストリンガー (Stringer):</span><br><span id="fac-str-desc">大会本部横 特設ブース</span></div>
         </div>
         <div class="flex items-start space-x-2">
           <i class="fa-solid fa-trash-can text-gray-600 mt-0.5 w-4 text-center"></i>
-          <div><span class="font-bold">ゴミ箱 (Trash):</span><br>※ゴミは各自でお持ち帰りください</div>
+          <div><span class="font-bold" id="fac-tr-title">ゴミ箱 (Trash):</span><br><span id="fac-tr-desc">※ゴミは各自でお持ち帰りください</span></div>
         </div>
       </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3 mb-4">
-      <a id="link-gourmet" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50"><i class="fa-solid fa-utensils text-2xl text-orange-500 mb-2"></i><h4 class="font-bold text-sm">つくばグルメマップ</h4><p class="text-[10px] text-gray-500 mt-1">おすすめの飲食店をご紹介</p></a>
-      <a id="link-insta" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50"><i class="fa-brands fa-instagram text-2xl text-pink-500 mb-2"></i><h4 class="font-bold text-sm">公式 Instagram</h4><p class="text-[10px] text-gray-500 mt-1">試合結果や写真を速報</p></a>
-      <a id="link-access" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50"><i class="fa-solid fa-map-location-dot text-2xl text-blue-500 mb-2"></i><h4 class="font-bold text-sm">会場アクセス</h4><p class="text-[10px] text-gray-500 mt-1">駐車場・バスのご案内</p></a>
-      <a id="link-hp" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50"><i class="fa-solid fa-globe text-2xl text-gray-700 mb-2"></i><h4 class="font-bold text-sm">大会公式HP</h4><p class="text-[10px] text-gray-500 mt-1">大会概要・スポンサー</p></a>
+      <a id="link-gourmet" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50">
+        <i class="fa-solid fa-utensils text-2xl text-orange-500 mb-2"></i>
+        <h4 class="font-bold text-sm" id="card-gourmet-title">つくばグルメマップ</h4>
+        <p class="text-[10px] text-gray-500 mt-1" id="card-gourmet-desc">おすすめの飲食店をご紹介</p>
+      </a>
+      <a id="link-insta" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50">
+        <i class="fa-brands fa-instagram text-2xl text-pink-500 mb-2"></i>
+        <h4 class="font-bold text-sm" id="card-insta-title">公式 Instagram</h4>
+        <p class="text-[10px] text-gray-500 mt-1" id="card-insta-desc">試合結果や写真を速報</p>
+      </a>
+      <a id="link-access" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50">
+        <i class="fa-solid fa-map-location-dot text-2xl text-blue-500 mb-2"></i>
+        <h4 class="font-bold text-sm" id="card-access-title">会場アクセス</h4>
+        <p class="text-[10px] text-gray-500 mt-1" id="card-access-desc">駐車場・バスのご案内</p>
+      </a>
+      <a id="link-hp" href="#" target="_blank" class="bg-white p-4 rounded shadow border border-gray-200 text-center hover:bg-gray-50">
+        <i class="fa-solid fa-globe text-2xl text-gray-700 mb-2"></i>
+        <h4 class="font-bold text-sm" id="card-hp-title">大会公式HP</h4>
+        <p class="text-[10px] text-gray-500 mt-1" id="card-hp-desc">大会概要・スポンサー</p>
+      </a>
     </div>
-    <div class="bg-gray-800 text-white p-4 rounded text-center text-xs"><p class="font-bold mb-1">筑波大学MEIKEIオープンテニス</p><p class="text-gray-400">© 2026 筑波大学硬式庭球部</p></div>
+    <div class="bg-gray-800 text-white p-4 rounded text-center text-xs">
+      <p class="font-bold mb-1" id="footer-title">筑波大学MEIKEIオープンテニス</p>
+      <p class="text-gray-400">© 2026 University of Tsukuba Tennis Club</p>
+    </div>
   </div>
 
   <!-- ================= スマホ風 下部ナビゲーション ================= -->
   <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-40 flex justify-around items-center h-16 pb-2 pt-1">
     <button onclick="switchTab('practice')" id="nav-practice" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
-      <i class="fa-solid fa-calendar-check text-xl mb-1"></i><span class="text-[10px]">Practice</span>
+      <i class="fa-solid fa-calendar-check text-xl mb-1"></i><span class="text-[10px]" id="nav-label-practice">Practice</span>
     </button>
     <button onclick="switchTab('oop')" id="nav-oop" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
-      <i class="fa-solid fa-list-ol text-xl mb-1"></i><span class="text-[10px]">OP/Draw</span>
+      <i class="fa-solid fa-list-ol text-xl mb-1"></i><span class="text-[10px]" id="nav-label-oop">OP/Draw</span>
     </button>
-    
-    <!-- ★ 追加機能1：未読バッジ（赤い丸）付きのNoticeボタン -->
     <button onclick="switchTab('notice')" id="nav-notice" class="nav-btn relative flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
       <div class="relative">
         <i class="fa-solid fa-bullhorn text-xl mb-1"></i>
         <span id="notice-badge" class="hidden absolute -top-1 -right-2.5 bg-red-600 text-white text-[8px] font-black px-1 py-0.2 rounded-full animate-bounce shadow">NEW</span>
       </div>
-      <span class="text-[10px]">Notice</span>
+      <span class="text-[10px]" id="nav-label-notice">Notice</span>
     </button>
-    
     <button onclick="switchTab('info')" id="nav-info" class="nav-btn flex flex-col items-center justify-center w-1/4 text-gray-400 hover:text-gray-800 transition">
-      <i class="fa-solid fa-circle-info text-xl mb-1"></i><span class="text-[10px]">Info</span>
+      <i class="fa-solid fa-circle-info text-xl mb-1"></i><span class="text-[10px]" id="nav-label-info">Info</span>
     </button>
   </div>
 
@@ -330,7 +342,7 @@
 
   <script>
     // ★★★ 以下のURLをご自身の【新しいデプロイ】のURLに書き換えてください ★★★
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwhU1gJDsIgtbuM1iPe_EFrTAzmMZu_sGtfZmNBlnK8JoIYKC9yF5ehWF33fkuYPBAbnA/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyO8fm7XSWnpy0ryF_cG4TQ88ZlcGosvyfgYkEoYdA7LxsPzkZPzc4Cds4MAO1lEydU0g/exec";
 
     let isGuestMode = false;
     let activeTabId = 'practice';
@@ -351,7 +363,6 @@
         activeBtn.classList.add('text-blue-600', 'font-bold');
       }
 
-      // ★ Noticeタブを開いたら「既読」にして赤いバッジを消す
       if (tabId === 'notice') {
         markNoticesAsRead();
       }
@@ -359,16 +370,20 @@
       window.scrollTo(0, 0);
     }
 
+    // ★ 全タブの多言語辞書（OP・Notice・Info・コート状況すべて対応）
     const i18n = {
       ja: {
-        lang_label: "日本語", title: "筑波大学MEIKEIオープンテニス PRACTICE SHEET",
-        title_guest: "筑波大学MEIKEIオープンテニス 大会情報",
+        lang_label: "日本語",
+        title: "筑波大学MEIKEIオープンテニス PRACTICE SHEET",
+        title_guest: "筑波大学MEIKEIオープンテニス 公式ポータル",
+        nav_practice: "コート予約", nav_oop: "試合進行/OP", nav_notice: "お知らせ", nav_info: "会場案内",
         rule: "【1日 {slots} ・最大4名】空きマスをタップして予約\n(※枠の上限は状況により変動します)", update: "更新",
         date: "Date:", open: "■ 空き", my: "■ 自分の予約", booked: "■ 予約済",
         swipe: "※表を横にスワイプして1〜7番コートを確認できます 👉",
         my_tickets: "■ 自分の全日程の予約チケット / My Bookings",
         no_tickets: "現在有効な予約はありません。", btn_cancel_ticket: "取消",
-        modal_title: "練習コート予約", label_name: "代表選手氏名 (リストから選択)", label_phone: "連絡先電話番号 (必須)",
+        modal_title: "練習コート予約", select_placeholder: "-- 選手を選択してください --",
+        label_name: "代表選手氏名 (リストから選択)", label_phone: "連絡先電話番号 (必須)",
         label_pin: "本人確認・取消用PIN (数字4桁)", ph_pin: "例: 1234",
         label_partner: "追加の同伴者（残り {n} 名まで可能）", ph_partner: "同伴者 {n} (手入力)",
         btn_cancel: "キャンセル", btn_submit: "予約確定",
@@ -386,23 +401,54 @@
         td_label_name: "大会側での割当 (選手名)", td_ph_name: "例: 筑波太郎 (空欄なら「公式割当」)",
         td_btn_block: "この行を大会割当としてブロック", td_btn_cancel: "このグループを取消 (強制削除)",
         td_btn_back: "戻る", official: "公式割当",
-        btn_bulk: "試合・イベント一括ブロック", bulk_title: "コート一括ブロック設定",
+        btn_bulk: "一括ブロック", bulk_title: "コート一括ブロック設定",
         bulk_reason: "表示名", bulk_reason_def: "試合", bulk_courts: "対象コート",
         bulk_all: "全選択", bulk_period: "対象期間", bulk_exec: "一括ブロック実行",
         confirm_td_block: "この行を大会割当としてブロックしますか？",
         confirm_td_bulk: "選択した条件で一括ブロックを実行しますか？",
         prompt_init: "【警告】スマホ内の設定を初期化します。\n実行するにはTDパスワードを入力してください:",
-        prompt_td_cancel_pass: "【危険】この予約を強制削除します。\n実行するにはTDパスワードを入力してください:"
+        prompt_td_cancel_pass: "【危険】この予約を強制削除します。\n実行するにはTDパスワードを入力してください:",
+        
+        // OP / Draw タブ
+        title_oop: "📋 試合進行 & OP / Schedule",
+        status_section_title: "現在のコート状況 / Court Status",
+        no_status: "現在ステータス情報はありません。",
+        oop_desc: "本日のOP・ドロー表はこちらから確認できます。",
+        btn_op_pdf: "本日のOP / Order of Play (PDF)",
+        btn_draw_pdf: "最新のドロー表 / Draws (PDF)",
+        oop_note: "※OPは毎日夕方頃に更新されます。",
+        
+        // Notice タブ
+        title_notice: "📢 大会掲示板 / Notice",
+        no_notices: "現在お知らせはありません。",
+        badge_important: "重要 / IMPORTANT",
+        badge_info: "連絡 / INFO",
+        
+        // Info タブ
+        title_info: "🗺️ 会場・大会情報 / Information",
+        map_section_title: "会場内マップ・施設案内 / Venue Map",
+        fac_td_title: "大会本部 (TD Desk):", fac_td_desc: "ハードコート中央通路付近",
+        fac_wc_title: "お手洗い・更衣室 (Restroom):", fac_wc_desc: "クラブハウス（部室棟）内",
+        fac_str_title: "ストリンガー (Stringer):", fac_str_desc: "大会本部横 特設ブース",
+        fac_tr_title: "ゴミ箱 (Trash):", fac_tr_desc: "※ゴミは各自でお持ち帰りください",
+        card_gourmet_title: "つくばグルメマップ", card_gourmet_desc: "おすすめの飲食店をご紹介",
+        card_insta_title: "公式 Instagram", card_insta_desc: "試合結果や写真を速報",
+        card_access_title: "会場アクセス", card_access_desc: "駐車場・バスのご案内",
+        card_hp_title: "大会公式HP", card_hp_desc: "大会概要・スポンサー",
+        footer_title: "筑波大学MEIKEIオープンテニス"
       },
       en: {
-        lang_label: "English", title: "MEIKEI OPEN Practice Court",
-        title_guest: "MEIKEI OPEN Tournament Info",
-        rule: "[{slots}/day, 30m] Tap an empty row to book\n(*Limits may change based on availability)", update: "Update",
+        lang_label: "English",
+        title: "MEIKEI OPEN Practice Court",
+        title_guest: "MEIKEI OPEN Official Portal",
+        nav_practice: "Practice", nav_oop: "OP/Draw", nav_notice: "Notice", nav_info: "Info",
+        rule: "[{slots}/day, Max 4 players] Tap an empty row to book\n(*Slot limits may change based on court availability)", update: "Update",
         date: "Date:", open: "■ Open", my: "■ My Booking", booked: "■ Booked",
         swipe: "* Swipe right to see Courts 1-7 👉",
         my_tickets: "■ My All Bookings",
         no_tickets: "No active bookings.", btn_cancel_ticket: "Cancel",
-        modal_title: "Book Practice Court", label_name: "Leader Name (Select from list)", label_phone: "Phone Number (Required)",
+        modal_title: "Book Practice Court", select_placeholder: "-- Select Player Name --",
+        label_name: "Leader Name (Select from list)", label_phone: "Phone Number (Required)",
         label_pin: "Verification PIN (4 digits)", ph_pin: "e.g. 1234",
         label_partner: "Partners (Up to {n} more)", ph_partner: "Partner {n} (Type name)",
         btn_cancel: "Cancel", btn_submit: "Confirm",
@@ -420,23 +466,54 @@
         td_label_name: "Official Assignment (Player Name)", td_ph_name: "e.g. John Doe (Blank for 'Official')",
         td_btn_block: "Block this row as Official", td_btn_cancel: "Force Delete Group",
         td_btn_back: "Back", official: "Official",
-        btn_bulk: "Bulk Block (Matches)", bulk_title: "Bulk Block Settings",
+        btn_bulk: "Bulk Block", bulk_title: "Bulk Block Settings",
         bulk_reason: "Display Name", bulk_reason_def: "MATCH", bulk_courts: "Target Courts",
         bulk_all: "Select All", bulk_period: "Period", bulk_exec: "Execute",
         confirm_td_block: "Block this row as Official?",
         confirm_td_bulk: "Execute bulk block with selected conditions?",
         prompt_init: "[Warning] Initialize app settings.\nEnter TD Password:",
-        prompt_td_cancel_pass: "[Warning] Force deleting this booking.\nEnter TD Password to execute:"
+        prompt_td_cancel_pass: "[Warning] Force deleting this booking.\nEnter TD Password to execute:",
+
+        // OP / Draw Tab
+        title_oop: "📋 Match Status & OOP",
+        status_section_title: "Live Court Status",
+        no_status: "No court status available.",
+        oop_desc: "Check today's Order of Play and Draws below.",
+        btn_op_pdf: "Today's Order of Play (PDF)",
+        btn_draw_pdf: "Latest Draws (PDF)",
+        oop_note: "* Order of Play is updated daily in the evening.",
+        
+        // Notice Tab
+        title_notice: "📢 Official Notice Board",
+        no_notices: "No notices at this time.",
+        badge_important: "IMPORTANT",
+        badge_info: "INFO",
+        
+        // Info Tab
+        title_info: "🗺️ Venue & Tournament Info",
+        map_section_title: "Venue Map & Facilities",
+        fac_td_title: "Tournament Desk (TD):", fac_td_desc: "Near the central passage of hard courts",
+        fac_wc_title: "Restroom & Locker:", fac_wc_desc: "Inside the Clubhouse building",
+        fac_str_title: "Stringer Booth:", fac_str_desc: "Special booth next to the TD Desk",
+        fac_tr_title: "Trash Policy:", fac_tr_desc: "* Please take all your trash home with you",
+        card_gourmet_title: "Tsukuba Gourmet Map", card_gourmet_desc: "Recommended local restaurants",
+        card_insta_title: "Official Instagram", card_insta_desc: "Live results & photos",
+        card_access_title: "Venue Access", card_access_desc: "Bus & parking information",
+        card_hp_title: "Official Website", card_hp_desc: "Tournament overview & sponsors",
+        footer_title: "University of Tsukuba MEIKEI OPEN Tennis"
       },
       ko: {
-        lang_label: "한국어", title: "MEIKEI OPEN 연습 코트 예약",
-        title_guest: "MEIKEI OPEN 대회 정보",
+        lang_label: "한국어",
+        title: "MEIKEI OPEN 연습 코트 예약",
+        title_guest: "MEIKEI OPEN 공식 포털",
+        nav_practice: "코트예약", nav_oop: "진행/OP", nav_notice: "공지사항", nav_info: "대회안내",
         rule: "[하루 {slots}, 최대 4명] 빈 칸 탭하여 예약\n(※상황에 따라 예약 제한 변동 가능)", update: "새로고침",
         date: "Date:", open: "■ 빈자리", my: "■ 내 예약", booked: "■ 예약됨",
         swipe: "※ 표를 옆으로 스와이프하여 코트를 확인하세요 👉",
         my_tickets: "■ 내 모든 예약 / My Bookings",
         no_tickets: "현재 예약이 없습니다.", btn_cancel_ticket: "취소",
-        modal_title: "연습 코트 예약", label_name: "대표 선수 이름 (선택)", label_phone: "연락처 (필수)",
+        modal_title: "연습 코트 예약", select_placeholder: "-- 선수를 선택해주세요 --",
+        label_name: "대표 선수 이름 (선택)", label_phone: "연락처 (필수)",
         label_pin: "본인 확인 PIN (숫자 4자리)", ph_pin: "예: 1234",
         label_partner: "동반자 (추가 {n}명 가능)", ph_partner: "동반자 {n} (직접 입력)",
         btn_cancel: "취소", btn_submit: "예약 확정",
@@ -454,13 +531,41 @@
         td_label_name: "대회 측 할당 (선수 이름)", td_ph_name: "예: 홍길동 (비워두면 '공식할당')",
         td_btn_block: "이 행을 대회 할당으로 블록", td_btn_cancel: "이 그룹 취소 (강제 삭제)",
         td_btn_back: "뒤로", official: "공식할당",
-        btn_bulk: "일괄 블록 (시합 등)", bulk_title: "코트 일괄 블록 설정",
+        btn_bulk: "일괄 블록", bulk_title: "코트 일괄 블록 설정",
         bulk_reason: "표시 이름", bulk_reason_def: "시합 (MATCH)", bulk_courts: "대상 코트",
         bulk_all: "전체 선택", bulk_period: "대상 기간", bulk_exec: "일괄 블록 실행",
         confirm_td_block: "이 행을 대회 할당으로 블록하시겠습니까?",
         confirm_td_bulk: "선택한 조건으로 일괄 블록을 실행하시겠습니까?",
         prompt_init: "[경고] 앱 설정을 초기화합니다.\nTD 비밀번호 입력:",
-        prompt_td_cancel_pass: "[경고] 이 예약을 강제 삭제합니다.\n실행하려면 TD 비밀번호를 입력하세요:"
+        prompt_td_cancel_pass: "[경고] 이 예약을 강제 삭제합니다.\n실행하려면 TD 비밀번호를 입력하세요:",
+
+        // OP / Draw Tab
+        title_oop: "📋 경기 진행 & OP / Schedule",
+        status_section_title: "현재 코트 상황 / Court Status",
+        no_status: "현재 코트 상태 정보가 없습니다.",
+        oop_desc: "오늘의 OP 및 대진표(Draw)를 확인하실 수 있습니다.",
+        btn_op_pdf: "오늘의 OP / Order of Play (PDF)",
+        btn_draw_pdf: "최신 대진표 / Draws (PDF)",
+        oop_note: "※ OP는 매일 저녁 무렵에 업데이트됩니다.",
+        
+        // Notice Tab
+        title_notice: "📢 대회 공지사항 / Notice",
+        no_notices: "현재 등록된 공지사항이 없습니다.",
+        badge_important: "중요 / IMPORTANT",
+        badge_info: "안내 / INFO",
+        
+        // Info Tab
+        title_info: "🗺️ 대회장 및 대회 정보 / Info",
+        map_section_title: "대회장 맵 및 시설 안내 / Venue Map",
+        fac_td_title: "대회 본부 (TD Desk):", fac_td_desc: "하드코트 중앙 통로 부근",
+        fac_wc_title: "화장실 및 탈의실 (Restroom):", fac_wc_desc: "클럽하우스(부실동) 내부",
+        fac_str_title: "스트링거 부스 (Stringer):", fac_str_desc: "대회 본부 옆 특설 부스",
+        fac_tr_title: "쓰레기통 안내 (Trash):", fac_tr_desc: "※ 쓰레기는 각자 되가져가 주시기 바랍니다",
+        card_gourmet_title: "츠쿠바 맛집 맵", card_gourmet_desc: "추천 음식점 소개",
+        card_insta_title: "공식 Instagram", card_insta_desc: "경기 결과 및 사진 속보",
+        card_access_title: "오시는 길 (Access)", card_access_desc: "버스 및 주차장 안내",
+        card_hp_title: "대회 공식 홈페이지", card_hp_desc: "대회 개요 및 스폰서",
+        footer_title: "츠쿠바대학 MEIKEI 오픈 테니스"
       }
     };
 
@@ -580,7 +685,7 @@
       if (isGuestMode) {
          const navPrac = document.getElementById('nav-practice');
          if (navPrac) navPrac.style.display = 'none';
-         switchTab('oop'); // 観客はまず試合進行・OPタブを開くように設定
+         switchTab('oop');
       } else {
          switchTab('practice'); 
       }
@@ -617,13 +722,69 @@
       if (el) el.innerText = text;
     }
 
+    // ★ コート状況（Match_Status）の自動翻訳関数
+    function translateCourtStatus(statusStr, lang) {
+      if (!statusStr) return '-';
+      const s = String(statusStr).trim();
+      if (lang === 'ja') return s;
+
+      const mapEn = {
+        '準備中': 'Preparing',
+        '第1試合 進行中': 'Match 1 In Progress',
+        '第2試合 進行中': 'Match 2 In Progress',
+        '第3試合 進行中': 'Match 3 In Progress',
+        '第4試合 進行中': 'Match 4 In Progress',
+        '第5試合 進行中': 'Match 5 In Progress',
+        '本日の試合終了': 'Matches Finished',
+        '雨天中断': 'Rain Delay',
+        '練習開放中': 'Open for Practice'
+      };
+      const mapKo = {
+        '準備中': '준비중',
+        '第1試合 進行中': '제1경기 진행중',
+        '第2試合 進行中': '제2경기 진행중',
+        '第3試合 進行中': '제3경기 진행중',
+        '第4試合 進行中': '제4경기 진행중',
+        '第5試合 進行中': '제5경기 진행중',
+        '本日の試合終了': '금일 경기 종료',
+        '雨天中断': '우천 중단',
+        '練習開放中': '연습 개방중'
+      };
+
+      if (lang === 'en') {
+        if (mapEn[s]) return mapEn[s];
+        // 「第1試合 6-4, 2-1」のような自由入力にも対応
+        return s.replace(/第(\d+)試合/g, 'Match $1')
+                .replace(/進行中/g, 'In Progress')
+                .replace(/終了/g, 'Finished')
+                .replace(/雨天中断/g, 'Rain Delay')
+                .replace(/準備中/g, 'Preparing');
+      }
+      if (lang === 'ko') {
+        if (mapKo[s]) return mapKo[s];
+        return s.replace(/第(\d+)試合/g, '제$1경기')
+                .replace(/進行中/g, '진행중')
+                .replace(/終了/g, '종료')
+                .replace(/雨天中断/g, '우천 중단')
+                .replace(/準備中/g, '준비중');
+      }
+      return s;
+    }
+
     function applyLang() {
       const t = i18n[currentLang] || i18n['ja'];
       const currentSlotText = getSlotText(currentLang, sysMaxSlots);
       
       setElText('current-lang-label', t.lang_label);
-      setElText('title-info', t.title_guest);
-      setElText('main-title-practice', t.title);
+      setElText('global-header-title', isGuestMode ? t.title_guest : t.title);
+      
+      // 下部ナビゲーション
+      setElText('nav-label-practice', t.nav_practice);
+      setElText('nav-label-oop', t.nav_oop);
+      setElText('nav-label-notice', t.nav_notice);
+      setElText('nav-label-info', t.nav_info);
+
+      // Practiceタブ
       setElText('rule-text', t.rule.replace('{slots}', currentSlotText));
       setElText('btn-update', t.update);
       setElText('date-label', t.date);
@@ -652,8 +813,43 @@
       setElText('bulk-btn-exec', t.bulk_exec);
       setElText('bulk-btn-cancel', t.btn_cancel);
 
+      // OP / Draw タブ
+      setElText('title-oop', t.title_oop);
+      setElText('status-section-title', t.status_section_title);
+      setElText('oop-desc', t.oop_desc);
+      setElText('btn-op-pdf', t.btn_op_pdf);
+      setElText('btn-draw-pdf', t.btn_draw_pdf);
+      setElText('oop-note', t.oop_note);
+
+      // Notice タブ
+      setElText('title-notice', t.title_notice);
+
+      // Info タブ
+      setElText('title-info', t.title_info);
+      setElText('map-section-title', t.map_section_title);
+      setElText('fac-td-title', t.fac_td_title);
+      setElText('fac-td-desc', t.fac_td_desc);
+      setElText('fac-wc-title', t.fac_wc_title);
+      setElText('fac-wc-desc', t.fac_wc_desc);
+      setElText('fac-str-title', t.fac_str_title);
+      setElText('fac-str-desc', t.fac_str_desc);
+      setElText('fac-tr-title', t.fac_tr_title);
+      setElText('fac-tr-desc', t.fac_tr_desc);
+      setElText('card-gourmet-title', t.card_gourmet_title);
+      setElText('card-gourmet-desc', t.card_gourmet_desc);
+      setElText('card-insta-title', t.card_insta_title);
+      setElText('card-insta-desc', t.card_insta_desc);
+      setElText('card-access-title', t.card_access_title);
+      setElText('card-access-desc', t.card_access_desc);
+      setElText('card-hp-title', t.card_hp_title);
+      setElText('card-hp-desc', t.card_hp_desc);
+      setElText('footer-title', t.footer_title);
+
+      // 動的コンテンツもすべて現在の言語で再描画
       renderTimetable(); 
       renderMyBookings();
+      renderNotices();
+      renderMatchStatus();
     }
 
     function updateSettingsUI() {
@@ -730,11 +926,7 @@
           bookings = data;
           applyLang(); 
           updateSettingsUI(); 
-          renderNotices();
-          renderMatchStatus();
           updateLinks();
-          renderTimetable(); 
-          renderMyBookings();
           
           if (!initialScrollDone && selectedDate === getTodayString()) {
             scrollToCurrentTime();
@@ -748,7 +940,6 @@
       }
     }
     
-    // ★ 追加機能1：お知らせの描画＆未読バッジの判定
     function getNoticeSignature() {
       if (!sysNotices || sysNotices.length === 0) return '';
       return sysNotices.length + '_' + (sysNotices[0].date || '') + '_' + (sysNotices[0].title || '');
@@ -761,32 +952,45 @@
       if (badge) badge.classList.add('hidden');
     }
 
+    // ★ お知らせ描画（言語に合わせてタイトル・本文を切り替え）
     function renderNotices() {
       const container = document.getElementById('notice-container');
       if (!container) return;
       container.innerHTML = '';
+      const t = i18n[currentLang] || i18n['ja'];
+
       if (!sysNotices || sysNotices.length === 0) {
-        container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">現在お知らせはありません。</p>';
+        container.innerHTML = `<p class="text-sm text-gray-500 text-center py-4">${t.no_notices}</p>`;
         return;
       }
       
       sysNotices.forEach(n => {
-        const isImportant = (n.type === '重要');
+        const isImportant = (n.type === '重要' || n.type === 'IMPORTANT');
         const borderClass = isImportant ? 'border-red-500' : 'border-blue-500';
         const badgeBgClass = isImportant ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
-        const labelStr = isImportant ? '重要 / IMPORTANT' : '連絡 / INFO';
+        const labelStr = isImportant ? t.badge_important : t.badge_info;
+        
+        // 言語に応じたタイトル・本文を選択（空欄なら日本語にフォールバック）
+        let dispTitle = n.title || '';
+        let dispContent = n.content || '';
+        if (currentLang === 'en') {
+          if (n.title_en) dispTitle = n.title_en;
+          if (n.content_en) dispContent = n.content_en;
+        } else if (currentLang === 'ko') {
+          if (n.title_ko) dispTitle = n.title_ko;
+          if (n.content_ko) dispContent = n.content_ko;
+        }
         
         container.innerHTML += `
           <div class="bg-white p-4 rounded shadow-sm border-l-4 ${borderClass}">
             <span class="text-[10px] ${badgeBgClass} px-2 py-1 font-bold rounded">${labelStr}</span>
             <span class="text-xs text-gray-500 ml-2">${n.date || ''}</span>
-            <h3 class="font-bold mt-2">${n.title || ''}</h3>
-            <p class="text-xs text-gray-700 mt-2 whitespace-pre-line">${n.content || ''}</p>
+            <h3 class="font-bold mt-2">${dispTitle}</h3>
+            <p class="text-xs text-gray-700 mt-2 whitespace-pre-line">${dispContent}</p>
           </div>
         `;
       });
 
-      // 未読チェック（現在Noticeタブを開いていない場合のみバッジを表示）
       const currentSig = getNoticeSignature();
       const lastReadSig = localStorage.getItem('meikei_last_read_notice');
       const badge = document.getElementById('notice-badge');
@@ -802,29 +1006,32 @@
       }
     }
 
-    // ★ 追加機能2：各コートの試合進行状況を描画
+    // ★ 各コートの試合進行状況を描画（自動翻訳対応）
     function renderMatchStatus() {
       const grid = document.getElementById('court-status-grid');
       if (!grid) return;
       grid.innerHTML = '';
+      const t = i18n[currentLang] || i18n['ja'];
+
       if (!sysMatchStatus || sysMatchStatus.length === 0) {
-        grid.innerHTML = '<p class="text-gray-400 text-xs col-span-2">現在ステータス情報はありません</p>';
+        grid.innerHTML = `<p class="text-gray-400 text-xs col-span-2">${t.no_status}</p>`;
         return;
       }
       sysMatchStatus.forEach(item => {
-        const st = String(item.status || '-');
+        const rawSt = String(item.status || '-');
+        const dispSt = translateCourtStatus(rawSt, currentLang);
         let bg = 'bg-gray-50 border-gray-300 text-gray-700';
         let dot = 'bg-gray-400';
-        if (st.includes('進行中') || st.includes('Match') || st.includes('LIVE')) {
+        if (rawSt.includes('進行中') || rawSt.includes('Match') || rawSt.includes('LIVE')) {
           bg = 'bg-green-50 border-green-400 text-green-900';
           dot = 'bg-green-500 animate-pulse';
-        } else if (st.includes('雨') || st.includes('中断') || st.includes('Rain') || st.includes('Delay')) {
+        } else if (rawSt.includes('雨') || rawSt.includes('中断') || rawSt.includes('Rain') || rawSt.includes('Delay')) {
           bg = 'bg-red-50 border-red-400 text-red-900';
           dot = 'bg-red-500';
-        } else if (st.includes('終了') || st.includes('Fin')) {
+        } else if (rawSt.includes('終了') || rawSt.includes('Fin')) {
           bg = 'bg-slate-100 border-slate-300 text-slate-500';
           dot = 'bg-slate-400';
-        } else if (st.includes('練習') || st.includes('Practice')) {
+        } else if (rawSt.includes('練習') || rawSt.includes('Practice')) {
           bg = 'bg-blue-50 border-blue-400 text-blue-900';
           dot = 'bg-blue-500';
         }
@@ -834,13 +1041,12 @@
               <span class="font-black text-[11px]">${item.court}</span>
               <span class="w-2 h-2 rounded-full ${dot}"></span>
             </div>
-            <div class="font-bold text-xs truncate">${st}</div>
+            <div class="font-bold text-xs truncate">${dispSt}</div>
           </div>
         `;
       });
     }
 
-    // ★ 追加機能3：リンクと会場マップ画像の更新
     function updateLinks() {
       if(!sysLinks) return;
       const setHref = (id, url) => { const el = document.getElementById(id); if(el && url) el.href = url; };
@@ -851,7 +1057,6 @@
       setHref('link-access', sysLinks['ACCESS_URL']);
       setHref('link-hp', sysLinks['HP_URL']);
 
-      // 会場マップ画像のURLが設定されていれば表示する
       const mapWrapper = document.getElementById('map-img-wrapper');
       const mapImg = document.getElementById('venue-map-img');
       if (mapWrapper && mapImg) {
@@ -1047,7 +1252,7 @@
       const container = document.getElementById('modal-inputs-container');
       container.innerHTML = '';
       
-      let playerOptions = `<option value="">-- 選択してください --</option>`;
+      let playerOptions = `<option value="">${t.select_placeholder}</option>`;
       if (sysPlayers && sysPlayers.length > 0) {
         sysPlayers.forEach(p => { playerOptions += `<option value="${p}">${p}</option>`; });
       }
